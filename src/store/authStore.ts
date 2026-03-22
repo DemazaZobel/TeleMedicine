@@ -131,8 +131,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoading: false,
       });
     } catch (error: any) {
-      console.error('[AUTH STORE] Login Error:', error);
-      
       let message = 'Login failed. Please try again.';
       if (error?.response?.data) {
         // Extract exact backend error if available (e.g. { detail: '...' } or { non_field_errors: [...] })
@@ -158,8 +156,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       await authService.register(payload);
       set({ isLoading: false });
     } catch (error: any) {
-      console.error('[AUTH STORE] Register Error:', error);
-
       let message = 'Registration failed. Please try again.';
       if (error?.response?.data) {
         const data = error.response.data;
