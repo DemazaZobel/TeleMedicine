@@ -24,12 +24,20 @@ export function DocumentUpload() {
   const handlePickFile = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'],
+        type: ['application/pdf', 'image/jpeg', 'image/png'], // Stricter MIME types
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
+        
+        // Security Check: File Size Limit (5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        if (asset.size && asset.size > MAX_FILE_SIZE) {
+          Alert.alert('Security Warning', 'For security and performance, documents must be less than 5MB.');
+          return;
+        }
+
         setSelectedFile({
           uri: asset.uri,
           name: asset.name,
@@ -38,7 +46,7 @@ export function DocumentUpload() {
         clearError();
       }
     } catch {
-      Alert.alert('Error', 'Failed to pick document.');
+      Alert.alert('Error', 'Failed to pick document securely.');
     }
   }, [clearError]);
 

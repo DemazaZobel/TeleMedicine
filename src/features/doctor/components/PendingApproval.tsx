@@ -22,18 +22,16 @@ export function PendingApproval() {
     fetchDocuments();
   }, [fetchProfile, fetchDocuments]);
 
-  // Dynamic Content Mappings
+  // Dynamic Content Mappings using premium verbiage
   const content = useMemo(() => {
     switch (stage) {
       case 'NEW_DOCTOR':
         return {
-          icon: '👋',
-          title: 'Welcome to MedLink',
-          subtitle: 'Please complete your professional profile to begin accepting patients.',
-          steps: '1. Complete your profile details\n2. Upload all required credentials\n3. Await admin verification email',
-          actions: (
+          title: 'Provider Onboarding',
+          subtitle: 'Welcome to MedLink. To ensure the highest quality of healthcare, all providers must complete a verified professional profile before accepting patient appointments.',
+          actionComponent: (
             <Button
-              title="Complete Profile"
+              title="Configure Profile"
               variant="primary"
               onPress={() => router.push('/doctor/profile')}
               fullWidth
@@ -42,76 +40,68 @@ export function PendingApproval() {
         };
       case 'PROFILE_FILLED':
         return {
-          icon: '📄',
-          title: 'Profile Saved',
-          subtitle: 'Now, please upload your medical credentials (license, certifications) for verification.',
-          steps: '1. ✅ Complete your profile details\n2. Upload all required credentials\n3. Await admin verification email',
-          actions: (
-            <View style={{ width: '100%', gap: 12 }}>
+          title: 'Identity Verification',
+          subtitle: 'Your profile details have been securely saved. For regulatory compliance, please upload your official medical credentials for admin review.',
+          actionComponent: (
+            <>
               <Button
-                title="Upload Documents"
+                title="Upload Secure Documents"
                 variant="primary"
                 onPress={() => router.push('/doctor/documents')}
                 fullWidth
               />
               <Button
-                title="Edit Profile"
-                variant="outline"
+                title="Review Profile"
+                variant="ghost"
                 onPress={() => router.push('/doctor/profile')}
                 fullWidth
               />
-            </View>
+            </>
           ),
         };
       case 'DOCUMENT_UPLOADED':
       case 'PENDING_REVIEW':
       default:
         return {
-          icon: '⏳',
-          title: 'Account Under Review',
-          subtitle: 'Your doctor profile and documents are currently being reviewed by our admin team.',
-          steps: '1. ✅ Complete your profile details\n2. ✅ Upload all required credentials\n3. ⏳ Await admin verification email',
-          actions: (
-            <View style={{ width: '100%', gap: 12 }}>
+          title: 'Verification Pending',
+          subtitle: 'Your credentials have been securely transmitted and are currently undergoing administrative review. We will notify you once your provider account is fully active.',
+          actionComponent: (
+            <>
               <Button
                 title="Manage Documents"
-                variant="primary"
+                variant="outline"
                 onPress={() => router.push('/doctor/documents')}
                 fullWidth
               />
               <Button
-                title="Edit Profile"
-                variant="outline"
+                title="Review Profile"
+                variant="ghost"
                 onPress={() => router.push('/doctor/profile')}
                 fullWidth
               />
-            </View>
+            </>
           ),
         };
     }
   }, [stage, router]);
 
   return (
-    <ScreenContainer scrollable centered>
+    <ScreenContainer scrollable>
       <View style={styles.container}>
-        <Text style={styles.icon}>{content.icon}</Text>
-        <Text style={styles.title}>{content.title}</Text>
-        <Text style={styles.subtitle}>{content.subtitle}</Text>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={styles.title}>{content.title}</Text>
+          <Text style={styles.subtitle}>{content.subtitle}</Text>
 
-        <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>Verification Status</Text>
-          <Text style={styles.statusText}>{content.steps}</Text>
-        </View>
-
-        <View style={[styles.actionRow, { flexDirection: 'column', width: '100%' }]}>
-          {content.actions}
+          <View style={styles.actionContainer}>
+            {content.actionComponent}
+          </View>
         </View>
 
         <Button
           title="Sign Out"
           variant="ghost"
           onPress={logout}
-          style={{ marginTop: theme.spacing['4xl'] }}
+          style={styles.logoutButton}
         />
       </View>
     </ScreenContainer>
