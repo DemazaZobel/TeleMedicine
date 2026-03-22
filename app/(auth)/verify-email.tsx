@@ -25,7 +25,7 @@ export default function VerifyEmailScreen() {
     try {
       setLoading(true);
       setError('');
-      await authService.verifyEmail({ email: email ?? '', otp: otp.trim() });
+      await authService.verifyEmail({ email: email ?? '', code: otp.trim() });
       router.replace('/(auth)/login');
     } catch {
       setError('Invalid or expired OTP. Please try again.');

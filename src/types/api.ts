@@ -59,13 +59,13 @@ export interface ForgotPasswordRequest {
 
 export interface ResetPasswordRequest {
   email: string;
-  otp: string;
+  code: string;
   newPassword: string;
 }
 
 export interface VerifyEmailRequest {
   email: string;
-  otp: string;
+  code: string;
 }
 
 export interface RefreshTokenRequest {
