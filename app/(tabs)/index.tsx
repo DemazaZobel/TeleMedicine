@@ -1,15 +1,23 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ScreenContainer, Card, Button } from '../../src/components/ui';
+import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
 import { useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
+import { useDoctorStore } from '../../src/store/doctor.store';
 import type { Theme } from '../../src/theme';
 
 export default function HomeScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const user = useAuthStore((s) => s.user);
+  const isVerified = useDoctorStore((s) => s.isDoctorVerified());
   const logout = useAuthStore((s) => s.logout);
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Guard for unverified doctors
+  if (user?.role === 'DOCTOR' && !isVerified) {
+    return <PendingApproval />;
+  }
 
   const greeting = user
     ? `Welcome, ${user.first_name}!`

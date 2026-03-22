@@ -3,21 +3,23 @@ import { View, Text, Pressable, Alert, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { ScreenContainer, Input, Button } from '../../../components/ui';
 import { useTheme } from '../../../theme';
-import { useDoctorStore } from '../../../store/doctorStore';
+import { useDoctorStore } from '../../../store/doctor.store';
 import { createDocumentUploadStyles } from '../styles/documentUpload.styles';
 
 export function DocumentUpload() {
   const { theme } = useTheme();
   const styles = useMemo(() => createDocumentUploadStyles(theme), [theme]);
 
-  const { isUploading, error, uploadDocument, clearError } = useDoctorStore();
+  const { isUploadingDocument, error, uploadDocument, clearError } = useDoctorStore();
 
   const [selectedFile, setSelectedFile] = useState<{
     uri: string;
     name: string;
     mimeType: string;
   } | null>(null);
+  
   const [documentType, setDocumentType] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
 
   const handlePickFile = useCallback(async () => {
     try {
@@ -41,21 +43,26 @@ export function DocumentUpload() {
   }, [clearError]);
 
   const handleUpload = useCallback(async () => {
-    if (!selectedFile || !documentType.trim()) return;
+    if (!selectedFile || !documentType.trim() || !licenseNumber.trim()) return;
 
     try {
-      await uploadDocument({
-        file: {
-          uri: selectedFile.uri,
-          name: selectedFile.name,
-          type: selectedFile.mimeType,
-        },
-        documentType: documentType.trim(),
-      });
+      const formData = new FormData();
+      formData.append('document_type', documentType.trim());
+      formData.append('license_number', licenseNumber.trim());
+      
+      // React Native trick to append files to FormData
+      formData.append('file', {
+        uri: selectedFile.uri,
+        name: selectedFile.name,
+        type: selectedFile.mimeType,
+      } as any);
+
+      await uploadDocument(formData);
 
       // Reset form after successful upload
       setSelectedFile(null);
       setDocumentType('');
+      setLicenseNumber('');
 
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Document uploaded successfully!');
@@ -63,14 +70,14 @@ export function DocumentUpload() {
     } catch {
       // Error is set in the store
     }
-  }, [selectedFile, documentType, uploadDocument]);
+  }, [selectedFile, documentType, licenseNumber, uploadDocument]);
 
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
         <Text style={styles.title}>Upload Document</Text>
         <Text style={styles.subtitle}>
-          Upload your credential documents for verification
+          Upload your medical credentials for approval
         </Text>
 
         {error && (
@@ -84,6 +91,13 @@ export function DocumentUpload() {
           placeholder="e.g. Medical License, Board Certification"
           value={documentType}
           onChangeText={(t) => { setDocumentType(t); clearError(); }}
+        />
+
+        <Input
+          label="License / Reference Number"
+          placeholder="e.g. LRN-123456"
+          value={licenseNumber}
+          onChangeText={(t) => { setLicenseNumber(t); clearError(); }}
         />
 
         <Pressable
@@ -110,9 +124,9 @@ export function DocumentUpload() {
         <Button
           title="Upload Document"
           onPress={handleUpload}
-          loading={isUploading}
+          loading={isUploadingDocument}
           fullWidth
-          disabled={!selectedFile || !documentType.trim()}
+          disabled={!selectedFile || !documentType.trim() || !licenseNumber.trim()}
         />
       </View>
     </ScreenContainer>

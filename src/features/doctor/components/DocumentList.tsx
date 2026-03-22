@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { ScreenContainer, Card, Loader } from '../../../components/ui';
 import { useTheme } from '../../../theme';
-import { useDoctorStore } from '../../../store/doctorStore';
+import { useDoctorStore } from '../../../store/doctor.store';
 import { createDocumentListStyles } from '../styles/documentList.styles';
-import type { ProviderDocument, DocumentStatus } from '../types';
+import type { DoctorDocument, DocumentStatus } from '../types/doctor.types';
 import { formatDate } from '../../../utils';
 
 const STATUS_MAP: Record<DocumentStatus, { style: string; textStyle: string; label: string }> = {
@@ -17,11 +17,11 @@ export function DocumentList() {
   const { theme } = useTheme();
   const styles = useMemo(() => createDocumentListStyles(theme), [theme]);
 
-  const { documents, isLoading, fetchDocuments } = useDoctorStore();
+  const { documents, isLoadingProfile, fetchDocuments } = useDoctorStore();
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
 
   const handleRefresh = useCallback(() => {
     fetchDocuments();
@@ -52,27 +52,24 @@ export function DocumentList() {
   );
 
   const renderDocument = useCallback(
-    ({ item }: { item: ProviderDocument }) => (
+    ({ item }: { item: DoctorDocument }) => (
       <Card style={styles.documentCard}>
         <View style={styles.documentHeader}>
           <Text style={styles.documentName} numberOfLines={1}>
-            {item.name}
+            {item.document_type}
           </Text>
           {renderStatusBadge(item.status)}
         </View>
-        <Text style={styles.documentType}>{item.documentType}</Text>
+        <Text style={styles.documentType}>No: {item.license_number}</Text>
         <Text style={styles.documentDate}>
-          Uploaded {formatDate(item.uploadedAt)}
+          Uploaded {formatDate(item.uploaded_at)}
         </Text>
-        {item.reviewNotes && (
-          <Text style={styles.reviewNotes}>Note: {item.reviewNotes}</Text>
-        )}
       </Card>
     ),
     [styles, renderStatusBadge]
   );
 
-  if (isLoading && documents.length === 0) {
+  if (isLoadingProfile && documents.length === 0) {
     return <Loader message="Loading documents..." />;
   }
 
@@ -103,7 +100,7 @@ export function DocumentList() {
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
-                refreshing={isLoading}
+                refreshing={isLoadingProfile}
                 onRefresh={handleRefresh}
                 tintColor={theme.colors.primary}
               />
