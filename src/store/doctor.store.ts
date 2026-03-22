@@ -4,6 +4,7 @@ import type {
   DoctorProfile,
   DoctorProfileUpdate,
   DoctorDocument,
+  VerificationStage,
 } from '../features/doctor/types/doctor.types';
 
 // ─── State ───────────────────────────────────────────────
@@ -25,6 +26,7 @@ interface DoctorActions {
   clearError: () => void;
   reset: () => void;
   isDoctorVerified: () => boolean;
+  verificationStage: () => VerificationStage;
 }
 
 type DoctorStore = DoctorState & DoctorActions;
@@ -43,6 +45,36 @@ export const useDoctorStore = create<DoctorStore>((set, get) => ({
 
   isDoctorVerified: () => {
     return get().profile?.is_verified === true;
+  },
+
+  verificationStage: () => {
+    const { profile, documents } = get();
+    
+    // Fallback if profile not loaded yet or doesn't exist
+    if (!profile) return 'NEW_DOCTOR';
+    
+    // Core success state
+    if (profile.is_verified) return 'APPROVED';
+    
+    // Check if profile fields are genuinely filled
+    const isProfileFilled = Boolean(
+      profile.specialization &&
+      profile.years_of_experience > 0 &&
+      profile.consultation_fee &&
+      Number(profile.consultation_fee) > 0
+    );
+
+    if (!isProfileFilled) return 'NEW_DOCTOR';
+
+    // Profile is filled, check documents
+    if (documents.length === 0) return 'PROFILE_FILLED';
+
+    // Documents exist, check their statuses
+    const allPending = documents.every((d) => d.status === 'PENDING');
+    if (allPending) return 'DOCUMENT_UPLOADED';
+
+    // Otherwise, some might be rejected or still pending but not verified
+    return 'PENDING_REVIEW';
   },
 
   fetchProfile: async () => {

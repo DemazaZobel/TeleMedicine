@@ -19,6 +19,7 @@ export function DoctorProfileForm() {
     updateProfile,
     clearError,
     isDoctorVerified,
+    verificationStage,
   } = useDoctorStore();
 
   const [specialization, setSpecialization] = useState('');
@@ -63,10 +64,17 @@ export function DoctorProfileForm() {
       <View style={styles.container}>
         <Text style={styles.title}>Doctor Profile</Text>
 
-        {!isDoctorVerified() && (
+        {verificationStage() === 'NEW_DOCTOR' && (
+          <View style={[styles.errorBanner, { backgroundColor: theme.colors.primary + '20' }]}>
+            <Text style={[styles.errorText, { color: theme.colors.primary, fontWeight: 'bold' }]}>
+              👋 Welcome! Please complete your medical profile to continue.
+            </Text>
+          </View>
+        )}
+        {(verificationStage() === 'PROFILE_FILLED' || verificationStage() === 'DOCUMENT_UPLOADED' || verificationStage() === 'PENDING_REVIEW') && (
           <View style={[styles.errorBanner, { backgroundColor: theme.colors.warningLight }]}>
-            <Text style={[styles.errorText, { color: theme.colors.warning }]}>
-              ⚠️ Upload credentials in the Documents tab to get verified.
+            <Text style={[styles.errorText, { color: theme.colors.warning, fontWeight: 'bold' }]}>
+              ⚠️ Action Required: Please upload your credentials in the Documents tab for admin review.
             </Text>
           </View>
         )}

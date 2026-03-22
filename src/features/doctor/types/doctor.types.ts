@@ -1,5 +1,13 @@
-// ─── Document Status ─────────────────────────────────────
+// ─── Document Status & Verification Stage ──────────────────
 export type DocumentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export type VerificationStage = 
+  | 'NEW_DOCTOR' 
+  | 'PROFILE_FILLED' 
+  | 'DOCUMENT_UPLOADED' 
+  | 'PENDING_REVIEW' 
+  | 'APPROVED' 
+  | 'ACTIVE_PROVIDER';
 
 // ─── Backend Aligned Models ──────────────────────────────
 export interface DoctorProfile {
