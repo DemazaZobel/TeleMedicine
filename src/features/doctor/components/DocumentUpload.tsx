@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, Pressable, Alert, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Input, Button } from '../../../components/ui';
 import { useTheme } from '../../../theme';
 import { useDoctorStore } from '../../../store/doctor.store';
@@ -24,7 +25,7 @@ export function DocumentUpload() {
   const handlePickFile = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/jpeg', 'image/png'], // Stricter MIME types
+        type: '*/*', // Accept all so iOS filesystem works correctly
         copyToCacheDirectory: true,
       });
 
@@ -38,10 +39,22 @@ export function DocumentUpload() {
           return;
         }
 
+        // Security Check: MIME type validation
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'] as string[];
+        const detectedType = asset.mimeType ?? 'application/octet-stream';
+        
+        // Also check ending file extension if mime isn't cleanly resolved
+        const isAllowedExtension = asset.name.toLowerCase().match(/\.(pdf|jpeg|jpg|png)$/);
+
+        if (!allowedTypes.includes(detectedType) && !isAllowedExtension) {
+          Alert.alert('Invalid Format', 'Only PDF, JPEG, and PNG files are accepted for verification documents.');
+          return;
+        }
+
         setSelectedFile({
           uri: asset.uri,
           name: asset.name,
-          mimeType: asset.mimeType ?? 'application/octet-stream',
+          mimeType: detectedType,
         });
         clearError();
       }
@@ -115,11 +128,11 @@ export function DocumentUpload() {
             selectedFile && styles.uploadAreaActive,
           ]}
         >
-          <Text style={styles.uploadIcon}>📎</Text>
+          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.primary} style={{ marginBottom: 12 }} />
           <Text style={styles.uploadText}>
-            {selectedFile ? 'Change File' : 'Tap to Select File'}
+            {selectedFile ? 'Change Select File' : 'Tap to Select File'}
           </Text>
-          <Text style={styles.uploadHint}>PDF or image files accepted</Text>
+          <Text style={styles.uploadHint}>Secure PDF or image formats</Text>
         </Pressable>
 
         {selectedFile && (

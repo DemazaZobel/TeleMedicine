@@ -96,13 +96,6 @@ export function PendingApproval() {
             {content.actionComponent}
           </View>
         </View>
-
-        <Button
-          title="Sign Out"
-          variant="ghost"
-          onPress={logout}
-          style={styles.logoutButton}
-        />
       </View>
     </ScreenContainer>
   );
