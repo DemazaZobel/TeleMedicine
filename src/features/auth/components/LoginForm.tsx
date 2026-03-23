@@ -29,6 +29,7 @@ export function LoginForm() {
   return (
     <AuthContainer 
       illustration={require('../../../../assets/images/login-illustration.png')}
+      darkIllustration={require('../../../../assets/images/dark-login-illustration.png')}
     >
       <View style={styles.container}>
         <View style={{ marginBottom: 24 }}>

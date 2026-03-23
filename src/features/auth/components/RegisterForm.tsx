@@ -60,6 +60,7 @@ export function RegisterForm() {
   return (
     <AuthContainer 
       illustration={require('../../../../assets/images/signup-illustration.png')}
+      darkIllustration={require('../../../../assets/images/dark-signup-illustration.png')}
       showBackButton
     >
       <View style={styles.container}>

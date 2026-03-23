@@ -10,12 +10,14 @@ import { createAuthContainerStyles } from './AuthContainer.styles';
 interface AuthContainerProps {
   children: React.ReactNode;
   illustration: ImageSourcePropType;
+  darkIllustration?: ImageSourcePropType;
   showBackButton?: boolean;
 }
 
 export const AuthContainer = React.memo(function AuthContainer({
   children,
   illustration,
+  darkIllustration,
   showBackButton = false,
 }: AuthContainerProps) {
   const { theme, isDark } = useTheme();
@@ -28,6 +30,8 @@ export const AuthContainer = React.memo(function AuthContainer({
   const statusBarStyle = isDark ? 'light' : 'dark';
   const backIconColor = isDark ? '#FFFFFF' : '#000000';
   const backRingBg = isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.8)';
+  
+  const currentIllustration = isDark && darkIllustration ? darkIllustration : illustration;
 
   return (
     <>
@@ -37,7 +41,7 @@ export const AuthContainer = React.memo(function AuthContainer({
         {/* Top Illustration Area */}
         <View style={[styles.illustrationContainer, { backgroundColor: illustrationBg }]}>
           <Image 
-            source={illustration} 
+            source={currentIllustration} 
             style={styles.illustration} 
             resizeMode="contain"
           />
