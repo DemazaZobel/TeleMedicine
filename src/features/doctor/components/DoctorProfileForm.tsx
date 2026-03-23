@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { ScreenContainer, Input, Button, Card } from '../../../components/ui';
-import { useTheme } from '../../../theme';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Text, View } from 'react-native';
+import { Button, Card, Input, ScreenContainer } from '../../../components/ui';
 import { useDoctorStore } from '../../../store/doctor.store';
+import { useTheme } from '../../../theme';
 import { createDoctorProfileStyles } from '../styles/doctorProfile.styles';
 import type { DoctorProfileUpdate } from '../types/doctor.types';
 

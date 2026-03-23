@@ -1,18 +1,18 @@
-import React, { useMemo, useEffect } from 'react';
-import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Button } from '../../../components/ui';
-import { useTheme } from '../../../theme';
-import { createPendingApprovalStyles } from '../styles/pendingApproval.styles';
+import React, { useEffect, useMemo } from 'react';
+import { Text, View } from 'react-native';
+import { Button, ScreenContainer } from '../../../components/ui';
 import { useAuthStore } from '../../../store/authStore';
 import { useDoctorStore } from '../../../store/doctor.store';
+import { useTheme } from '../../../theme';
+import { createPendingApprovalStyles } from '../styles/pendingApproval.styles';
 
 export function PendingApproval() {
   const { theme } = useTheme();
   const router = useRouter();
   const { logout } = useAuthStore();
   const styles = useMemo(() => createPendingApprovalStyles(theme), [theme]);
-  
+
   // Read stage and ensure profile is fetched
   const { verificationStage, fetchProfile, fetchDocuments } = useDoctorStore();
   const stage = verificationStage();
