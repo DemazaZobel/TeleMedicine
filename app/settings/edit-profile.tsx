@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Input, Button, Banner } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, Theme } from '../../src/theme';
 
 export default function EditProfileScreen() {
   const { theme } = useTheme();
-  const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { user, isLoading, error, fetchProfile, updateProfile, clearError } =
@@ -18,7 +17,6 @@ export default function EditProfileScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [saved, setSaved] = useState(false);
 
-  // Track original values to detect changes
   const [original, setOriginal] = useState({ firstName: '', lastName: '', phoneNumber: '' });
 
   useEffect(() => {
@@ -37,7 +35,6 @@ export default function EditProfileScreen() {
     }
   }, [user]);
 
-  // Dirty check
   const hasChanges =
     firstName !== original.firstName ||
     lastName !== original.lastName ||
@@ -52,7 +49,6 @@ export default function EditProfileScreen() {
         last_name: lastName.trim(),
         phone_number: phoneNumber.trim() || undefined,
       });
-      // Update original after successful save
       setOriginal({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
@@ -64,66 +60,63 @@ export default function EditProfileScreen() {
     }
   }, [firstName, lastName, phoneNumber, updateProfile, clearError]);
 
+  const initials = `${user?.first_name?.[0] ?? 'U'}${user?.last_name?.[0] ?? ''}`;
+
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
-        <Text style={styles.title}>Edit Profile</Text>
-        <Text style={styles.subtitle}>
-          Update your personal information below.
-        </Text>
+        {/* ── Avatar with Camera Badge ── */}
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarOuter}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarInitials}>{initials}</Text>
+            </View>
+            <TouchableOpacity style={styles.cameraBadge} activeOpacity={0.7}>
+              <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-        {error && (
-          <Banner variant="error" message={error} />
-        )}
+        {/* ── Banners ── */}
+        {error && <Banner variant="error" message={error} />}
+        {saved && <Banner variant="success" message="Profile updated successfully." />}
 
-        {saved && (
-          <Banner variant="success" message="Profile updated successfully." />
-        )}
+        {/* ── Side-by-side Name Fields ── */}
+        <View style={styles.nameRow}>
+          <Input
+            label="First name"
+            placeholder="First name"
+            value={firstName}
+            onChangeText={(t) => { setFirstName(t); clearError(); setSaved(false); }}
+            containerStyle={styles.halfField}
+          />
+          <Input
+            label="Last name"
+            placeholder="Last name"
+            value={lastName}
+            onChangeText={(t) => { setLastName(t); clearError(); setSaved(false); }}
+            containerStyle={styles.halfField}
+          />
+        </View>
 
+        {/* ── Email (read-only) ── */}
+        <View style={styles.readOnlyField}>
+          <Text style={styles.readOnlyLabel}>Email</Text>
+          <View style={styles.readOnlyInput}>
+            <Text style={styles.readOnlyValue}>{user?.email ?? '—'}</Text>
+          </View>
+        </View>
+
+        {/* ── Phone Number ── */}
         <Input
-          label="First Name"
-          placeholder="Enter your first name"
-          value={firstName}
-          onChangeText={(t) => {
-            setFirstName(t);
-            clearError();
-            setSaved(false);
-          }}
-        />
-
-        <Input
-          label="Last Name"
-          placeholder="Enter your last name"
-          value={lastName}
-          onChangeText={(t) => {
-            setLastName(t);
-            clearError();
-            setSaved(false);
-          }}
-        />
-
-        <Input
-          label="Phone Number"
+          label="Phone"
           placeholder="+251 9XX XXX XXX"
           value={phoneNumber}
-          onChangeText={(t) => {
-            setPhoneNumber(t);
-            clearError();
-            setSaved(false);
-          }}
+          onChangeText={(t) => { setPhoneNumber(t); clearError(); setSaved(false); }}
           keyboardType="phone-pad"
         />
 
-        <View style={styles.readOnlySection}>
-          <Text style={styles.readOnlyLabel}>Email</Text>
-          <Text style={styles.readOnlyValue}>{user?.email ?? '—'}</Text>
-        </View>
-
-        <View style={styles.readOnlySection}>
-          <Text style={styles.readOnlyLabel}>Role</Text>
-          <Text style={styles.readOnlyValue}>{user?.role ?? '—'}</Text>
-        </View>
-
+        {/* ── Save Button ── */}
         <Button
           title="Save Changes"
           onPress={handleSave}
@@ -141,40 +134,70 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       paddingHorizontal: theme.spacing.xl,
-      paddingVertical: theme.spacing.xl,
+      paddingTop: theme.spacing.lg,
+      paddingBottom: theme.spacing['4xl'],
     },
-    title: {
-      ...theme.typography.h2,
-      color: theme.colors.text,
-      fontWeight: '700',
-      marginBottom: theme.spacing.xs,
-    },
-    subtitle: {
-      ...theme.typography.body,
-      color: theme.colors.textSecondary,
-      marginBottom: theme.spacing['2xl'],
-      lineHeight: 24,
-    },
-    readOnlySection: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+    avatarSection: {
       alignItems: 'center',
-      paddingVertical: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.divider,
-      marginBottom: theme.spacing.sm,
+      marginBottom: theme.spacing['2xl'],
+    },
+    avatarOuter: {
+      position: 'relative',
+    },
+    avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: theme.colors.disabled,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    avatarInitials: {
+      fontSize: 36,
+      fontWeight: '700',
+      color: theme.colors.textSecondary,
+    },
+    cameraBadge: {
+      position: 'absolute',
+      bottom: 2,
+      right: 2,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: theme.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: theme.colors.background,
+    },
+    nameRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+    },
+    halfField: {
+      flex: 1,
+    },
+    readOnlyField: {
+      marginBottom: theme.spacing.lg,
     },
     readOnlyLabel: {
-      ...theme.typography.body,
+      ...theme.typography.label,
       color: theme.colors.textSecondary,
+      marginBottom: theme.spacing.xs,
+    },
+    readOnlyInput: {
+      backgroundColor: theme.colors.inputBackground,
+      borderWidth: 1,
+      borderColor: theme.colors.inputBorder,
+      borderRadius: theme.radius.md,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md + 2,
     },
     readOnlyValue: {
       ...theme.typography.body,
-      color: theme.colors.text,
-      fontWeight: '600',
+      color: theme.colors.textTertiary,
     },
     saveButton: {
       marginTop: theme.spacing['2xl'],
-      marginBottom: theme.spacing['4xl'],
     },
   });

@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Input, Button } from '../../../components/ui';
+import { AuthContainer, Input, Button } from '../../../components/ui';
 import { useTheme } from '../../../theme';
 import { useAuthStore } from '../../../store/authStore';
 import { createRegisterStyles } from '../styles/register.styles';
@@ -58,12 +58,15 @@ export function RegisterForm() {
   );
 
   return (
-    <ScreenContainer scrollable centered>
+    <AuthContainer 
+      illustration={require('../../../../assets/images/signup-illustration.png')}
+      showBackButton
+    >
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>
+        <View style={[styles.header, { marginBottom: 24 }]}>
+          <Text style={{ fontSize: 28, fontWeight: '700', color: theme.colors.text }}>Create Account</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, marginTop: 4 }}>
             Join MedLink to manage your health
           </Text>
         </View>
@@ -150,6 +153,6 @@ export function RegisterForm() {
           </Pressable>
         </View>
       </View>
-    </ScreenContainer>
+    </AuthContainer>
   );
 }

@@ -2,7 +2,7 @@ import { createVerifyEmailStyles } from '@/features/auth/styles/verifyEmail.styl
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Button, Input, ScreenContainer } from '../../src/components/ui';
+import { Button, Input, AuthContainer } from '../../src/components/ui';
 import { authService } from '../../src/features/auth/services/authService';
 import { useTheme } from '../../src/theme';
 
@@ -46,13 +46,18 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <ScreenContainer scrollable centered>
+    <AuthContainer 
+      illustration={require('../../assets/images/verification-illustration.png')}
+      showBackButton
+    >
       <View style={styles.container}>
-        <Text style={styles.title}>Verify Email</Text>
-        <Text style={styles.subtitle}>
-          Enter the verification code sent to{'\n'}
-          <Text style={styles.email}>{email}</Text>
-        </Text>
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontSize: 28, fontWeight: '700', color: theme.colors.text }}>Verify Email</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, marginTop: 4 }}>
+            Enter the verification code sent to{'\n'}
+            <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>{email}</Text>
+          </Text>
+        </View>
 
         <Input
           label="Verification Code"
@@ -79,6 +84,6 @@ export default function VerifyEmailScreen() {
           style={styles.resendButton}
         />
       </View>
-    </ScreenContainer>
+    </AuthContainer>
   );
 }

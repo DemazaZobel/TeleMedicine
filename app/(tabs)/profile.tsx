@@ -1,9 +1,67 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Card, Button } from '../../src/components/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { ScreenContainer } from '../../src/components/ui';
 import { useTheme, Theme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
+
+interface MenuItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+  destructive?: boolean;
+  theme: Theme;
+}
+
+function MenuItem({ icon, label, onPress, rightElement, destructive, theme }: MenuItemProps) {
+  return (
+    <TouchableOpacity
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+      }}
+      onPress={onPress}
+      activeOpacity={0.6}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: destructive
+            ? theme.colors.errorLight
+            : theme.colors.primaryLight,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginRight: 14,
+        }}
+      >
+        <Ionicons
+          name={icon}
+          size={20}
+          color={destructive ? theme.colors.error : theme.colors.primary}
+        />
+      </View>
+      <Text
+        style={{
+          flex: 1,
+          fontSize: 16,
+          fontWeight: '500',
+          color: destructive ? theme.colors.error : theme.colors.text,
+        }}
+      >
+        {label}
+      </Text>
+      {rightElement ?? (
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
+      )}
+    </TouchableOpacity>
+  );
+}
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -13,139 +71,150 @@ export default function ProfileScreen() {
   const fetchProfile = useAuthStore((s) => s.fetchProfile);
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Fetch live profile from backend on mount
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
+  const initials = `${user?.first_name?.[0] ?? 'U'}${user?.last_name?.[0] ?? ''}`;
+
   return (
     <ScreenContainer scrollable>
-      <Text style={styles.title}>Profile</Text>
+      {/* ── Avatar Header ── */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.avatarContainer}
+          onPress={() => router.push('/settings/edit-profile')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarInitials}>{initials}</Text>
+          </View>
+          {/* Edit badge */}
+          <View style={styles.editBadge}>
+            <Ionicons name="pencil" size={13} color="#FFFFFF" />
+          </View>
+        </TouchableOpacity>
 
-      <Card style={styles.profileCard}>
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarText}>
-            {user?.first_name?.[0] ?? 'U'}
-            {user?.last_name?.[0] ?? ''}
-          </Text>
-        </View>
         <Text style={styles.name}>
           {user?.first_name ?? 'User'} {user?.last_name ?? ''}
         </Text>
         <Text style={styles.email}>{user?.email ?? ''}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{user?.role ?? 'PATIENT'}</Text>
-        </View>
-      </Card>
+      </View>
 
-      <Card style={styles.settingsCard}>
-        <Text style={styles.cardTitle}>Account</Text>
-        <Button
-          title="Edit Profile"
-          variant="outline"
+      {/* ── Divider ── */}
+      <View style={styles.divider} />
+
+      {/* ── Menu Items ── */}
+      <View style={styles.menuSection}>
+        <MenuItem
+          icon="person-outline"
+          label="Edit Profile"
           onPress={() => router.push('/settings/edit-profile')}
-          fullWidth
-          style={{ marginBottom: theme.spacing.md }}
+          theme={theme}
         />
-        <Button
-          title="Change Password"
-          variant="outline"
+        <MenuItem
+          icon="lock-closed-outline"
+          label="Change Password"
           onPress={() => router.push('/settings/change-password')}
-          fullWidth
+          theme={theme}
         />
-      </Card>
+      </View>
 
-      <Card style={styles.settingsCard}>
-        <Text style={styles.cardTitle}>Settings</Text>
-        <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Dark Mode</Text>
-          <Button
-            title={isDark ? 'On' : 'Off'}
-            variant="outline"
-            size="sm"
-            onPress={toggleTheme}
-          />
-        </View>
-      </Card>
+      <View style={styles.divider} />
 
-      <Button
-        title="Sign Out"
-        variant="outline"
-        onPress={logout}
-        fullWidth
-        style={styles.logoutButton}
-      />
+      <View style={styles.menuSection}>
+        <MenuItem
+          icon="moon-outline"
+          label="Dark Mode"
+          theme={theme}
+          rightElement={
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{
+                false: theme.colors.disabled,
+                true: theme.colors.primary,
+              }}
+              thumbColor="#FFFFFF"
+            />
+          }
+        />
+        <MenuItem
+          icon="help-circle-outline"
+          label="Help Center"
+          theme={theme}
+          onPress={() => {}}
+        />
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.menuSection}>
+        <MenuItem
+          icon="log-out-outline"
+          label="Log Out"
+          onPress={logout}
+          destructive
+          theme={theme}
+        />
+      </View>
     </ScreenContainer>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    title: {
-      ...theme.typography.h2,
-      color: theme.colors.text,
-      paddingTop: theme.spacing['3xl'],
-      marginBottom: theme.spacing.xl,
-      fontWeight: '700',
-    },
-    profileCard: {
+    header: {
       alignItems: 'center',
+      paddingTop: theme.spacing['4xl'],
+      paddingBottom: theme.spacing['2xl'],
+    },
+    avatarContainer: {
+      position: 'relative',
       marginBottom: theme.spacing.lg,
     },
-    avatarPlaceholder: {
-      width: 80,
-      height: 80,
-      borderRadius: theme.radius.full,
+    avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: theme.colors.disabled,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    avatarInitials: {
+      fontSize: 36,
+      fontWeight: '700',
+      color: theme.colors.textSecondary,
+    },
+    editBadge: {
+      position: 'absolute',
+      bottom: 2,
+      right: 2,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
       backgroundColor: theme.colors.primary,
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: theme.spacing.md,
-    },
-    avatarText: {
-      ...theme.typography.h2,
-      color: theme.colors.textInverse,
+      borderWidth: 2,
+      borderColor: theme.colors.background,
     },
     name: {
-      ...theme.typography.h4,
+      fontSize: 22,
+      fontWeight: '700',
       color: theme.colors.text,
     },
     email: {
-      ...theme.typography.bodySm,
+      fontSize: 14,
       color: theme.colors.textSecondary,
-      marginTop: theme.spacing.xs,
+      marginTop: 4,
     },
-    roleBadge: {
-      backgroundColor: theme.colors.primaryLight,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.xs,
-      borderRadius: theme.radius.full,
-      marginTop: theme.spacing.md,
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.divider,
+      marginHorizontal: 20,
     },
-    roleText: {
-      ...theme.typography.caption,
-      color: theme.colors.primary,
-      fontWeight: '700',
-    },
-    settingsCard: {
-      marginBottom: theme.spacing.lg,
-    },
-    cardTitle: {
-      ...theme.typography.h4,
-      color: theme.colors.text,
-      marginBottom: theme.spacing.md,
-      fontWeight: '600',
-    },
-    settingRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    settingLabel: {
-      ...theme.typography.body,
-      color: theme.colors.text,
-    },
-    logoutButton: {
-      marginBottom: theme.spacing['4xl'],
+    menuSection: {
+      paddingVertical: 4,
     },
   });
-
