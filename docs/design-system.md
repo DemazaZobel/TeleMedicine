@@ -2,7 +2,7 @@
 
 Welcome to the MedLink frontend team! As we scale to 3 developers, it is **critical** that we maintain a consistent, premium user interface. 
 
-This document outlines our design system rules. **Do not deviate from these rules without team discussion.**
+This document outlines our design system rules. **Do not deviate from these rules without team discussion.**k
 
 ---
 

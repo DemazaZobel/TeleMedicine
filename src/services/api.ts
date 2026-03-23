@@ -76,19 +76,26 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Detailed error logging
-    console.error(`[API ERROR] => ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`);
-    if (error.response) {
-      // The request was made and the server responded with a status code outside 2xx
-      console.error(`[API ERROR STATUS] => ${error.response.status}`);
-      console.error(`[API ERROR DATA] =>`, JSON.stringify(error.response.data, null, 2));
-    } else if (error.request) {
-      // The request was made but no response was received (Network Error)
-      console.error(`[API NETWORK ERROR] => The request was made but no response was received. Is the backend running and accessible?`);
-      console.error(`[API ERROR MESSAGE] =>`, error.message);
+    // Suppress expected 401s from the refresh endpoint so they don't pollute the console
+    const isRefreshError = originalRequest?.url?.includes('/auth/token/refresh') && error.response?.status === 401;
+
+    if (!isRefreshError) {
+      // Detailed error logging
+      console.error(`[API ERROR] => ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`);
+      if (error.response) {
+        // The request was made and the server responded with a status code outside 2xx
+        console.error(`[API ERROR STATUS] => ${error.response.status}`);
+        console.error(`[API ERROR DATA] =>`, JSON.stringify(error.response.data, null, 2));
+      } else if (error.request) {
+        // The request was made but no response was received (Network Error)
+        console.error(`[API NETWORK ERROR] => The request was made but no response was received. Is the backend running and accessible?`);
+        console.error(`[API ERROR MESSAGE] =>`, error.message);
+      } else {
+        // Something happened in setting up the request
+        console.error(`[API AXIOS CONFIG ERROR] =>`, error.message);
+      }
     } else {
-      // Something happened in setting up the request
-      console.error(`[API AXIOS CONFIG ERROR] =>`, error.message);
+      console.warn(`[API] Token refresh rejected (typically expired or blacklisted token). Logging out...`);
     }
 
     // Only attempt refresh for 401 errors on non-auth endpoints

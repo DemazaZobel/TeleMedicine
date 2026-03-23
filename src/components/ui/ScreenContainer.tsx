@@ -28,7 +28,7 @@ export const ScreenContainer = React.memo(function ScreenContainer({
   // Wrap the children in KeyboardAvoidingView to push content up when keyboard opens
   const keyboardWrappedChildren = (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, width: '100%' }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {children}
