@@ -43,7 +43,7 @@ export const AuthContainer = React.memo(function AuthContainer({
           <Image 
             source={currentIllustration} 
             style={styles.illustration} 
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </View>
 

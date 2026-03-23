@@ -18,12 +18,10 @@ export const createAuthContainerStyles = (theme: Theme) =>
       width: '100%',
       justifyContent: 'center',
       alignItems: 'center',
-      paddingTop: 30,
-      paddingHorizontal: 20,
     },
     illustration: {
-      width: '80%',
-      height: '80%',
+      width: '100%',
+      height: '100%',
     },
     backButton: {
       position: 'absolute',
