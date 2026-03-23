@@ -112,6 +112,14 @@ export default function ProfileScreen() {
           onPress={() => router.push('/settings/edit-profile')}
           theme={theme}
         />
+        {user?.role === 'PATIENT' && (
+          <MenuItem
+            icon="heart-outline"
+            label="Medical Info"
+            onPress={() => router.push('/settings/medical-info')}
+            theme={theme}
+          />
+        )}
         <MenuItem
           icon="lock-closed-outline"
           label="Change Password"
