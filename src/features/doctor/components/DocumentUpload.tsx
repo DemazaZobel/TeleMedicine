@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, Pressable, Alert, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Input, Button } from '../../../components/ui';
+import { Input, Button } from '../../../components/ui';
 import { useTheme } from '../../../theme';
 import { useDoctorStore } from '../../../store/doctor.store';
 import { createDocumentUploadStyles } from '../styles/documentUpload.styles';
@@ -94,62 +94,60 @@ export function DocumentUpload() {
   }, [selectedFile, documentType, licenseNumber, uploadDocument]);
 
   return (
-    <ScreenContainer scrollable>
-      <View style={styles.container}>
-        <Text style={styles.title}>Upload Document</Text>
-        <Text style={styles.subtitle}>
-          Upload your medical credentials for approval
+    <View style={styles.container}>
+      <Text style={styles.title}>Upload Document</Text>
+      <Text style={styles.subtitle}>
+        Upload your medical credentials for approval
+      </Text>
+
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      <Input
+        label="Document Type"
+        placeholder="e.g. Medical License, Board Certification"
+        value={documentType}
+        onChangeText={(t) => { setDocumentType(t); clearError(); }}
+      />
+
+      <Input
+        label="License / Reference Number"
+        placeholder="e.g. LRN-123456"
+        value={licenseNumber}
+        onChangeText={(t) => { setLicenseNumber(t); clearError(); }}
+      />
+
+      <Pressable
+        onPress={handlePickFile}
+        style={[
+          styles.uploadArea,
+          selectedFile && styles.uploadAreaActive,
+        ]}
+      >
+        <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.primary} style={{ marginBottom: 12 }} />
+        <Text style={styles.uploadText}>
+          {selectedFile ? 'Change Select File' : 'Tap to Select File'}
         </Text>
+        <Text style={styles.uploadHint}>Secure PDF or image formats</Text>
+      </Pressable>
 
-        {error && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+      {selectedFile && (
+        <View style={styles.selectedFile}>
+          <Text style={styles.fileName}>{selectedFile.name}</Text>
+          <Text style={styles.fileType}>{selectedFile.mimeType}</Text>
+        </View>
+      )}
 
-        <Input
-          label="Document Type"
-          placeholder="e.g. Medical License, Board Certification"
-          value={documentType}
-          onChangeText={(t) => { setDocumentType(t); clearError(); }}
-        />
-
-        <Input
-          label="License / Reference Number"
-          placeholder="e.g. LRN-123456"
-          value={licenseNumber}
-          onChangeText={(t) => { setLicenseNumber(t); clearError(); }}
-        />
-
-        <Pressable
-          onPress={handlePickFile}
-          style={[
-            styles.uploadArea,
-            selectedFile && styles.uploadAreaActive,
-          ]}
-        >
-          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.primary} style={{ marginBottom: 12 }} />
-          <Text style={styles.uploadText}>
-            {selectedFile ? 'Change Select File' : 'Tap to Select File'}
-          </Text>
-          <Text style={styles.uploadHint}>Secure PDF or image formats</Text>
-        </Pressable>
-
-        {selectedFile && (
-          <View style={styles.selectedFile}>
-            <Text style={styles.fileName}>{selectedFile.name}</Text>
-            <Text style={styles.fileType}>{selectedFile.mimeType}</Text>
-          </View>
-        )}
-
-        <Button
-          title="Upload Document"
-          onPress={handleUpload}
-          loading={isUploadingDocument}
-          fullWidth
-          disabled={!selectedFile || !documentType.trim() || !licenseNumber.trim()}
-        />
-      </View>
-    </ScreenContainer>
+      <Button
+        title="Upload Document"
+        onPress={handleUpload}
+        loading={isUploadingDocument}
+        fullWidth
+        disabled={!selectedFile || !documentType.trim() || !licenseNumber.trim()}
+      />
+    </View>
   );
 }

@@ -13,7 +13,7 @@ const STATUS_MAP: Record<DocumentStatus, { style: string; textStyle: string; lab
   REJECTED: { style: 'statusRejected', textStyle: 'statusRejectedText', label: 'Rejected' },
 };
 
-export function DocumentList() {
+export function DocumentList({ header }: { header?: React.ReactNode }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createDocumentListStyles(theme), [theme]);
 
@@ -73,29 +73,38 @@ export function DocumentList() {
     return <Loader message="Loading documents..." />;
   }
 
+  const HeaderComponent = (
+    <>
+      {header}
+      <View style={{ paddingHorizontal: 16 }}>
+        <Text style={styles.title}>My Documents</Text>
+        <Text style={styles.subtitle}>
+          Track the status of your uploaded credentials
+        </Text>
+      </View>
+    </>
+  );
+
   return (
-    <ScreenContainer padded={false}>
-      <View style={styles.container}>
-        <View style={{ paddingHorizontal: 16 }}>
-          <Text style={styles.title}>My Documents</Text>
-          <Text style={styles.subtitle}>
-            Track the status of your uploaded credentials
-          </Text>
-        </View>
+    <View style={styles.container}>
 
         {documents.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📄</Text>
-            <Text style={styles.emptyTitle}>No documents uploaded</Text>
-            <Text style={styles.emptySubtitle}>
-              Upload your credentials to get verified
-            </Text>
-          </View>
+          <>
+            {HeaderComponent}
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>📄</Text>
+              <Text style={styles.emptyTitle}>No documents uploaded</Text>
+              <Text style={styles.emptySubtitle}>
+                Upload your credentials to get verified
+              </Text>
+            </View>
+          </>
         ) : (
           <FlatList
             data={documents}
             keyExtractor={(item) => item.id}
             renderItem={renderDocument}
+            ListHeaderComponent={HeaderComponent}
             contentContainerStyle={{ padding: 16, gap: 0 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -107,7 +116,6 @@ export function DocumentList() {
             }
           />
         )}
-      </View>
-    </ScreenContainer>
+    </View>
   );
 }
