@@ -81,8 +81,27 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
 
-        // Fetch live profile from /auth/profile/ instead of stale snapshot
-        const user = await authService.getProfile();
+        // Read existing stored user (has role from login)
+        const userJson = await SecureStore.getItemAsync(STORAGE_KEYS.USER);
+        const storedUser = userJson ? JSON.parse(userJson) : null;
+
+        // Fetch live profile and merge, preserving role from stored snapshot
+        let user;
+        try {
+          const profileData = await authService.getProfile();
+          user = storedUser
+            ? { ...storedUser, ...profileData, role: storedUser.role }
+            : profileData;
+        } catch {
+          // If profile fetch fails, fall back to stored user
+          user = storedUser;
+        }
+
+        if (!user) {
+          set({ isBootstrapping: false });
+          return;
+        }
+
         await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
 
         set({
@@ -224,14 +243,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   /**
-   * Fetch profile: GET /auth/profile/ and update local state.
+   * Fetch profile: GET /auth/profile/ and merge with local state.
+   * IMPORTANT: We merge rather than replace because the profile endpoint
+   * may not return fields like `role`, `is_verified`, `is_doctor_approved`
+   * that were present in the original login response.
    */
   fetchProfile: async () => {
     try {
       set({ isLoading: true, error: null });
-      const user = await authService.getProfile();
-      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
-      set({ user, isLoading: false });
+      const profileData = await authService.getProfile();
+      const existingUser = get().user;
+      // Merge: keep existing fields (like role), overlay with fresh profile data
+      const mergedUser = existingUser
+        ? { ...existingUser, ...profileData, role: existingUser.role }
+        : profileData;
+      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      set({ user: mergedUser, isLoading: false });
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
       const message =
@@ -241,14 +268,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   /**
-   * Update profile: PUT /auth/profile/ and refresh local user.
+   * Update profile: PUT /auth/profile/ and merge with local user.
    */
   updateProfile: async (payload: UpdateProfileRequest) => {
     try {
       set({ isLoading: true, error: null });
-      const user = await authService.updateProfile(payload);
-      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
-      set({ user, isLoading: false });
+      const profileData = await authService.updateProfile(payload);
+      const existingUser = get().user;
+      const mergedUser = existingUser
+        ? { ...existingUser, ...profileData, role: existingUser.role }
+        : profileData;
+      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      set({ user: mergedUser, isLoading: false });
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
       const message =

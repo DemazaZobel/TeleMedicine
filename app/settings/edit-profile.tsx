@@ -18,17 +18,30 @@ export default function EditProfileScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [saved, setSaved] = useState(false);
 
+  // Track original values to detect changes
+  const [original, setOriginal] = useState({ firstName: '', lastName: '', phoneNumber: '' });
+
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
   useEffect(() => {
     if (user) {
-      setFirstName(user.first_name ?? '');
-      setLastName(user.last_name ?? '');
-      setPhoneNumber(user.phone_number ?? '');
+      const fn = user.first_name ?? '';
+      const ln = user.last_name ?? '';
+      const pn = user.phone_number ?? '';
+      setFirstName(fn);
+      setLastName(ln);
+      setPhoneNumber(pn);
+      setOriginal({ firstName: fn, lastName: ln, phoneNumber: pn });
     }
   }, [user]);
+
+  // Dirty check
+  const hasChanges =
+    firstName !== original.firstName ||
+    lastName !== original.lastName ||
+    phoneNumber !== original.phoneNumber;
 
   const handleSave = useCallback(async () => {
     setSaved(false);
@@ -38,6 +51,12 @@ export default function EditProfileScreen() {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone_number: phoneNumber.trim() || undefined,
+      });
+      // Update original after successful save
+      setOriginal({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phoneNumber: phoneNumber.trim(),
       });
       setSaved(true);
     } catch {
@@ -113,6 +132,7 @@ export default function EditProfileScreen() {
           title="Save Changes"
           onPress={handleSave}
           loading={isLoading}
+          disabled={!hasChanges}
           fullWidth
           style={styles.saveButton}
         />

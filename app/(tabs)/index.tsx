@@ -11,7 +11,6 @@ export default function HomeScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const user = useAuthStore((s) => s.user);
   const isVerified = useDoctorStore((s) => s.isDoctorVerified());
-  const logout = useAuthStore((s) => s.logout);
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Guard for unverified doctors
@@ -70,13 +69,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </Card>
-
-      <Button
-        title="Sign Out"
-        variant="ghost"
-        onPress={logout}
-        style={styles.logoutButton}
-      />
     </ScreenContainer>
   );
 }
@@ -132,9 +124,5 @@ const createStyles = (theme: Theme) =>
       width: 1,
       height: 40,
       backgroundColor: theme.colors.divider,
-    },
-    logoutButton: {
-      marginTop: theme.spacing['2xl'],
-      marginBottom: theme.spacing['4xl'],
     },
   });
