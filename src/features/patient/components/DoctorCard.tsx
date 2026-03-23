@@ -26,7 +26,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
           <View style={styles.info}>
             <View style={styles.nameRow}>
               <Text style={styles.name} numberOfLines={1}>
-                Dr. {doctor.user.first_name} {doctor.user.last_name}
+                Dr. {doctor.first_name} {doctor.last_name}
               </Text>
               {doctor.is_verified && (
                 <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
