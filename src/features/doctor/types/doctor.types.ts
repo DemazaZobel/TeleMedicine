@@ -34,3 +34,29 @@ export interface DoctorDocument {
   status: DocumentStatus;
   uploaded_at: string;
 }
+
+// ─── Provider Search (Patient-side) ─────────────────────
+export interface ProviderSearchParams {
+  query?: string;
+  specialization?: string;
+  min_fee?: number;
+  max_fee?: number;
+  min_rating?: number;
+  sort_by?: 'fee' | 'rating' | 'experience';
+}
+
+export interface ProviderSearchResult {
+  id: string;
+  user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  specialization: string;
+  years_of_experience: number;
+  consultation_fee: string;
+  is_verified: boolean;
+  average_rating: string | number;
+  review_count: number;
+}

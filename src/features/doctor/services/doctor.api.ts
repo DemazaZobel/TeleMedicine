@@ -3,6 +3,8 @@ import type {
   DoctorProfile,
   DoctorProfileUpdate,
   DoctorDocument,
+  ProviderSearchParams,
+  ProviderSearchResult,
 } from '../types/doctor.types';
 
 const DOCTOR_BASE = '/providers';
@@ -26,7 +28,6 @@ export const doctorApi = {
 
   // Documents
   uploadDoctorDocument: async (formData: FormData) => {
-    // API client should handle interceptors for access token
     const response = await apiClient.post<DoctorDocument>(
       `${DOCTOR_BASE}/documents/`,
       formData,
@@ -45,4 +46,14 @@ export const doctorApi = {
     );
     return response.data;
   },
+
+  // Search (Patient-facing)
+  searchProviders: async (params?: ProviderSearchParams) => {
+    const response = await apiClient.get<ProviderSearchResult[]>(
+      `${DOCTOR_BASE}/search/`,
+      { params }
+    );
+    return response.data;
+  },
 };
+
