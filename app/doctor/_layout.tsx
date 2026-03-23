@@ -1,8 +1,12 @@
-import { Stack } from 'expo-router';
+import React from 'react';
+import { Stack, useRouter } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
 
 export default function DoctorLayout() {
   const { theme } = useTheme();
+  const router = useRouter();
 
   return (
     <Stack
@@ -11,6 +15,16 @@ export default function DoctorLayout() {
         headerTintColor: theme.colors.text,
         headerShadowVisible: false,
         contentStyle: { backgroundColor: theme.colors.background },
+        headerTitleAlign: 'center',
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ paddingHorizontal: theme.spacing.md, marginLeft: -theme.spacing.sm }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+        ),
       }}
     >
       <Stack.Screen 
@@ -21,7 +35,6 @@ export default function DoctorLayout() {
         name="documents" 
         options={{ title: 'Secure Documents' }} 
       />
-      {/* Pending approval is usually rendered within tabs, but if accessed randomly we map it here */}
       <Stack.Screen 
         name="pending-approval" 
         options={{ title: 'Verification', headerShown: true }} 
