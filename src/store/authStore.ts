@@ -153,10 +153,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoading: false,
       });
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: Record<string, unknown> }; message?: string };
+      const axiosError = error as { response?: { status?: number, data?: Record<string, unknown> }; message?: string };
 
       let message = 'Login failed. Please try again.';
-      if (axiosError?.response?.data) {
+      
+      // Override explicit backend error with generic security message on 401
+      if (axiosError?.response?.status === 401) {
+        message = 'Invalid email or password. Please try again.';
+      } else if (axiosError?.response?.data) {
         const data = axiosError.response.data;
         message =
           (data.detail as string) ||

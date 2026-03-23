@@ -25,7 +25,7 @@ export function DocumentUpload() {
   const handlePickFile = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/jpeg', 'image/png'], // Explicitly accept PDFs and Images
+        type: '*/*', // Reverted to wildcard to prevent strict OS filtering from hiding files
         copyToCacheDirectory: true,
       });
 
