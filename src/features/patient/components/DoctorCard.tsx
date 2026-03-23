@@ -20,7 +20,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
       <Card style={styles.card}>
         <View style={styles.header}>
           <Image
-            source={require('../../../../assets/images/avatar-placeholder.png')}
+            source={require('../../../../assets/images/doctor-avatar.png')}
             style={styles.avatar}
           />
           <View style={styles.info}>
