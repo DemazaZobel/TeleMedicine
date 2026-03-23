@@ -35,7 +35,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <AuthContainer 
-      illustration={require('../../assets/images/verification-illustration.png')}
+      illustration={require('../../assets/images/forgot-password-illustration.png')}
       showBackButton
     >
       <View style={styles.container}>

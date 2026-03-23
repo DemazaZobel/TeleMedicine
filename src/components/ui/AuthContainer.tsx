@@ -19,26 +19,27 @@ export const AuthContainer = React.memo(function AuthContainer({
   showBackButton = false,
 }: AuthContainerProps) {
   const { theme, isDark } = useTheme();
-  // Using light explicitly for the status bar if the top is white, otherwise match theme
   const styles = useMemo(() => createAuthContainerStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  // In dark mode the illustration area uses a muted dark tone instead of white
+  const illustrationBg = isDark ? '#1A2332' : '#EFF4F8';
+  const statusBarStyle = isDark ? 'light' : 'dark';
+  const backIconColor = isDark ? '#FFFFFF' : '#000000';
+  const backRingBg = isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.8)';
+
   return (
     <>
-      <StatusBar style="dark" backgroundColor="transparent" translucent />
-      {/* 
-        We force a white background on the root container so the generated white-background 
-        illustrations blend perfectly, regardless of dark/light mode for the top half.
-      */}
-      <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
+      <StatusBar style={statusBarStyle} backgroundColor="transparent" translucent />
+      <View style={[styles.container, { backgroundColor: illustrationBg }]}>
         
         {/* Top Illustration Area */}
-        <View style={styles.illustrationContainer}>
+        <View style={[styles.illustrationContainer, { backgroundColor: illustrationBg }]}>
           <Image 
             source={illustration} 
             style={styles.illustration} 
-            resizeMode="cover" 
+            resizeMode="contain"
           />
         </View>
 
@@ -48,23 +49,24 @@ export const AuthContainer = React.memo(function AuthContainer({
             onPress={() => router.canGoBack() && router.back()}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
           >
-            <View style={styles.backButtonRing}>
-              <Ionicons name="arrow-back" size={24} color="#000000" />
+            <View style={[styles.backButtonRing, { backgroundColor: backRingBg }]}>
+              <Ionicons name="arrow-back" size={24} color={backIconColor} />
             </View>
           </TouchableOpacity>
         )}
 
         <KeyboardAvoidingView
           style={{ flex: 1, width: '100%' }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            bounces={false}
+            bounces={true}
           >
-            {/* Invisible spacer to push the card down over the illustration */}
+            {/* Spacer pushes the card down over the illustration */}
             <View style={styles.spacer} /> 
             
             <View style={styles.card}>

@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
-import { ScreenContainer, Input, Button, Card, Banner } from '../../../components/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import { Banner, Button, Card, Input, ScreenContainer } from '../../../components/ui';
 import { usePatientStore } from '../../../store/patient.store';
-import { useTheme } from '../../../theme';
 import type { Theme } from '../../../theme';
+import { useTheme } from '../../../theme';
 import type { PatientProfileUpdate } from '../types/patient.types';
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+const GENDER_OPTIONS = ['Male', 'Female'];
 
 export function MedicalInfoForm() {
   const { theme } = useTheme();

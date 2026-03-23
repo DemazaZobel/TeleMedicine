@@ -85,7 +85,7 @@ export function PendingApproval() {
 
   return (
     <AuthContainer
-      illustration={require('../../../../assets/images/verification-illustration.png')}
+      illustration={require('../../../../assets/images/verify-email-illustration.png')}
       showBackButton={false}
     >
       <View style={styles.container}>

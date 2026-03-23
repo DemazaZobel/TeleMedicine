@@ -1,13 +1,12 @@
 import { StyleSheet, Dimensions } from 'react-native';
 import type { Theme } from '../../theme';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export const createAuthContainerStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      // Root will be overridden to white in the component so illustrations blend
       backgroundColor: theme.colors.background,
     },
     illustrationContainer: {
@@ -15,15 +14,16 @@ export const createAuthContainerStyles = (theme: Theme) =>
       top: 0,
       left: 0,
       right: 0,
-      height: height * 0.45,
+      height: height * 0.42,
       width: '100%',
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#FFFFFF', 
+      paddingTop: 30,
+      paddingHorizontal: 20,
     },
     illustration: {
-      width: '100%',
-      height: '100%',
+      width: '80%',
+      height: '80%',
     },
     backButton: {
       position: 'absolute',
@@ -31,7 +31,6 @@ export const createAuthContainerStyles = (theme: Theme) =>
       zIndex: 10,
     },
     backButtonRing: {
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
       borderRadius: 99,
       padding: 8,
       shadowColor: '#000',
@@ -44,21 +43,23 @@ export const createAuthContainerStyles = (theme: Theme) =>
       flexGrow: 1,
     },
     spacer: {
-      height: height * 0.35, // Pushes the card down, leaving 35% of the screen for the image
+      height: height * 0.35,
     },
     card: {
       flex: 1,
-      backgroundColor: theme.colors.background, // Adapts to dark/light mode
+      backgroundColor: theme.colors.background,
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
       paddingHorizontal: theme.spacing.xl,
       paddingTop: theme.spacing['2xl'],
       paddingBottom: theme.spacing['4xl'],
-      // Soft shadow indicating it overhangs the image
+      // Subtle shadow for the card overlap effect
       shadowColor: theme.colors.text,
-      shadowOffset: { width: 0, height: -10 },
-      shadowOpacity: 0.05,
-      shadowRadius: 20,
+      shadowOffset: { width: 0, height: -6 },
+      shadowOpacity: 0.06,
+      shadowRadius: 16,
       elevation: 10,
+      // Bottom padding so the last input is always reachable when keyboard is open
+      minHeight: height * 0.65,
     },
   });

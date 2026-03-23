@@ -47,7 +47,7 @@ export default function VerifyEmailScreen() {
 
   return (
     <AuthContainer 
-      illustration={require('../../assets/images/verification-illustration.png')}
+      illustration={require('../../assets/images/verify-email-illustration.png')}
       showBackButton
     >
       <View style={styles.container}>
