@@ -6,3 +6,4 @@ export { ScreenContainer } from './ScreenContainer';
 export { AuthContainer } from './AuthContainer';
 export { Loader } from './Loader';
 export { ComingSoon } from './ComingSoon';
+export { EmptyState } from './EmptyState';
