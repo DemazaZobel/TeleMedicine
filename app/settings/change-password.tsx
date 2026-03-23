@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Input, Button } from '../../src/components/ui';
+import { ScreenContainer, Input, Button, Banner } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, Theme } from '../../src/theme';
 
@@ -57,9 +57,7 @@ export default function ChangePasswordScreen() {
         </Text>
 
         {error && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
+          <Banner variant="error" message={error} />
         )}
 
         <Input
@@ -125,17 +123,6 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.textSecondary,
       marginBottom: theme.spacing['2xl'],
       lineHeight: 24,
-    },
-    errorBanner: {
-      backgroundColor: theme.colors.errorLight,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.radius.md,
-      marginBottom: theme.spacing.lg,
-    },
-    errorText: {
-      ...theme.typography.bodySm,
-      color: theme.colors.error,
     },
     submitButton: {
       marginTop: theme.spacing['2xl'],
