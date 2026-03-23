@@ -2,7 +2,7 @@ import type { UserRole } from './models';
 
 // ─── Route Definitions ──────────────────────────────────
 export type AuthRoute = '/login' | '/register' | '/forgot-password' | '/verify-email';
-export type TabRoute = '/' | '/appointments' | '/profile' | '/patients';
+export type TabRoute = '/' | '/appointments' | '/health' | '/profile' | '/patients';
 
 // ─── Role-Based Tab Configuration ────────────────────────
 export interface TabConfig {
@@ -24,6 +24,12 @@ export const TAB_CONFIGS: TabConfig[] = [
     title: 'Appointments',
     icon: 'calendar',
     roles: ['PATIENT', 'DOCTOR'],
+  },
+  {
+    name: 'health',
+    title: 'Health',
+    icon: 'heart',
+    roles: ['PATIENT'],
   },
   {
     name: 'patients',
