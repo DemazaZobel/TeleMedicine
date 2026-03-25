@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { Button, ScreenContainer } from '../../../components/ui';
+import { Button, AuthContainer } from '../../../components/ui';
 import { useDoctorStore } from '../../../store/doctor.store';
 import { useTheme } from '../../../theme';
 import { createPendingApprovalStyles } from '../styles/pendingApproval.styles';
@@ -84,17 +84,24 @@ export function PendingApproval() {
   }, [stage, router]);
 
   return (
-    <ScreenContainer scrollable>
+    <AuthContainer
+      illustration={require('../../../../assets/images/verify-email-illustration.png')}
+      showBackButton={false}
+    >
       <View style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.title}>{content.title}</Text>
-          <Text style={styles.subtitle}>{content.subtitle}</Text>
+        <View style={{ marginBottom: 32 }}>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: theme.colors.text, marginBottom: 8 }}>
+            {content.title}
+          </Text>
+          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, lineHeight: 24 }}>
+            {content.subtitle}
+          </Text>
+        </View>
 
-          <View style={styles.actionContainer}>
-            {content.actionComponent}
-          </View>
+        <View style={{ gap: 12 }}>
+          {content.actionComponent}
         </View>
       </View>
-    </ScreenContainer>
+    </AuthContainer>
   );
 }

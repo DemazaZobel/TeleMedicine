@@ -47,12 +47,10 @@ export interface ProviderSearchParams {
 
 export interface ProviderSearchResult {
   id: string;
-  user: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
   specialization: string;
   years_of_experience: number;
   consultation_fee: string;

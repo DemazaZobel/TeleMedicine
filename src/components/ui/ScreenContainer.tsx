@@ -25,16 +25,6 @@ export const ScreenContainer = React.memo(function ScreenContainer({
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createScreenContainerStyles(theme), [theme]);
 
-  // Wrap the children in KeyboardAvoidingView to push content up when keyboard opens
-  const keyboardWrappedChildren = (
-    <KeyboardAvoidingView
-      style={{ flex: 1, width: '100%' }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      {children}
-    </KeyboardAvoidingView>
-  );
-
   const content = scrollable ? (
     <ScrollView
       contentContainerStyle={[
@@ -44,9 +34,9 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         style,
       ]}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled" // Important so buttons work while keyboard is open
+      keyboardShouldPersistTaps="handled" 
     >
-      {keyboardWrappedChildren}
+      {children}
     </ScrollView>
   ) : (
     <View
@@ -57,7 +47,7 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         style,
       ]}
     >
-      {keyboardWrappedChildren}
+      {children}
     </View>
   );
 
@@ -65,9 +55,23 @@ export const ScreenContainer = React.memo(function ScreenContainer({
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
       {safeArea ? (
-        <SafeAreaView style={styles.safeArea}>{content}</SafeAreaView>
+        <SafeAreaView style={styles.safeArea}>
+          <KeyboardAvoidingView
+            style={{ flex: 1, width: '100%' }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            {content}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       ) : (
-        content
+        <KeyboardAvoidingView
+          style={{ flex: 1, width: '100%' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          {content}
+        </KeyboardAvoidingView>
       )}
     </>
   );

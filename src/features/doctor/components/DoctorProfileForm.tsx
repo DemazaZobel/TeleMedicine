@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { Button, Card, Input, ScreenContainer } from '../../../components/ui';
 import { useDoctorStore } from '../../../store/doctor.store';
 import { useTheme } from '../../../theme';
@@ -62,56 +62,51 @@ export function DoctorProfileForm() {
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
-        <Text style={styles.title}>Doctor Profile</Text>
-
-        {verificationStage() === 'NEW_DOCTOR' && (
-          <View style={[styles.errorBanner, { backgroundColor: theme.colors.primary + '20' }]}>
-            <Text style={[styles.errorText, { color: theme.colors.primary, fontWeight: 'bold' }]}>
-              👋 Welcome! Please complete your medical profile to continue.
-            </Text>
-          </View>
-        )}
-        {(verificationStage() === 'PROFILE_FILLED' || verificationStage() === 'DOCUMENT_UPLOADED' || verificationStage() === 'PENDING_REVIEW') && (
-          <View style={[styles.errorBanner, { backgroundColor: theme.colors.warningLight }]}>
-            <Text style={[styles.errorText, { color: theme.colors.warning, fontWeight: 'bold' }]}>
-              ⚠️ Action Required: Please upload your credentials in the Documents tab for admin review.
-            </Text>
-          </View>
-        )}
+        {/* Premium Profile Header */}
+        <View style={{ alignItems: 'center', marginBottom: theme.spacing['2xl'] }}>
+          <Image 
+            source={require('../../../../assets/images/doctor-avatar.png')} 
+            style={{ width: 120, height: 120, borderRadius: 60, marginBottom: theme.spacing.md }} 
+          />
+          <Text style={{ ...theme.typography.h3, color: theme.colors.text }}>Doctor Profile</Text>
+          {profile?.is_verified ? (
+            <View style={{ backgroundColor: theme.colors.successLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 8 }}>
+              <Text style={{ color: theme.colors.success, fontWeight: '600', fontSize: 12 }}>Verified Practitioner</Text>
+            </View>
+          ) : (
+            <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 8 }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 12 }}>Pending Institutional Review</Text>
+            </View>
+          )}
+        </View>
 
         {error && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
+          <View style={[styles.errorBanner, { backgroundColor: theme.colors.errorLight, borderRadius: 12, padding: 16, marginBottom: 24 }]}>
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
           </View>
         )}
 
         {saved && (
-          <View style={styles.successBanner}>
-            <Text style={styles.successText}>Profile updated successfully!</Text>
+          <View style={[styles.successBanner, { backgroundColor: theme.colors.successLight, borderRadius: 12, padding: 16, marginBottom: 24 }]}>
+            <Text style={[styles.successText, { color: theme.colors.success, fontWeight: '500' }]}>Profile updated successfully!</Text>
           </View>
         )}
 
         {profile && (
-          <Card style={{ marginBottom: 16 }}>
-            <Text style={styles.sectionTitle}>Status & Stats</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Verification:</Text>
-              <Text style={{ ...theme.typography.body, fontWeight: 'bold', color: profile.is_verified ? theme.colors.success : theme.colors.warning }}>
-                {profile.is_verified ? '✅ Verified' : '🟡 Pending Review'}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Average Rating:</Text>
-              <Text style={{ ...theme.typography.body, fontWeight: 'bold' }}>⭐ {profile.average_rating}</Text>
+          <Card style={{ marginBottom: 24 }}>
+            <Text style={{ ...theme.typography.h4, color: theme.colors.text, marginBottom: 16, fontWeight: '600' }}>Platform Stats</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Average Rating</Text>
+              <Text style={{ ...theme.typography.body, fontWeight: 'bold' }}>★ {profile.average_rating}</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Total Reviews:</Text>
+              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Total Consultations Reviews</Text>
               <Text style={{ ...theme.typography.body, fontWeight: 'bold' }}>{profile.review_count}</Text>
             </View>
           </Card>
         )}
 
-        <Card>
+        <Card style={{ marginBottom: 24 }}>
           <Text style={styles.sectionTitle}>Professional Info</Text>
 
           <Input
