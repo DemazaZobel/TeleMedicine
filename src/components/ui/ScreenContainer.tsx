@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, ScrollView, ViewStyle, StatusBar } from 'react-native';
+import { View, ScrollView, ViewStyle, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../../theme';
 import { createScreenContainerStyles } from './ScreenContainer.styles';
 
@@ -24,6 +25,16 @@ export const ScreenContainer = React.memo(function ScreenContainer({
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createScreenContainerStyles(theme), [theme]);
 
+  // Wrap the children in KeyboardAvoidingView to push content up when keyboard opens
+  const keyboardWrappedChildren = (
+    <KeyboardAvoidingView
+      style={{ flex: 1, width: '100%' }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      {children}
+    </KeyboardAvoidingView>
+  );
+
   const content = scrollable ? (
     <ScrollView
       contentContainerStyle={[
@@ -33,9 +44,9 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         style,
       ]}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
+      keyboardShouldPersistTaps="handled" // Important so buttons work while keyboard is open
     >
-      {children}
+      {keyboardWrappedChildren}
     </ScrollView>
   ) : (
     <View
@@ -46,13 +57,13 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         style,
       ]}
     >
-      {children}
+      {keyboardWrappedChildren}
     </View>
   );
 
   return (
     <>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
       {safeArea ? (
         <SafeAreaView style={styles.safeArea}>{content}</SafeAreaView>
       ) : (

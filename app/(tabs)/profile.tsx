@@ -1,14 +1,22 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ScreenContainer, Card, Button } from '../../src/components/ui';
 import { useTheme, Theme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const fetchProfile = useAuthStore((s) => s.fetchProfile);
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Fetch live profile from backend on mount
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   return (
     <ScreenContainer scrollable>
@@ -28,6 +36,23 @@ export default function ProfileScreen() {
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>{user?.role ?? 'PATIENT'}</Text>
         </View>
+      </Card>
+
+      <Card style={styles.settingsCard}>
+        <Text style={styles.cardTitle}>Account</Text>
+        <Button
+          title="Edit Profile"
+          variant="outline"
+          onPress={() => router.push('/settings/edit-profile')}
+          fullWidth
+          style={{ marginBottom: theme.spacing.md }}
+        />
+        <Button
+          title="Change Password"
+          variant="outline"
+          onPress={() => router.push('/settings/change-password')}
+          fullWidth
+        />
       </Card>
 
       <Card style={styles.settingsCard}>
@@ -61,6 +86,7 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.text,
       paddingTop: theme.spacing['3xl'],
       marginBottom: theme.spacing.xl,
+      fontWeight: '700',
     },
     profileCard: {
       alignItems: 'center',
@@ -107,6 +133,7 @@ const createStyles = (theme: Theme) =>
       ...theme.typography.h4,
       color: theme.colors.text,
       marginBottom: theme.spacing.md,
+      fontWeight: '600',
     },
     settingRow: {
       flexDirection: 'row',
@@ -121,3 +148,4 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing['4xl'],
     },
   });
+

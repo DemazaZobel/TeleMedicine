@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { ScreenContainer, Card, Loader } from '../../../components/ui';
 import { useTheme } from '../../../theme';
-import { useDoctorStore } from '../../../store/doctorStore';
+import { useDoctorStore } from '../../../store/doctor.store';
 import { createDocumentListStyles } from '../styles/documentList.styles';
-import type { ProviderDocument, DocumentStatus } from '../types';
+import type { DoctorDocument, DocumentStatus } from '../types/doctor.types';
 import { formatDate } from '../../../utils';
 
 const STATUS_MAP: Record<DocumentStatus, { style: string; textStyle: string; label: string }> = {
@@ -13,15 +13,15 @@ const STATUS_MAP: Record<DocumentStatus, { style: string; textStyle: string; lab
   REJECTED: { style: 'statusRejected', textStyle: 'statusRejectedText', label: 'Rejected' },
 };
 
-export function DocumentList() {
+export function DocumentList({ header }: { header?: React.ReactNode }) {
   const { theme } = useTheme();
   const styles = useMemo(() => createDocumentListStyles(theme), [theme]);
 
-  const { documents, isLoading, fetchDocuments } = useDoctorStore();
+  const { documents, isLoadingProfile, fetchDocuments } = useDoctorStore();
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
 
   const handleRefresh = useCallback(() => {
     fetchDocuments();
@@ -52,65 +52,70 @@ export function DocumentList() {
   );
 
   const renderDocument = useCallback(
-    ({ item }: { item: ProviderDocument }) => (
+    ({ item }: { item: DoctorDocument }) => (
       <Card style={styles.documentCard}>
         <View style={styles.documentHeader}>
           <Text style={styles.documentName} numberOfLines={1}>
-            {item.name}
+            {item.document_type}
           </Text>
           {renderStatusBadge(item.status)}
         </View>
-        <Text style={styles.documentType}>{item.documentType}</Text>
+        <Text style={styles.documentType}>No: {item.license_number}</Text>
         <Text style={styles.documentDate}>
-          Uploaded {formatDate(item.uploadedAt)}
+          Uploaded {formatDate(item.uploaded_at)}
         </Text>
-        {item.reviewNotes && (
-          <Text style={styles.reviewNotes}>Note: {item.reviewNotes}</Text>
-        )}
       </Card>
     ),
     [styles, renderStatusBadge]
   );
 
-  if (isLoading && documents.length === 0) {
+  if (isLoadingProfile && documents.length === 0) {
     return <Loader message="Loading documents..." />;
   }
 
+  const HeaderComponent = (
+    <>
+      {header}
+      <View style={{ paddingHorizontal: 16 }}>
+        <Text style={styles.title}>My Documents</Text>
+        <Text style={styles.subtitle}>
+          Track the status of your uploaded credentials
+        </Text>
+      </View>
+    </>
+  );
+
   return (
-    <ScreenContainer padded={false}>
-      <View style={styles.container}>
-        <View style={{ paddingHorizontal: 16 }}>
-          <Text style={styles.title}>My Documents</Text>
-          <Text style={styles.subtitle}>
-            Track the status of your uploaded credentials
-          </Text>
-        </View>
+    <View style={styles.container}>
 
         {documents.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📄</Text>
-            <Text style={styles.emptyTitle}>No documents uploaded</Text>
-            <Text style={styles.emptySubtitle}>
-              Upload your credentials to get verified
-            </Text>
-          </View>
+          <>
+            {HeaderComponent}
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>📄</Text>
+              <Text style={styles.emptyTitle}>No documents uploaded</Text>
+              <Text style={styles.emptySubtitle}>
+                Upload your credentials to get verified
+              </Text>
+            </View>
+          </>
         ) : (
           <FlatList
             data={documents}
             keyExtractor={(item) => item.id}
             renderItem={renderDocument}
+            ListHeaderComponent={HeaderComponent}
             contentContainerStyle={{ padding: 16, gap: 0 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
-                refreshing={isLoading}
+                refreshing={isLoadingProfile}
                 onRefresh={handleRefresh}
                 tintColor={theme.colors.primary}
               />
             }
           />
         )}
-      </View>
-    </ScreenContainer>
+    </View>
   );
 }

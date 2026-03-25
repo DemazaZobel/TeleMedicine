@@ -8,8 +8,11 @@ import type {
   ResetPasswordRequest,
   VerifyEmailRequest,
   RefreshTokenResponse,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
   ApiResponse,
 } from '../../../types';
+import type { User } from '../../../types/models';
 
 const AUTH_BASE = '/auth';
 
@@ -85,4 +88,29 @@ export const authService = {
     );
     return data;
   },
+
+  /** GET /api/auth/profile/ — Get current user's profile */
+  async getProfile(): Promise<User> {
+    const { data } = await apiClient.get<User>(`${AUTH_BASE}/profile/`);
+    return data;
+  },
+
+  /** PUT /api/auth/profile/ — Update current user's profile */
+  async updateProfile(payload: UpdateProfileRequest): Promise<User> {
+    const { data } = await apiClient.put<User>(
+      `${AUTH_BASE}/profile/`,
+      payload
+    );
+    return data;
+  },
+
+  /** PUT /api/auth/password/change/ — Change password (authenticated) */
+  async changePassword(payload: ChangePasswordRequest): Promise<{ message: string }> {
+    const { data } = await apiClient.put<{ message: string }>(
+      `${AUTH_BASE}/password/change/`,
+      payload
+    );
+    return data;
+  },
 };
+
