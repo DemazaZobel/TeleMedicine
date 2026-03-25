@@ -19,7 +19,7 @@ export default function SettingsLayout() {
         headerLeft: () => (
           <TouchableOpacity
             onPress={() => router.back()}
-            style={{ paddingHorizontal: theme.spacing.md, marginLeft: -theme.spacing.sm }}
+            style={{ paddingHorizontal: theme.spacing.md }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
