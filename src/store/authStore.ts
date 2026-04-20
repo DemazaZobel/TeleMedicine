@@ -1,52 +1,88 @@
-// src/store/authStore.ts
+import axios from "axios";
 import { create } from "zustand";
-import * as SecureStore from "expo-secure-store";
 import api from "../services/api";
-import { User, LoginResponse } from "../types/auth";
-import { AxiosError } from "axios";
+import { clearTokens, getRefresh, saveTokens } from "../services/tokenStorage";
+
+const BASE_URL = "https://medlinkethiopia.pythonanywhere.com/api";
 
 interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  error: string | null;
+  user: any;
+  loading: boolean;
+
+  bootstrap: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isLoading: false,
-  error: null,
+  loading: true,
+
+  bootstrap: async () => {
+    try {
+      const refresh = await getRefresh();
+
+      if (!refresh) {
+        set({ loading: false });
+        return;
+      }
+
+      // Use raw axios (bypass interceptor) so a 400 from an invalid
+      // refresh token doesn't surface as an unhandled rejection.
+      const refreshRes = await axios.post(`${BASE_URL}/auth/token/refresh/`, {
+        refresh,
+      });
+
+      await saveTokens(refreshRes.data.access, refresh);
+
+      const profile = await api.get("/auth/me/");
+
+      set({
+        user: profile.data,
+        loading: false,
+      });
+    } catch (e) {
+      await clearTokens().catch(() => {});
+
+      set({
+        user: null,
+        loading: false,
+      });
+    }
+  },
 
   login: async (email, password) => {
-    set({ isLoading: true, error: null });
+    set({ loading: true });
+
     try {
-      const response = await api.post<LoginResponse>("/auth/login/", {
+      const res = await api.post("/auth/login/", {
         email,
         password,
       });
-      const { access, refresh, user } = response.data;
 
-      await SecureStore.setItemAsync("accessToken", access);
-      await SecureStore.setItemAsync("refreshToken", refresh);
+      await saveTokens(res.data.access, res.data.refresh);
 
-      set({ user, isLoading: false });
-    } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
       set({
-        error: axiosError.response?.data?.detail || "Login failed",
-        isLoading: false,
+        user: res.data.user,
+        loading: false,
       });
-      throw error;
+    } catch (e) {
+      set({ loading: false });
+      throw e;
     }
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync("accessToken");
-    await SecureStore.deleteItemAsync("refreshToken");
-    set({ user: null });
-  },
+    const refresh = await getRefresh();
 
-  setUser: (user: User) => set({ user }),
+    try {
+      await api.post("/auth/logout/", { refresh });
+    } catch {}
+
+    await clearTokens();
+
+    set({
+      user: null,
+    });
+  },
 }));

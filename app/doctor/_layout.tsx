@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 import { COLORS } from "../../src/constants/theme";
 import { useAppointmentStore } from "../../src/store/appointmentStore";
 
-export default function TabsLayout() {
+export default function DoctorTabLayout() {
   const unreadCount = useAppointmentStore((s) => s.unreadCount);
 
   return (
@@ -24,7 +24,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
@@ -44,6 +44,16 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="availability"
+        options={{
+          title: "Availability",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="time" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="notifications"
         options={{
           title: "Notifications",
@@ -57,6 +67,14 @@ export default function TabsLayout() {
             minWidth: 18,
             height: 18,
           },
+        }}
+      />
+
+      {/* Hide the pending screen from tabs */}
+      <Tabs.Screen
+        name="pending"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

@@ -14,12 +14,12 @@ import { COLORS, RADII, SPACING } from "../../src/constants/theme";
 import { useAppointmentStore } from "../../src/store/appointmentStore";
 import { useAuthStore } from "../../src/store/authStore";
 
-export default function HomeScreen() {
+export default function DoctorHome() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
-  const { appointments, fetchAppointments, fetchNotifications, unreadCount } =
+  const logout = useAuthStore((s) => s.logout);
+  const { appointments, fetchAppointments, unreadCount, fetchNotifications } =
     useAppointmentStore();
 
   useEffect(() => {
@@ -27,11 +27,17 @@ export default function HomeScreen() {
     fetchNotifications();
   }, []);
 
-  const upcoming = appointments.filter(
-    (a) =>
-      (a.status === "CONFIRMED" || a.status === "REQUESTED") &&
-      new Date(a.scheduled_start) >= new Date()
-  );
+  const pendingCount = appointments.filter(
+    (a) => a.status === "REQUESTED"
+  ).length;
+  const todayAppointments = appointments.filter((a) => {
+    const d = new Date(a.scheduled_start);
+    const today = new Date();
+    return (
+      d.toDateString() === today.toDateString() &&
+      (a.status === "CONFIRMED" || a.status === "REQUESTED")
+    );
+  });
 
   return (
     <ScrollView
@@ -42,10 +48,10 @@ export default function HomeScreen() {
       <View style={styles.greetingRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.greeting}>
-            Hello, {user?.first_name} 👋
+            Welcome back, Dr. {user?.last_name} 👋
           </Text>
           <Text style={styles.greetingSub}>
-            How are you feeling today?
+            Here's your overview for today
           </Text>
         </View>
         <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
@@ -53,74 +59,60 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick Actions */}
-      <View style={styles.quickRow}>
-        <TouchableOpacity
-          style={styles.quickCard}
-          onPress={() => router.push("/appointment/book" as any)}
-        >
-          <View style={[styles.quickIcon, { backgroundColor: `${COLORS.primary}14` }]}>
-            <Ionicons name="add-circle" size={28} color={COLORS.primary} />
-          </View>
-          <Text style={styles.quickLabel}>Book{"\n"}Appointment</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickCard}
-          onPress={() => router.push("/(tabs)/appointments" as any)}
-        >
-          <View style={[styles.quickIcon, { backgroundColor: `${COLORS.secondary}14` }]}>
-            <Ionicons name="calendar" size={28} color={COLORS.secondary} />
-          </View>
-          <Text style={styles.quickLabel}>My{"\n"}Appointments</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickCard}
-          onPress={() => router.push("/(tabs)/notifications" as any)}
-        >
-          <View style={[styles.quickIcon, { backgroundColor: "#FEF3C714" }]}>
-            <Ionicons name="notifications" size={28} color="#F59E0B" />
-          </View>
-          <Text style={styles.quickLabel}>
-            Notifications{unreadCount > 0 ? ` (${unreadCount})` : ""}
+      {/* Stats Cards */}
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard, { backgroundColor: "#FEF3C7" }]}>
+          <Ionicons name="hourglass" size={24} color="#92400E" />
+          <Text style={[styles.statNumber, { color: "#92400E" }]}>
+            {pendingCount}
           </Text>
-        </TouchableOpacity>
+          <Text style={styles.statLabel}>Pending</Text>
+        </View>
+
+        <View style={[styles.statCard, { backgroundColor: "#D1FAE5" }]}>
+          <Ionicons name="today" size={24} color="#065F46" />
+          <Text style={[styles.statNumber, { color: "#065F46" }]}>
+            {todayAppointments.length}
+          </Text>
+          <Text style={styles.statLabel}>Today</Text>
+        </View>
+
+        <View style={[styles.statCard, { backgroundColor: "#DBEAFE" }]}>
+          <Ionicons name="calendar" size={24} color="#1E40AF" />
+          <Text style={[styles.statNumber, { color: "#1E40AF" }]}>
+            {appointments.filter((a) => a.status === "CONFIRMED").length}
+          </Text>
+          <Text style={styles.statLabel}>Confirmed</Text>
+        </View>
       </View>
 
-      {/* Upcoming Appointments */}
+      {/* Today's appointments */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
+        <Text style={styles.sectionTitle}>Today's Appointments</Text>
         <TouchableOpacity
-          onPress={() => router.push("/(tabs)/appointments" as any)}
+          onPress={() => router.push("/doctor/appointments" as any)}
         >
           <Text style={styles.seeAll}>See All</Text>
         </TouchableOpacity>
       </View>
 
-      {upcoming.length === 0 ? (
+      {todayAppointments.length === 0 ? (
         <View style={styles.emptyCard}>
           <Ionicons
-            name="calendar-outline"
+            name="sunny-outline"
             size={40}
             color={`${COLORS.textMuted}60`}
           />
           <Text style={styles.emptyText}>
-            No upcoming appointments.{"\n"}Book one to get started!
+            No appointments scheduled for today
           </Text>
-          <TouchableOpacity
-            style={styles.emptyBtn}
-            onPress={() => router.push("/appointment/book" as any)}
-          >
-            <Text style={styles.emptyBtnText}>Book Now</Text>
-          </TouchableOpacity>
         </View>
       ) : (
-        upcoming.slice(0, 3).map((apt) => (
+        todayAppointments.slice(0, 3).map((apt) => (
           <AppointmentCard
             key={apt.id}
             appointment={apt}
-            role="PATIENT"
+            role="DOCTOR"
             onPress={() =>
               router.push({
                 pathname: "/appointment/[id]",
@@ -166,34 +158,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  quickRow: {
+  statsRow: {
     flexDirection: "row",
     gap: SPACING.s,
     marginBottom: SPACING.l,
   },
-  quickCard: {
+  statCard: {
     flex: 1,
-    backgroundColor: COLORS.surface,
     borderRadius: RADII.l,
     padding: SPACING.m,
     alignItems: "center",
-    gap: SPACING.s,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    gap: SPACING.xs,
   },
-  quickIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: "center",
-    alignItems: "center",
+  statNumber: {
+    fontSize: 28,
+    fontWeight: "800",
   },
-  quickLabel: {
+  statLabel: {
     fontSize: 12,
+    color: COLORS.textMuted,
     fontWeight: "600",
-    color: COLORS.text,
-    textAlign: "center",
-    lineHeight: 16,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -224,18 +208,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textMuted,
     textAlign: "center",
-    lineHeight: 20,
-  },
-  emptyBtn: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.l,
-    paddingVertical: SPACING.s,
-    borderRadius: RADII.round,
-    marginTop: SPACING.s,
-  },
-  emptyBtnText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
   },
 });

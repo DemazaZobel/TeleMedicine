@@ -1,57 +1,64 @@
-import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
-import { useAuthStore } from '../src/store/authStore';
+import { Stack, useRouter, useSegments } from "expo-router"
+import { useEffect } from "react"
+import { ActivityIndicator, View } from "react-native"
+import { COLORS } from "../src/constants/theme"
+import { useAuthStore } from "../src/store/authStore"
 
 export default function RootLayout() {
-  const user = useAuthStore((state) => state.user);
-  const router = useRouter();
-  const segments = useSegments();
-  const navigationState = useRootNavigationState();
 
-  // 1. Create a hard state to track if navigation is truly ready
-  const [isNavReady, setIsNavReady] = useState(false);
+  const { user, loading, bootstrap } = useAuthStore()
 
-  // 2. Wait for Expo Router's internal state to get a valid key
+  const router = useRouter()
+  const segments = useSegments()
+
   useEffect(() => {
-    if (navigationState?.key) {
-      setIsNavReady(true);
+    bootstrap()
+  }, [])
+
+  useEffect(() => {
+
+    if (loading) return
+
+    const inAuth = segments[0] === "auth"
+
+    if (!user && !inAuth) {
+      router.replace("/auth/login" as any)
+      return
     }
-  }, [navigationState?.key]);
 
-  // 3. Handle the actual redirection
-  useEffect(() => {
-    // If navigation isn't fully ready, absolutely do not route.
-    if (!isNavReady) return;
+    if (user) {
 
-    const inAuthGroup = segments[0] === 'auth';
-
-    // 4. Wrap the redirect in a setTimeout of 0 or 1ms. 
-    // This pushes the action to the very end of the Javascript event loop, 
-    // GUARANTEEING that the <Stack> is mounted in the UI before it navigates.
-    setTimeout(() => {
-      if (!user && !inAuthGroup) {
-        router.replace('/auth/register' as any);
-      } else if (user && inAuthGroup) {
-        if (user.role === 'DOCTOR' && !user.is_doctor_approved) {
-          // router.replace('/doctor/pending' as any); 
-        } else {
-          // Replace with tabs once we build the tabs folder
-          router.replace('/(tabs)' as any);
-        }
+      if (!user.is_verified) {
+        router.replace("/auth/verify-otp" as any)
+        return
       }
-    }, 1);
 
-  }, [user, segments, isNavReady]);
+      if (user.role === "DOCTOR" && !user.is_doctor_approved) {
+        router.replace("/doctor/pending" as any)
+        return
+      }
 
-  // If the navigation isn't ready, you can return null to avoid flashing screens
-  if (!isNavReady) return null;
+      if (user.role === "PATIENT") {
+        router.replace("/(tabs)" as any)
+        return
+      }
 
-  return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register" options={{ title: 'Register', headerShown: false }} />
-      <Stack.Screen name="auth/otp" options={{ title: 'Verify Email' }} />
-      <Stack.Screen name="auth/login" options={{ title: 'Login', headerShown: false }} />
-    </Stack>
-  );
+      if (user.role === "DOCTOR" && user.is_doctor_approved) {
+        router.replace("/doctor/home" as any)
+        return
+      }
+
+    }
+
+  }, [user, loading])
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    )
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />
 }

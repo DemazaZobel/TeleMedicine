@@ -15,7 +15,15 @@ export interface User {
 export interface LoginResponse {
   access: string;
   refresh: string;
-  user: User;
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: "PATIENT" | "DOCTOR" | "ADMIN";
+    is_verified: boolean;
+    is_doctor_approved: boolean;
+  };
 }
 
 // React Navigation Types
