@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import * as Storage from './storage';
 
 // ─── Configuration ───────────────────────────────────────
 const API_BASE_URL = 'https://medlinkethiopia.pythonanywhere.com/api';
@@ -50,7 +50,7 @@ apiClient.interceptors.request.use(
       console.log(`[API PAYLOAD] =>`, JSON.stringify(sanitizedData, null, 2));
     }
 
-    const token = await SecureStore.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+    const token = await Storage.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -125,7 +125,7 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const refreshToken = await SecureStore.getItemAsync(
+      const refreshToken = await Storage.getItemAsync(
         STORAGE_KEYS.REFRESH_TOKEN
       );
 
@@ -140,7 +140,7 @@ apiClient.interceptors.response.use(
       );
 
       const newAccessToken: string = data.access;
-      await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+      await Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
 
       processQueue(null, newAccessToken);
 
@@ -155,9 +155,9 @@ apiClient.interceptors.response.use(
       processQueue(refreshError, null);
 
       // Clear stored tokens on refresh failure
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.USER);
+      await Storage.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+      await Storage.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+      await Storage.deleteItemAsync(STORAGE_KEYS.USER);
 
       return Promise.reject(refreshError);
     } finally {

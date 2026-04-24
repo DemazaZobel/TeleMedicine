@@ -4,20 +4,27 @@ import { useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
 import { TAB_CONFIGS } from '../../src/types/navigation';
+import { useWindowDimensions, View, Platform } from 'react-native';
+import { Sidebar, MobileWebNav } from '../../src/components/ui';
 
 export default function TabsLayout() {
   const { theme } = useTheme();
+  const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
   const userRole = user?.role ?? 'PATIENT';
   const verificationStage = useDoctorStore((s) => s.verificationStage());
 
-  return (
+  const isDesktop = width > 768;
+  const isWeb = Platform.OS === 'web';
+  const hideTabBar = isDesktop || isWeb;
+
+  const tabsElement = (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.tabActive,
         tabBarInactiveTintColor: theme.colors.tabInactive,
-        tabBarStyle: {
+        tabBarStyle: hideTabBar ? { display: 'none' } : {
           backgroundColor: theme.colors.tabBar,
           borderTopColor: theme.colors.tabBarBorder,
           borderTopWidth: 1,
@@ -32,8 +39,6 @@ export default function TabsLayout() {
       }}
     >
       {TAB_CONFIGS.map((tab) => {
-        // If it's a doctor and they aren't approved yet, we still show the tab but intercept the UI inside the screen
-        // unless it's a sensitive tab like wallet that should be completely hidden
         let isTabVisible = tab.roles.includes(userRole);
         
         if (userRole === 'DOCTOR' && verificationStage !== 'APPROVED' && tab.name === 'wallet') {
@@ -60,4 +65,28 @@ export default function TabsLayout() {
       })}
     </Tabs>
   );
+
+  if (isWeb) {
+    if (isDesktop) {
+      return (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <Sidebar />
+          <View style={{ flex: 1 }}>
+            {tabsElement}
+          </View>
+        </View>
+      );
+    } else {
+      return (
+        <View style={{ flex: 1 }}>
+          <MobileWebNav />
+          <View style={{ flex: 1 }}>
+            {tabsElement}
+          </View>
+        </View>
+      );
+    }
+  }
+
+  return tabsElement;
 }

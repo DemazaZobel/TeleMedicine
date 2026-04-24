@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, Platform, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Input, Button, Banner } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, Theme } from '../../src/theme';
@@ -9,6 +10,7 @@ export default function ChangePasswordScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const isWeb = Platform.OS === 'web';
 
   const { isLoading, error, changePassword, clearError } = useAuthStore();
 
@@ -51,6 +53,17 @@ export default function ChangePasswordScreen() {
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
+        {/* Web-only breadcrumb */}
+        {isWeb && (
+          <Pressable
+            onPress={() => router.push('/(tabs)/profile' as any)}
+            style={styles.breadcrumb}
+          >
+            <Ionicons name="arrow-back" size={18} color={theme.colors.primary} />
+            <Text style={styles.breadcrumbText}>Back to Profile</Text>
+          </Pressable>
+        )}
+
         <Text style={styles.title}>Change Password</Text>
         <Text style={styles.subtitle}>
           Enter your current password and choose a new one.
@@ -109,8 +122,22 @@ export default function ChangePasswordScreen() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
+      width: '100%',
+      maxWidth: 800,
+      alignSelf: 'center',
       paddingHorizontal: theme.spacing.xl,
       paddingVertical: theme.spacing.xl,
+    },
+    breadcrumb: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+      gap: theme.spacing.xs,
+    },
+    breadcrumbText: {
+      ...theme.typography.body,
+      color: theme.colors.primary,
+      fontWeight: '500',
     },
     title: {
       ...theme.typography.h2,

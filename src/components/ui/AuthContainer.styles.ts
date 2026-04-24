@@ -1,27 +1,63 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import type { Theme } from '../../theme';
 
-const { height } = Dimensions.get('window');
+export const createAuthContainerStyles = (theme: Theme, windowWidth: number, windowHeight: number) => {
+  const isDesktop = windowWidth > 768;
 
-export const createAuthContainerStyles = (theme: Theme) =>
-  StyleSheet.create({
+  return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
+      flexDirection: isDesktop ? 'row' : 'column',
     },
+    // Desktop specific panes
+    desktopLeftPane: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      padding: theme.spacing['4xl'],
+    },
+    desktopRightPane: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      // The background color for this pane will be passed dynamically based on theme (illustrationBg)
+    },
+    desktopIllustrationCard: {
+      width: '100%',
+      height: '100%',
+      maxWidth: 600,
+      maxHeight: 700,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.05,
+      shadowRadius: 30,
+      elevation: 5,
+      overflow: 'hidden',
+    },
+    desktopFormContainer: {
+      width: '100%',
+      maxWidth: 420,
+    },
+    // Mobile specific styles (preserved)
     illustrationContainer: {
       position: 'absolute',
       top: 0,
       left: 0,
       right: 0,
-      height: height * 0.42,
+      height: windowHeight * 0.42,
       width: '100%',
       justifyContent: 'center',
       alignItems: 'center',
     },
     illustration: {
-      width: '100%',
-      height: '100%',
+      width: '80%',
+      height: '80%',
     },
     backButton: {
       position: 'absolute',
@@ -41,7 +77,7 @@ export const createAuthContainerStyles = (theme: Theme) =>
       flexGrow: 1,
     },
     spacer: {
-      height: height * 0.35,
+      height: windowHeight * 0.35,
     },
     card: {
       flex: 1,
@@ -51,13 +87,12 @@ export const createAuthContainerStyles = (theme: Theme) =>
       paddingHorizontal: theme.spacing.xl,
       paddingTop: theme.spacing['2xl'],
       paddingBottom: theme.spacing['4xl'],
-      // Subtle shadow for the card overlap effect
       shadowColor: theme.colors.text,
       shadowOffset: { width: 0, height: -6 },
       shadowOpacity: 0.06,
       shadowRadius: 16,
       elevation: 10,
-      // Bottom padding so the last input is always reachable when keyboard is open
-      minHeight: height * 0.65,
+      minHeight: windowHeight * 0.65,
     },
   });
+};
