@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Input, Button } from '../../src/components/ui';
+import { AuthContainer, Input, Button } from '../../src/components/ui';
 import { useTheme } from '../../src/theme';
 import { authService } from '../../src/features/auth/services/authService';
 import { createForgotPasswordStyles } from '../../src/features/auth/styles/forgotPassword.styles';
@@ -34,14 +34,19 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <ScreenContainer scrollable centered>
+    <AuthContainer 
+      illustration={require('../../assets/images/forgot-password-illustration.png')}
+      showBackButton
+    >
       <View style={styles.container}>
-        <Text style={styles.title}>Reset Password</Text>
-        <Text style={styles.subtitle}>
-          {sent
-            ? 'Check your email for the reset code.'
-            : "Enter your email and we'll send you a reset code."}
-        </Text>
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontSize: 28, fontWeight: '700', color: theme.colors.text }}>Reset Password</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, marginTop: 4 }}>
+            {sent
+              ? 'Check your email for the reset code.'
+              : "Enter your email and we'll send you a reset code."}
+          </Text>
+        </View>
 
         {!sent ? (
           <>
@@ -79,6 +84,6 @@ export default function ForgotPasswordScreen() {
           />
         )}
       </View>
-    </ScreenContainer>
+    </AuthContainer>
   );
 }

@@ -75,3 +75,15 @@ export interface RefreshTokenRequest {
 export interface RefreshTokenResponse {
   access: string;
 }
+
+// ─── Profile & Password ─────────────────────────────────
+export interface UpdateProfileRequest {
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
