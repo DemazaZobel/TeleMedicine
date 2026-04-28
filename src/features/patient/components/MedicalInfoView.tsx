@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, Platform, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Card, Button } from '../../../components/ui';
@@ -30,6 +30,7 @@ export function MedicalInfoView() {
   const { theme } = useTheme();
   const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const isWeb = Platform.OS === 'web';
 
   const { medicalInfo, isLoadingInfo, fetchMedicalInfo } = usePatientStore();
 
@@ -58,7 +59,7 @@ export function MedicalInfoView() {
             title="Edit"
             variant="outline"
             size="sm"
-            onPress={() => router.push('/settings/medical-info')}
+            onPress={() => router.push('/settings/medical-info' as any)}
             style={{ minWidth: 70 }}
           />
         </View>
@@ -82,12 +83,12 @@ export function MedicalInfoView() {
             </View>
           </Card>
         ) : (
-          <>
-            {/* Vitals Card */}
-            <Card style={styles.card}>
-              <View style={styles.cardHeader}>
+          <View style={styles.mainContent}>
+            {/* Vitals Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
                 <Ionicons name="water-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.cardTitle}>Vitals</Text>
+                <Text style={styles.sectionTitle}>Vitals</Text>
               </View>
 
               {medicalInfo?.blood_type ? (
@@ -101,17 +102,19 @@ export function MedicalInfoView() {
 
               <InfoRow label="Date of Birth" value={medicalInfo?.date_of_birth ?? ''} theme={theme} />
               <InfoRow label="Gender" value={medicalInfo?.gender ?? ''} theme={theme} />
-            </Card>
+            </View>
 
-            {/* Conditions & Allergies */}
-            <Card style={styles.card}>
-              <View style={styles.cardHeader}>
+            <View style={styles.divider} />
+
+            {/* Conditions & Allergies Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
                 <Ionicons name="alert-circle-outline" size={20} color={theme.colors.warning} />
-                <Text style={styles.cardTitle}>Conditions & Allergies</Text>
+                <Text style={styles.sectionTitle}>Conditions & Allergies</Text>
               </View>
 
               {medicalInfo?.allergies ? (
-                <View style={{ marginBottom: 12 }}>
+                <View style={{ marginBottom: 16 }}>
                   <Text style={styles.fieldLabel}>Allergies</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                     {medicalInfo.allergies.split(',').map((a, i) => (
@@ -119,7 +122,7 @@ export function MedicalInfoView() {
                         key={i}
                         label={a.trim()}
                         color={theme.colors.error}
-                        bg={theme.colors.errorLight}
+                        bg={theme.colors.errorLight + '20'}
                       />
                     ))}
                   </View>
@@ -127,7 +130,7 @@ export function MedicalInfoView() {
               ) : null}
 
               {medicalInfo?.chronic_conditions ? (
-                <View style={{ marginBottom: 12 }}>
+                <View style={{ marginBottom: 16 }}>
                   <Text style={styles.fieldLabel}>Chronic Conditions</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                     {medicalInfo.chronic_conditions.split(',').map((c, i) => (
@@ -135,7 +138,7 @@ export function MedicalInfoView() {
                         key={i}
                         label={c.trim()}
                         color={theme.colors.warning}
-                        bg={theme.colors.warningLight}
+                        bg={theme.colors.warningLight + '20'}
                       />
                     ))}
                   </View>
@@ -147,34 +150,40 @@ export function MedicalInfoView() {
                   No conditions or allergies recorded.
                 </Text>
               )}
-            </Card>
+            </View>
 
-            {/* Medical History */}
+            {/* Medical History Section */}
             {medicalInfo?.medical_history ? (
-              <Card style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
-                  <Text style={styles.cardTitle}>Medical History</Text>
+              <>
+                <View style={styles.divider} />
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
+                    <Text style={styles.sectionTitle}>Medical History</Text>
+                  </View>
+                  <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary, lineHeight: 24 }}>
+                    {medicalInfo.medical_history}
+                  </Text>
                 </View>
-                <Text style={{ ...theme.typography.body, color: theme.colors.text, lineHeight: 22 }}>
-                  {medicalInfo.medical_history}
-                </Text>
-              </Card>
+              </>
             ) : null}
 
-            {/* Location */}
+            {/* Location Section */}
             {(medicalInfo?.address || medicalInfo?.city || medicalInfo?.country) ? (
-              <Card style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Ionicons name="location-outline" size={20} color={theme.colors.success} />
-                  <Text style={styles.cardTitle}>Location</Text>
+              <>
+                <View style={styles.divider} />
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Ionicons name="location-outline" size={20} color={theme.colors.success} />
+                    <Text style={styles.sectionTitle}>Location</Text>
+                  </View>
+                  <InfoRow label="Address" value={medicalInfo?.address ?? ''} theme={theme} />
+                  <InfoRow label="City" value={medicalInfo?.city ?? ''} theme={theme} />
+                  <InfoRow label="Country" value={medicalInfo?.country ?? ''} theme={theme} />
                 </View>
-                <InfoRow label="Address" value={medicalInfo?.address ?? ''} theme={theme} />
-                <InfoRow label="City" value={medicalInfo?.city ?? ''} theme={theme} />
-                <InfoRow label="Country" value={medicalInfo?.country ?? ''} theme={theme} />
-              </Card>
+              </>
             ) : null}
-          </>
+          </View>
         )}
       </View>
     </ScreenContainer>
@@ -184,6 +193,9 @@ export function MedicalInfoView() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
+      width: '100%',
+      maxWidth: 800,
+      alignSelf: 'center',
       paddingHorizontal: theme.spacing.xl,
       paddingTop: theme.spacing['2xl'],
       paddingBottom: theme.spacing['4xl'],
@@ -192,7 +204,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing['2xl'],
     },
     title: {
       ...theme.typography.h2,
@@ -200,45 +212,66 @@ const createStyles = (theme: Theme) =>
       fontWeight: '700',
     },
     subtitle: {
-      ...theme.typography.bodySm,
+      ...theme.typography.body,
       color: theme.colors.textSecondary,
-      marginTop: 2,
+      marginTop: 4,
     },
-    card: {
-      marginBottom: theme.spacing.lg,
+    mainContent: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      padding: theme.spacing.xl,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 12,
+      elevation: 2,
     },
     emptyCard: {
       marginTop: theme.spacing.xl,
     },
-    cardHeader: {
+    section: {
+      paddingVertical: theme.spacing.md,
+    },
+    sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: theme.spacing.md,
-      gap: 8,
+      marginBottom: theme.spacing.lg,
+      gap: 10,
     },
-    cardTitle: {
+    sectionTitle: {
       ...theme.typography.h4,
+      fontSize: 18,
       color: theme.colors.text,
       fontWeight: '600',
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.border,
+      opacity: 0.4,
+      marginVertical: theme.spacing.sm,
     },
     fieldLabel: {
       ...theme.typography.label,
       color: theme.colors.textSecondary,
       marginBottom: theme.spacing.sm,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     bloodTypeRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
-      marginBottom: 12,
+      marginBottom: 16,
     },
     bloodTypeBadge: {
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: theme.colors.primaryLight,
+      backgroundColor: theme.colors.primaryLight + '30',
       justifyContent: 'center',
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.primaryLight,
     },
     bloodTypeText: {
       fontSize: 18,

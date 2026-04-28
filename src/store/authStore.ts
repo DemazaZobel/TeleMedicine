@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import * as Storage from '../services/storage';
 import type {
   User,
   AuthTokens,
@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       set({ isBootstrapping: true });
 
-      const refreshTokenValue = await SecureStore.getItemAsync(
+      const refreshTokenValue = await Storage.getItemAsync(
         STORAGE_KEYS.REFRESH_TOKEN
       );
 
@@ -79,10 +79,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         const response = await authService.refreshToken(refreshTokenValue);
         const newAccessToken = response.access;
 
-        await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+        await Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
 
         // Read existing stored user (has role from login)
-        const userJson = await SecureStore.getItemAsync(STORAGE_KEYS.USER);
+        const userJson = await Storage.getItemAsync(STORAGE_KEYS.USER);
         const storedUser = userJson ? JSON.parse(userJson) : null;
 
         // Fetch live profile and merge, preserving role from stored snapshot
@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           return;
         }
 
-        await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
+        await Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
 
         set({
           user,
@@ -113,18 +113,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       } catch {
         // Token refresh failed → session expired → clean up
         await Promise.all([
-          SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
-          SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
-          SecureStore.deleteItemAsync(STORAGE_KEYS.USER),
+          Storage.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
+          Storage.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
+          Storage.deleteItemAsync(STORAGE_KEYS.USER),
         ]);
         set({ ...initialState, isBootstrapping: false });
       }
     } catch {
       // SecureStore read failed → start fresh
       await Promise.all([
-        SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
-        SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
-        SecureStore.deleteItemAsync(STORAGE_KEYS.USER),
+        Storage.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
+        Storage.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
+        Storage.deleteItemAsync(STORAGE_KEYS.USER),
       ]).catch(() => {});
       set({ ...initialState, isBootstrapping: false });
     }
@@ -141,9 +141,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       // Persist tokens + user snapshot to SecureStore
       await Promise.all([
-        SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, response.access),
-        SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, response.refresh),
-        SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(response.user)),
+        Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, response.access),
+        Storage.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, response.refresh),
+        Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(response.user)),
       ]);
 
       set({
@@ -213,9 +213,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
     } finally {
       await Promise.all([
-        SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
-        SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
-        SecureStore.deleteItemAsync(STORAGE_KEYS.USER),
+        Storage.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
+        Storage.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
+        Storage.deleteItemAsync(STORAGE_KEYS.USER),
       ]);
       set({ ...initialState, isBootstrapping: false });
     }
@@ -231,7 +231,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       const response = await authService.refreshToken(tokens.refresh);
 
-      await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, response.access);
+      await Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, response.access);
 
       set({
         tokens: { ...tokens, access: response.access },
@@ -257,7 +257,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const mergedUser = existingUser
         ? { ...existingUser, ...profileData, role: existingUser.role }
         : profileData;
-      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      await Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
       set({ user: mergedUser, isLoading: false });
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
@@ -278,7 +278,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const mergedUser = existingUser
         ? { ...existingUser, ...profileData, role: existingUser.role }
         : profileData;
-      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      await Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
       set({ user: mergedUser, isLoading: false });
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
@@ -309,11 +309,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   /**
-   * Update the local user snapshot (also persists to SecureStore).
+   * Update the local user snapshot (also persists to storage).
    */
   setUser: (user: User) => {
     set({ user });
-    SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
+    Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
   },
 
   clearError: () => set({ error: null }),

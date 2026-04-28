@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../../components/ui/Input';
@@ -15,7 +15,16 @@ export const SearchBar = React.memo(function SearchBar({ initialValue = '', onSe
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [value, setValue] = useState(initialValue);
 
-  // Debounce could be added here, but for now we'll trigger on submit or clear
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (value !== initialValue) {
+        onSearch(value);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [value, onSearch, initialValue]);
+
   const handleSubmit = () => {
     onSearch(value);
   };

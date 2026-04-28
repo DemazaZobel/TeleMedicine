@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AuthContainer, Input, Button } from '../../../components/ui';
-import { useTheme } from '../../../theme';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { AuthContainer, Button, Input } from '../../../components/ui';
 import { useAuthStore } from '../../../store/authStore';
-import { createRegisterStyles } from '../styles/register.styles';
+import { useTheme } from '../../../theme';
 import type { UserRole } from '../../../types';
+import { createRegisterStyles } from '../styles/register.styles';
 
 const ROLES: { label: string; value: UserRole }[] = [
   { label: '🧑 Patient', value: 'PATIENT' },
@@ -58,10 +58,9 @@ export function RegisterForm() {
   );
 
   return (
-    <AuthContainer 
+    <AuthContainer
       illustration={require('../../../../assets/images/signup-illustration.png')}
       darkIllustration={require('../../../../assets/images/dark-signup-illustration.png')}
-      showBackButton
     >
       <View style={styles.container}>
         {/* Header */}

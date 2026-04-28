@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { ScreenContainer, Input, Button, Banner } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useTheme, Theme } from '../../src/theme';
@@ -8,6 +9,8 @@ import { useTheme, Theme } from '../../src/theme';
 export default function EditProfileScreen() {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const router = useRouter();
+  const isWeb = Platform.OS === 'web';
 
   const { user, isLoading, error, fetchProfile, updateProfile, clearError } =
     useAuthStore();
@@ -65,6 +68,21 @@ export default function EditProfileScreen() {
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
+        {/* Web-only breadcrumb & page title */}
+        {isWeb && (
+          <>
+            <Pressable
+              onPress={() => router.push('/(tabs)/profile' as any)}
+              style={styles.breadcrumb}
+            >
+              <Ionicons name="arrow-back" size={18} color={theme.colors.primary} />
+              <Text style={styles.breadcrumbText}>Back to Profile</Text>
+            </Pressable>
+            <Text style={styles.pageTitle}>Edit Profile</Text>
+            <Text style={styles.pageSubtitle}>Update your personal information</Text>
+          </>
+        )}
+
         {/* ── Avatar with Camera Badge ── */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarOuter}>
@@ -133,9 +151,34 @@ export default function EditProfileScreen() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
+      width: '100%',
+      maxWidth: 800,
+      alignSelf: 'center',
       paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing.lg,
+      paddingTop: theme.spacing.xl,
       paddingBottom: theme.spacing['4xl'],
+    },
+    breadcrumb: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+      gap: theme.spacing.xs,
+    },
+    breadcrumbText: {
+      ...theme.typography.body,
+      color: theme.colors.primary,
+      fontWeight: '500',
+    },
+    pageTitle: {
+      ...theme.typography.h2,
+      color: theme.colors.text,
+      fontWeight: '700',
+      marginBottom: theme.spacing.xs,
+    },
+    pageSubtitle: {
+      ...theme.typography.body,
+      color: theme.colors.textSecondary,
+      marginBottom: theme.spacing['2xl'],
     },
     avatarSection: {
       alignItems: 'center',

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { doctorApi } from '../features/doctor/services/doctor.api';
-import type { ProviderSearchResult, ProviderSearchParams } from '../features/doctor/types/doctor.types';
+import type { ProviderSearchParams, ProviderSearchResult } from '../features/doctor/types/doctor.types';
 
 interface DiscoveryState {
   doctors: ProviderSearchResult[];
@@ -44,7 +44,7 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { searchQuery, selectedSpecialization } = get();
-      
+
       const params: ProviderSearchParams = {};
       if (searchQuery.trim()) {
         params.query = searchQuery;
@@ -56,9 +56,9 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       const results = await doctorApi.searchProviders(params);
       set({ doctors: results, isLoading: false });
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.detail || 'Failed to fetch doctors', 
-        isLoading: false 
+      set({
+        error: error.response?.data?.detail || 'Failed to fetch doctors',
+        isLoading: false
       });
     }
   },
