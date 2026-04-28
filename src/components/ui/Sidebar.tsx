@@ -29,7 +29,6 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/(auth)/login');
   };
 
   return (

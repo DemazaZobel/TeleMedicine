@@ -113,4 +113,37 @@ export const bookingService = {
     const { data } = await apiClient.put<NotificationPreferenceDetail>(`${BASE_URL}/notification-preferences/`, payload);
     return data;
   },
+  // ─── PAYMENTS & WALLET ───────────────────────────────────
+
+  /** GET /api/payments/methods/ */
+  getPaymentMethods: async (): Promise<PaymentMethodDetail[]> => {
+    const { data } = await apiClient.get<PaymentMethodDetail[]>('/payments/methods/');
+    return data;
+  },
+
+  /** POST /api/payments/initiate/{appointment_id}/ */
+  initiatePayment: async (appointmentId: string | number, paymentMethodId: string | number): Promise<InitiatePaymentResponse> => {
+    const { data } = await apiClient.post<InitiatePaymentResponse>(`/payments/initiate/${appointmentId}/`, {
+      payment_method_id: paymentMethodId
+    });
+    return data;
+  },
+
+  /** POST /api/payments/complete/{appointment_id}/ */
+  completeAppointment: async (appointmentId: string | number): Promise<AppointmentDetail> => {
+    const { data } = await apiClient.post<AppointmentDetail>(`/payments/complete/${appointmentId}/`);
+    return data;
+  },
+
+  /** GET /api/payments/wallet/ */
+  getWallet: async (): Promise<DoctorWalletDetail> => {
+    const { data } = await apiClient.get<DoctorWalletDetail>('/payments/wallet/');
+    return data;
+  },
+
+  /** GET /api/payments/history/ */
+  getPaymentHistory: async (): Promise<PaymentDetail[]> => {
+    const { data } = await apiClient.get<PaymentDetail[]>('/payments/history/');
+    return data;
+  },
 };

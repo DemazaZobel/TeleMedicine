@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo } from 'react';
-import { Text, View, StyleSheet, Platform, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Card, Button } from '../../../components/ui';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Button, Card, ScreenContainer } from '../../../components/ui';
 import { usePatientStore } from '../../../store/patient.store';
-import { useTheme } from '../../../theme';
 import type { Theme } from '../../../theme';
+import { useTheme } from '../../../theme';
+import { MedicalInfoModal } from './MedicalInfoModal';
 
 function InfoRow({ label, value, theme }: { label: string; value: string; theme: Theme }) {
   return (
@@ -33,6 +34,7 @@ export function MedicalInfoView() {
   const isWeb = Platform.OS === 'web';
 
   const { medicalInfo, isLoadingInfo, fetchMedicalInfo } = usePatientStore();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     fetchMedicalInfo();
@@ -59,7 +61,7 @@ export function MedicalInfoView() {
             title="Edit"
             variant="outline"
             size="sm"
-            onPress={() => router.push('/settings/medical-info' as any)}
+            onPress={() => setIsModalVisible(true)}
             style={{ minWidth: 70 }}
           />
         </View>
@@ -77,7 +79,7 @@ export function MedicalInfoView() {
               </Text>
               <Button
                 title="Add Medical Info"
-                onPress={() => router.push('/settings/medical-info')}
+                onPress={() => setIsModalVisible(true)}
                 style={{ marginTop: 24 }}
               />
             </View>
@@ -186,6 +188,10 @@ export function MedicalInfoView() {
           </View>
         )}
       </View>
+      <MedicalInfoModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+      />
     </ScreenContainer>
   );
 }
@@ -194,9 +200,8 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       width: '100%',
-      maxWidth: 800,
       alignSelf: 'center',
-      paddingHorizontal: theme.spacing.xl,
+      paddingHorizontal: theme.spacing['2xl'],
       paddingTop: theme.spacing['2xl'],
       paddingBottom: theme.spacing['4xl'],
     },

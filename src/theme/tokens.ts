@@ -1,4 +1,4 @@
-import { TextStyle } from 'react-native';
+import { ColorValue, TextStyle } from 'react-native';
 
 // ─── Color Palette ───────────────────────────────────────
 const palette = {
@@ -98,6 +98,8 @@ export const radius = {
 
 // ─── Theme Colors ────────────────────────────────────────
 export interface ThemeColors {
+  amber700: ColorValue | undefined;
+  amber50: ColorValue | undefined;
   // Backgrounds
   background: string;
   surface: string;
@@ -225,6 +227,8 @@ export const lightTheme: Theme = {
     tabBarBorder: palette.gray200,
     tabActive: palette.blue500,
     tabInactive: palette.gray400,
+    amber50: undefined,
+    amber700: undefined
   },
   spacing,
   typography,
@@ -298,6 +302,8 @@ export const darkTheme: Theme = {
     tabBarBorder: palette.gray700,
     tabActive: palette.blue400,
     tabInactive: palette.gray600,
+    amber50: undefined,
+    amber700: undefined
   },
   spacing,
   typography,

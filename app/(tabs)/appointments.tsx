@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
-import { ScreenContainer, EmptyState } from '../../src/components/ui';
-import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { EmptyState, ScreenContainer } from '../../src/components/ui';
 import { AppointmentCard } from '../../src/features/booking/components/AppointmentCard';
+import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
 import { useAuthStore } from '../../src/store/authStore';
-import { useDoctorStore } from '../../src/store/doctor.store';
 import { useBookingStore } from '../../src/store/booking.store';
-import { useTheme } from '../../src/theme';
+import { useDoctorStore } from '../../src/store/doctor.store';
 import type { Theme } from '../../src/theme';
+import { useTheme } from '../../src/theme';
 
 export default function AppointmentsScreen() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  
+
   const user = useAuthStore((s) => s.user);
   const isDoctor = user?.role === 'DOCTOR';
   const isVerified = useDoctorStore((s) => s.isDoctorVerified());
-  
-  const { 
-    appointments, 
-    isLoading, 
-    fetchMyAppointments, 
-    cancelAppointment, 
-    doctorDecision 
+
+  const {
+    appointments,
+    isLoading,
+    fetchMyAppointments,
+    cancelAppointment,
+    doctorDecision
   } = useBookingStore();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -42,13 +42,13 @@ export default function AppointmentsScreen() {
 
   const handleCancel = (id: string | number) => {
     Alert.alert(
-      "Cancel Appointment", 
+      "Cancel Appointment",
       "Are you sure you want to cancel this appointment?",
       [
         { text: "No", style: "cancel" },
-        { 
-          text: "Yes, Cancel", 
-          style: "destructive", 
+        {
+          text: "Yes, Cancel",
+          style: "destructive",
           onPress: async () => {
             try {
               await cancelAppointment(id);
@@ -111,9 +111,9 @@ export default function AppointmentsScreen() {
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
               <View style={{ flex: 1, maxWidth: `${100 / numColumns}%`, paddingRight: numColumns > 1 ? theme.spacing.md : 0 }}>
-                <AppointmentCard 
-                  appointment={item} 
-                  isDoctor={isDoctor} 
+                <AppointmentCard
+                  appointment={item}
+                  isDoctor={isDoctor}
                   onCancel={handleCancel}
                   onAccept={isDoctor ? handleAccept : undefined}
                 />

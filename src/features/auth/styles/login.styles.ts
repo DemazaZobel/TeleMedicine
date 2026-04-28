@@ -7,62 +7,86 @@ export const createLoginStyles = (theme: Theme) =>
       flex: 1,
       justifyContent: 'center',
       width: '100%',
-      maxWidth: 400,
+      maxWidth: 420,
       alignSelf: 'center',
-      paddingHorizontal: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.xl,
     },
-    logoContainer: {
+    header: {
+      marginBottom: theme.spacing['3xl'],
+    },
+    logoBadge: {
+      width: 48,
+      height: 48,
+      borderRadius: 16,
+      backgroundColor: theme.colors.primaryLight + '30',
+      justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: theme.spacing['4xl'],
+      marginBottom: theme.spacing.lg,
     },
-    logo: {
-      fontSize: 48,
-      marginBottom: theme.spacing.md,
-    },
-    appName: {
+    title: {
       ...theme.typography.h2,
-      color: theme.colors.primary,
-      fontWeight: '700',
+      fontWeight: '800',
+      color: theme.colors.text,
+      letterSpacing: -0.5,
+      marginBottom: 6,
     },
-    tagline: {
-      ...theme.typography.bodySm,
+    subtitle: {
+      ...theme.typography.bodyMd,
       color: theme.colors.textSecondary,
-      marginTop: theme.spacing.xs,
     },
     errorContainer: {
-      backgroundColor: theme.colors.errorLight,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.radius.md,
-      marginBottom: theme.spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.errorLight + '20',
+      padding: theme.spacing.md,
+      borderRadius: theme.radius.lg,
+      marginBottom: theme.spacing.xl,
+      borderWidth: 1,
+      borderColor: theme.colors.error + '30',
     },
     errorText: {
       ...theme.typography.bodySm,
       color: theme.colors.error,
+      flex: 1,
+    },
+    form: {
+      gap: theme.spacing.md,
+    },
+    passwordContainer: {
+      position: 'relative',
     },
     forgotPassword: {
-      alignSelf: 'flex-end',
-      marginBottom: theme.spacing.xl,
-      marginTop: -theme.spacing.sm,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      paddingTop: 8,
     },
     forgotPasswordText: {
       ...theme.typography.bodySm,
       color: theme.colors.primary,
       fontWeight: '600',
     },
-    registerContainer: {
+    submitBtn: {
+      marginTop: theme.spacing.md,
+      height: 48,
+      borderRadius: theme.radius.lg,
+    },
+    footer: {
       flexDirection: 'row',
       justifyContent: 'center',
-      marginTop: theme.spacing['2xl'],
-      gap: theme.spacing.xs,
+      alignItems: 'center',
+      marginTop: theme.spacing['4xl'],
     },
-    registerText: {
+    footerText: {
       ...theme.typography.bodySm,
       color: theme.colors.textSecondary,
+    },
+    registerLinkContainer: {
+      padding: 8,
     },
     registerLink: {
       ...theme.typography.bodySm,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: '700',
     },
   });

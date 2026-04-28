@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Card, Button } from '../../../components/ui';
-import type { AppointmentDetail } from '../types/bookingTypes';
-import { useTheme } from '../../../theme';
-import type { Theme } from '../../../theme';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button } from '../../../components/ui';
 import { useBookingStore } from '../../../store/booking.store';
+import { useDiscoveryStore } from '../../../store/discovery.store';
+import type { Theme } from '../../../theme';
+import { useTheme } from '../../../theme';
+import type { AppointmentDetail } from '../types/bookingTypes';
 import { RescheduleModal } from './RescheduleModal';
 
 interface AppointmentCardProps {
@@ -18,8 +18,9 @@ interface AppointmentCardProps {
 
 export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: AppointmentCardProps) {
   const { theme } = useTheme();
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { doctorDecision, respondToChangeRequest, isLoading } = useBookingStore();
+  const { doctors } = useDiscoveryStore();
   const [rescheduleVisible, setRescheduleVisible] = useState(false);
 
   const start = new Date(appointment.scheduled_start);
@@ -29,7 +30,7 @@ export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: A
   const timeStr = `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status?.toUpperCase()) {
       case 'CONFIRMED': return theme.colors.success;
       case 'REQUESTED': return theme.colors.warning;
       case 'COMPLETED': return theme.colors.primary;
@@ -38,13 +39,34 @@ export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: A
     }
   };
 
-  const patientName = appointment.patient?.user 
-    ? `${appointment.patient.user.first_name || ''} ${appointment.patient.user.last_name || ''}`.trim() 
-    : 'Patient';
-    
-  const doctorName = appointment.doctor?.user 
-    ? `Dr. ${appointment.doctor.user.last_name || ''}`.trim() 
-    : 'Doctor';
+  const getStatusLabel = () => {
+    const status = appointment.status?.toUpperCase() || 'UNKNOWN';
+    if (status === 'CONFIRMED') {
+      return appointment.payment_status === 'paid' ? 'Confirmed • Paid' : 'Confirmed • Unpaid';
+    }
+    return status;
+  };
+
+  const pat = appointment.patient as any;
+  const patientName = pat?.user?.first_name
+    ? `${pat.user.first_name} ${pat.user.last_name || ''}`.trim()
+    : pat?.first_name
+      ? `${pat.first_name} ${pat.last_name || ''}`.trim()
+      : 'Patient';
+
+  const doc = appointment.doctor as any;
+  const doctorProfileId = doc?.id || doc;
+  const foundDoctor = doctors.find(
+    d => String(d.id) === String(doctorProfileId) || String(d.user_id) === String(doctorProfileId)
+  );
+
+  const doctorName = doc?.user?.last_name
+    ? `Dr. ${doc.user.last_name}`
+    : doc?.last_name
+      ? `Dr. ${doc.last_name}`
+      : foundDoctor
+        ? `Dr. ${foundDoctor.last_name || foundDoctor.first_name || ''}`.trim()
+        : 'Doctor';
 
   const displayName = isDoctor ? patientName : doctorName;
 
@@ -64,101 +86,130 @@ export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: A
       });
       setRescheduleVisible(false);
       Alert.alert('Success', 'Reschedule proposed to patient');
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleRespondChange = async (action: 'accept' | 'reject') => {
     try {
-      // Find the pending change request ID (backend Usually nests this or we fetch it)
-      // For this UI, we assume there's one active change request if status is special or we show it in the header
-      // The respond API expects the CHANGE_REQUEST ID, not the appointment ID.
-      // Since our Store might need to fetch it, we'll keep it simple for now.
       Alert.alert('Feature Coming', 'Direct response to change requests is being finalized.');
-    } catch (error) {}
+    } catch (error) { }
+  };
+
+  const handlePay = async () => {
+    try {
+      const { fetchPaymentMethods, initiatePayment } = useBookingStore.getState();
+      await fetchPaymentMethods();
+      const { paymentMethods, error: storeError } = useBookingStore.getState();
+
+      if (storeError?.includes('405')) {
+        Alert.alert('Backend Setup Required', 'The "List Payment Methods" endpoint (GET) is missing or not deployed on your backend.');
+        return;
+      }
+
+      let methodToUse = paymentMethods.find(m => m.is_verified) || paymentMethods[0];
+      if (!methodToUse) {
+        Alert.alert('No Payment Method', 'Please add a payment method in your settings first.');
+        return;
+      }
+
+      const checkoutUrl = await initiatePayment(appointment.id, methodToUse.id);
+      await WebBrowser.openBrowserAsync(checkoutUrl);
+      Alert.alert('Payment Initiated', 'Please complete payment in the browser.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to initiate payment.');
+    }
+  };
+
+  const handleComplete = async () => {
+    try {
+      const { completeAppointment } = useBookingStore.getState();
+      await completeAppointment(appointment.id);
+      Alert.alert('Success', 'Consultation completed. Funds released.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to complete.');
+    }
   };
 
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.doctorInfo}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
+      <View style={styles.content}>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
+            </View>
+
+            <View>
+              <Text style={styles.name} numberOfLines={1}>{displayName}</Text>
+              <Text style={styles.subText}>
+                {appointment.mode === 'ONLINE' ? 'Online Consultation' : 'In-Person Visit'}
+              </Text>
+            </View>
           </View>
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{displayName}</Text>
-            <Text style={styles.specialization}>{appointment.mode} CONSULTATION</Text>
+
+          <View style={styles.statusPill}>
+            <Text style={[styles.statusText, { color: getStatusColor(appointment.status) }]}>
+              {getStatusLabel()}
+            </Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(appointment.status) + '15' }]}>
-          <Text style={[styles.statusText, { color: getStatusColor(appointment.status) }]}>
-            {appointment.status}
-          </Text>
+
+        {/* Time (PRIMARY FOCUS) */}
+        <View style={styles.timeBlock}>
+          <Text style={styles.time}>{timeStr}</Text>
+          <Text style={styles.date}>{dateStr}</Text>
         </View>
+
+        {/* Reason */}
+        {appointment.reason && (
+          <View style={styles.reasonBlock}>
+            <Text style={styles.reasonLabel}>Reason</Text>
+            <Text style={styles.reason} numberOfLines={2}>
+              {appointment.reason}
+            </Text>
+          </View>
+
+
+        )}
       </View>
 
-      <View style={styles.divider} />
 
-      <View style={styles.timeContainer}>
-        <View style={styles.timeRow}>
-          <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
-          <Text style={styles.timeValue}>{dateStr}</Text>
-        </View>
-        <View style={styles.timeRow}>
-          <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
-          <Text style={styles.timeValue}>{timeStr}</Text>
-        </View>
-      </View>
-
-      {appointment.reason && (
-         <View style={styles.reasonContainer}>
-           <Text style={styles.reasonText} numberOfLines={2}>
-             "{appointment.reason}"
-           </Text>
-         </View>
-      )}
-
+      {/* Actions */}
       <View style={styles.actions}>
-        {appointment.status === 'CONFIRMED' && appointment.mode === 'ONLINE' && (
-           <Button 
-             title="Join Call" 
-             onPress={handleJoin} 
-             style={styles.joinBtn}
-             icon={<Ionicons name="videocam" size={18} color="#FFF" />}
-           />
+        {onCancel && ['REQUESTED', 'CONFIRMED'].includes(appointment.status?.toUpperCase()) && (
+          <TouchableOpacity onPress={() => onCancel(appointment.id)}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
         )}
 
-        {['REQUESTED', 'CONFIRMED'].includes(appointment.status) && onCancel && (
-          <Button 
-            title="Cancel" 
-            variant="ghost" 
-            onPress={() => onCancel(appointment.id)} 
-            style={styles.cancelBtn}
-            textStyle={{ color: theme.colors.error }}
-          />
-        )}
-
-        {appointment.status === 'REQUESTED' && isDoctor && (
-          <>
-            <Button 
-              title="Reschedule" 
-              variant="outline" 
-              onPress={() => setRescheduleVisible(true)} 
-              style={styles.actionBtn} 
+        {/* Primary CTA */}
+        {appointment.status?.toUpperCase() === 'CONFIRMED' &&
+          appointment.payment_status === 'paid' &&
+          appointment.mode === 'ONLINE' && (
+            <Button
+              title="Join"
+              onPress={handleJoin}
+              style={styles.primaryBtn}
             />
-            {onAccept && (
-              <Button 
-                title="Accept" 
-                onPress={() => onAccept(appointment.id)} 
-                style={styles.actionBtn} 
-              />
-            )}
-          </>
-        )}
+          )}
+
+        {!isDoctor &&
+          appointment.status?.toUpperCase() === 'CONFIRMED' &&
+          appointment.payment_status === 'unpaid' && (
+            <Button
+              title="Pay"
+              onPress={handlePay}
+              style={styles.primaryBtn}
+              loading={isLoading}
+            />
+          )}
       </View>
 
-      <RescheduleModal 
-        visible={rescheduleVisible} 
-        onClose={() => setRescheduleVisible(false)} 
+      <RescheduleModal
+        visible={rescheduleVisible}
+        onClose={() => setRescheduleVisible(false)}
         onConfirm={handleProposeConfirm}
         isLoading={isLoading}
       />
@@ -170,121 +221,120 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
       backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      padding: theme.spacing.lg,
-      marginBottom: theme.spacing.lg,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 12,
-      elevation: 3,
+      borderRadius: 18,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border + '30',
+
+      height: 200,
+      display: 'flex',
+      flexDirection: 'column',
     },
+
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      alignItems: 'center',
+      marginBottom: 12,
     },
-    doctorInfo: {
+
+    userInfo: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
     },
+
     avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.colors.primaryLight + '40',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.primary + '12',
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: theme.spacing.md,
+      marginRight: 10,
     },
+
     avatarText: {
-      fontSize: 18,
+      fontSize: 15,
       fontWeight: '700',
       color: theme.colors.primary,
     },
-    nameContainer: {
-      flex: 1,
-    },
+
     name: {
-      ...theme.typography.h4,
-      fontSize: 17,
+      fontSize: 15,
       fontWeight: '700',
       color: theme.colors.text,
+    },
+
+    subText: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      marginTop: 2,
+    },
+
+    statusPill: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 999,
+      backgroundColor: theme.colors.border + '40',
+    },
+
+    statusText: {
+      fontSize: 11,
+      fontWeight: '600',
+    },
+
+    timeBlock: {
+      marginBottom: 12,
+    },
+
+    time: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: theme.colors.text,
+    },
+
+    content: {
+      flex: 1,
+    },
+
+    date: {
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      marginTop: 2,
+    },
+
+    reasonBlock: {
+      minHeight: 40,
+    },
+
+    reasonLabel: {
+      fontSize: 11,
+      color: theme.colors.textTertiary,
       marginBottom: 2,
     },
-    specialization: {
-      ...theme.typography.caption,
-      color: theme.colors.textTertiary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.8,
-      fontSize: 11,
-    },
-    statusBadge: {
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: theme.radius.full,
-      marginLeft: theme.spacing.sm,
-    },
-    statusText: {
-      ...theme.typography.caption,
-      fontWeight: '700',
-      fontSize: 11,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: theme.colors.border,
-      opacity: 0.5,
-      marginVertical: theme.spacing.md,
-    },
-    timeContainer: {
-      flexDirection: 'row',
-      gap: theme.spacing.xl,
-    },
-    timeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    timeValue: {
-      ...theme.typography.bodySm,
+
+    reason: {
+      fontSize: 14,
       color: theme.colors.textSecondary,
-      fontWeight: '500',
+      lineHeight: 20,
     },
-    reasonContainer: {
-      marginTop: theme.spacing.md,
-      backgroundColor: theme.colors.background,
-      padding: theme.spacing.sm,
-      borderRadius: theme.radius.md,
-      borderLeftWidth: 3,
-      borderLeftColor: theme.colors.primaryLight,
-    },
-    reasonText: {
-      ...theme.typography.bodySm,
-      color: theme.colors.textSecondary,
-      fontStyle: 'italic',
-    },
+
     actions: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
-      marginTop: theme.spacing.lg,
-      gap: theme.spacing.sm,
+      justifyContent: 'space-between',
       alignItems: 'center',
     },
-    actionBtn: {
-      minWidth: 90,
-      height: 38,
-      paddingHorizontal: theme.spacing.md,
+
+    cancelText: {
+      fontSize: 13,
+      color: theme.colors.textTertiary,
     },
-    joinBtn: {
-      minWidth: 120,
-      height: 40,
-      backgroundColor: theme.colors.success,
-    },
-    cancelBtn: {
-      height: 38,
-      paddingHorizontal: theme.spacing.md,
+
+    primaryBtn: {
+      height: 36,
+      paddingHorizontal: 18,
+      borderRadius: 10,
     },
   });

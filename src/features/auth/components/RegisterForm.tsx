@@ -1,21 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { AuthContainer, Button, Input } from '../../../components/ui';
 import { useAuthStore } from '../../../store/authStore';
-import { useTheme } from '../../../theme';
+import { Theme, useTheme } from '../../../theme';
 import type { UserRole } from '../../../types';
-import { createRegisterStyles } from '../styles/register.styles';
 
-const ROLES: { label: string; value: UserRole }[] = [
-  { label: '🧑 Patient', value: 'PATIENT' },
-  { label: '👨‍⚕️ Doctor', value: 'DOCTOR' },
+const ROLES: { label: string; icon: keyof typeof Ionicons.glyphMap; value: UserRole }[] = [
+  { label: 'Patient', icon: 'person-outline', value: 'PATIENT' },
+  { label: 'Doctor', icon: 'medkit-outline', value: 'DOCTOR' },
 ];
 
 export function RegisterForm() {
   const router = useRouter();
-  const { theme } = useTheme();
-  const styles = useMemo(() => createRegisterStyles(theme), [theme]);
+  const { theme, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const { register, isLoading, error, clearError } = useAuthStore();
 
@@ -63,17 +63,22 @@ export function RegisterForm() {
       darkIllustration={require('../../../../assets/images/dark-signup-illustration.png')}
     >
       <View style={styles.container}>
-        {/* Header */}
-        <View style={[styles.header, { marginBottom: 24 }]}>
-          <Text style={{ fontSize: 28, fontWeight: '700', color: theme.colors.text }}>Create Account</Text>
-          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, marginTop: 4 }}>
-            Join MedLink to manage your health
-          </Text>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="medical" size={28} color={theme.colors.primary} />
+          </View>
         </View>
 
-        {/* Error Banner */}
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+        </View>
+
+        {/* Error */}
         {error && (
           <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={18} color={theme.colors.error} style={{ marginRight: 8 }} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -89,6 +94,12 @@ export function RegisterForm() {
               ]}
               onPress={() => setRole(r.value)}
             >
+              <Ionicons
+                name={r.icon}
+                size={18}
+                color={role === r.value ? theme.colors.primary : theme.colors.textTertiary}
+                style={{ marginRight: 6 }}
+              />
               <Text
                 style={[
                   styles.roleButtonText,
@@ -101,58 +112,221 @@ export function RegisterForm() {
           ))}
         </View>
 
-        {/* Name Row */}
-        <View style={styles.nameRow}>
+        {/* Form */}
+        <View style={styles.form}>
+          <View style={styles.formRow}>
+            <Input
+              placeholder="First Name"
+              value={firstName}
+              onChangeText={clearOnChange(setFirstName)}
+              leftIcon={<Ionicons name="person-outline" size={20} color={theme.colors.textTertiary} />}
+              containerStyle={{ flex: 1 }}
+            />
+            <Input
+              placeholder="Last Name"
+              value={lastName}
+              onChangeText={clearOnChange(setLastName)}
+              leftIcon={<Ionicons name="person-outline" size={20} color={theme.colors.textTertiary} />}
+              containerStyle={{ flex: 1 }}
+            />
+          </View>
+
           <Input
-            label="First Name"
-            placeholder="John"
-            value={firstName}
-            onChangeText={clearOnChange(setFirstName)}
-            containerStyle={styles.nameField}
+            placeholder="email address"
+            value={email}
+            onChangeText={clearOnChange(setEmail)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            leftIcon={<Ionicons name="mail-outline" size={20} color={theme.colors.textTertiary} />}
           />
+
           <Input
-            label="Last Name"
-            placeholder="Doe"
-            value={lastName}
-            onChangeText={clearOnChange(setLastName)}
-            containerStyle={styles.nameField}
+            placeholder="Password (min. 6 chars)"
+            value={password}
+            onChangeText={clearOnChange(setPassword)}
+            secureTextEntry
+            leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.colors.textTertiary} />}
+          />
+
+          <Button
+            title="Create Account"
+            onPress={handleRegister}
+            loading={isLoading}
+            fullWidth
+            style={styles.submitBtn}
+            disabled={!isValid}
           />
         </View>
 
-        <Input
-          label="Email"
-          placeholder="you@example.com"
-          value={email}
-          onChangeText={clearOnChange(setEmail)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <Input
-          label="Password"
-          placeholder="Min 6 characters"
-          value={password}
-          onChangeText={clearOnChange(setPassword)}
-          secureTextEntry
-        />
-
-        <Button
-          title="Create Account"
-          onPress={handleRegister}
-          loading={isLoading}
-          fullWidth
-          disabled={!isValid}
-        />
-
-        {/* Login Link */}
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Already have an account?</Text>
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.loginLink}>Sign In</Text>
+        {/* Social
+        
+           <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+           <View style={styles.socialRow}>
+          <Pressable style={styles.socialBtn}>
+            <Ionicons name="logo-apple" size={22} color={theme.colors.text} />
           </Pressable>
-        </View>
+          <Pressable style={[styles.socialBtn, styles.socialBtnGoogle]}>
+            <Ionicons name="logo-google" size={22} color="#4285F4" />
+          </Pressable>
+          <Pressable style={styles.socialBtn}>
+            <Ionicons name="logo-twitter" size={22} color={theme.colors.text} />
+          </Pressable>
+        </View>*/}
+
+
+        <Text style={styles.subtitle}>
+          Already have an account?{' '}
+          <Text
+            style={styles.link}
+            onPress={() => router.push('/(auth)/login')}
+          >
+            Sign in
+          </Text>
+        </Text>
       </View>
     </AuthContainer>
   );
 }
+
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      alignItems: 'center',
+    },
+    logoContainer: {
+      marginBottom: 20,
+    },
+    logoBadge: {
+      width: 56,
+      height: 56,
+      borderRadius: 16,
+      backgroundColor: theme.colors.primary + '15',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '25',
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: '700',
+      color: theme.colors.text,
+      letterSpacing: -0.5,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      lineHeight: 20,
+      marginTop: 16,
+    },
+    link: {
+      color: theme.colors.text,
+      fontWeight: '700',
+    },
+    errorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.errorLight + '20',
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 16,
+      width: '100%',
+      borderWidth: 1,
+      borderColor: theme.colors.error + '20',
+    },
+    errorText: {
+      fontSize: 13,
+      color: theme.colors.error,
+      flex: 1,
+    },
+    roleSelector: {
+      flexDirection: 'row',
+      gap: 12,
+      width: '100%',
+      marginBottom: 20,
+    },
+    roleButton: {
+      flex: 1,
+      flexDirection: 'row',
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: theme.colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+    },
+    roleButtonActive: {
+      borderColor: theme.colors.primary + '60',
+      backgroundColor: theme.colors.primary + '08',
+    },
+    roleButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    roleButtonTextActive: {
+      color: theme.colors.primary,
+      fontWeight: '700',
+    },
+    form: {
+      width: '100%',
+      gap: 14,
+    },
+    formRow: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    submitBtn: {
+      marginTop: 4,
+      height: 50,
+      borderRadius: 14,
+    },
+    divider: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      marginVertical: 24,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: theme.colors.border,
+    },
+    dividerText: {
+      marginHorizontal: 16,
+      fontSize: 12,
+      color: theme.colors.textTertiary,
+      fontWeight: '500',
+      textTransform: 'uppercase',
+    },
+    socialRow: {
+      flexDirection: 'row',
+      gap: 12,
+      width: '100%',
+    },
+    socialBtn: {
+      flex: 1,
+      height: 48,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    socialBtnGoogle: {
+      borderColor: theme.colors.primary + '30',
+      backgroundColor: theme.colors.primary + '08',
+    },
+  });

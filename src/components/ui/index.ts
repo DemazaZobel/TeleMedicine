@@ -9,3 +9,4 @@ export { ComingSoon } from './ComingSoon';
 export { EmptyState } from './EmptyState';
 export { Sidebar } from './Sidebar';
 export { MobileWebNav } from './MobileWebNav';
+export { ModalBase } from './ModalBase';

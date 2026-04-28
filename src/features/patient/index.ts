@@ -5,3 +5,4 @@ export { MedicalInfoView } from './components/MedicalInfoView';
 export { DoctorCard } from './components/DoctorCard';
 export { FilterChips } from './components/FilterChips';
 export { SearchBar } from './components/SearchBar';
+export { DoctorDetailsModal } from './components/DoctorDetailsModal';

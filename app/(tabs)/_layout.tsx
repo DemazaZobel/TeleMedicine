@@ -67,10 +67,12 @@ export default function TabsLayout() {
   );
 
   if (isWeb) {
+    const showSidebar = isDesktop && (userRole !== 'DOCTOR' || verificationStage === 'APPROVED');
+    
     if (isDesktop) {
       return (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <Sidebar />
+          {showSidebar && <Sidebar />}
           <View style={{ flex: 1 }}>
             {tabsElement}
           </View>

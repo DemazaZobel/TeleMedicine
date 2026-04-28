@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Card, EmptyState, ScreenContainer } from '../../src/components/ui';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
-import { DoctorCard, FilterChips, SearchBar } from '../../src/features/patient';
+import { DoctorCard, FilterChips, SearchBar, DoctorDetailsModal } from '../../src/features/patient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useBookingStore } from '../../src/store/booking.store';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
@@ -15,9 +15,12 @@ import { useTheme } from '../../src/theme';
 export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
+  const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
   const isVerified = useDoctorStore((s) => s.isDoctorVerified());
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
 
   // Booking Store
   const { notifications, fetchNotifications, appointments, fetchMyAppointments } = useBookingStore();
@@ -40,6 +43,7 @@ export default function HomeScreen() {
   useEffect(() => {
     if (user?.role === 'PATIENT') {
       fetchDoctors();
+      fetchMyAppointments();
     } else if (user?.role === 'DOCTOR') {
       fetchMyAppointments();
       fetchProfile();
@@ -151,8 +155,8 @@ export default function HomeScreen() {
     );
   };
 
-  const { width } = useWindowDimensions();
-  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+  // Add state for selected doctor
+  const [selectedDoctor, setSelectedDoctor] = React.useState<any>(null);
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
@@ -165,7 +169,7 @@ export default function HomeScreen() {
           <View style={[styles.cardWrapper, { flex: 1, maxWidth: `${100 / numColumns}%` }]}>
             <DoctorCard
               doctor={item}
-              onPress={() => router.push(`/doctor/${item.id}` as any)}
+              onPress={() => setSelectedDoctor(item)}
             />
           </View>
         )}
@@ -173,6 +177,12 @@ export default function HomeScreen() {
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+      
+      <DoctorDetailsModal
+        visible={!!selectedDoctor}
+        onClose={() => setSelectedDoctor(null)}
+        doctor={selectedDoctor}
       />
     </ScreenContainer>
   );

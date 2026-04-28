@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Card, Button, Input } from '../../../components/ui';
+import { ModalBase } from '../../../components/ui/ModalBase';
 import { useBookingStore } from '../../../store/booking.store';
+import { useDiscoveryStore } from '../../../store/discovery.store';
 import { useTheme } from '../../../theme';
 import type { Theme } from '../../../theme';
 import type { AppointmentMode } from '../types/bookingTypes';
@@ -15,12 +17,34 @@ interface BookingModalProps {
 
 export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingModalProps) {
   const { theme } = useTheme();
-  const styles = createStyles(theme);
-  const { bookAppointment, isLoading, error } = useBookingStore();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { bookAppointment, fetchMyAppointments, appointments, isLoading, error } = useBookingStore();
 
   const [mode, setMode] = useState<AppointmentMode>('ONLINE');
   const [reason, setReason] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const { doctors } = useDiscoveryStore();
+
+  // Check if there is already an active appointment with this doctor
+  const hasActiveAppointment = useMemo(() => {
+    const doctor = doctors.find(d => String(d.id) === String(doctorId));
+    return appointments.some((a) => {
+      const docId = String(a.doctor?.id || a.doctor);
+      const matchId = docId === String(doctorId) || (doctor && docId === String(doctor.user_id));
+      const matchStatus = ['requested', 'confirmed', 'pending'].includes(a.status?.toLowerCase() || '');
+      return matchId && matchStatus;
+    });
+  }, [appointments, doctorId, doctors]);
+
+  useEffect(() => {
+    if (visible) {
+      setReason('');
+      setMode('ONLINE');
+      setSelectedIndex(0);
+      fetchMyAppointments(); // Fetch latest to ensure accurate double-booking check
+    }
+  }, [visible, fetchMyAppointments]);
 
   // Generate generic future times for demo purposes
   const getMockSlots = () => {
@@ -43,6 +67,11 @@ export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingM
   const [slots] = useState(getMockSlots());
 
   const handleBook = async () => {
+    if (hasActiveAppointment) {
+      Alert.alert('Booking Exists', 'You already have an active appointment with this doctor.');
+      return;
+    }
+
     try {
       const selectedSlot = slots[selectedIndex];
       await bookAppointment({
@@ -59,113 +88,103 @@ export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingM
   };
 
   return (
-    <Modal
+    <ModalBase
       visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      title="Book Appointment"
+      subtitle="Select your preferred mode and provide a reason."
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.title}>Book Appointment</Text>
-          <Text style={styles.subtitle}>Select your preferred mode and provide a reason.</Text>
-          
-          <Text style={styles.label}>Select Time Slot</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotScroll}>
-            {slots.map((slot, index) => {
-               const isActive = index === selectedIndex;
-               return (
-                 <TouchableOpacity 
-                   key={index} 
-                   style={[styles.slotCard, isActive && styles.slotCardActive]}
-                   onPress={() => setSelectedIndex(index)}
-                 >
-                     <Text style={[styles.slotDate, isActive && styles.activeText]}>
-                       {slot.start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                     </Text>
-                     <Text style={[styles.slotTime, isActive && styles.activeText]}>
-                       {slot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                     </Text>
-                 </TouchableOpacity>
-               )
-            })}
-          </ScrollView>
-
-          <Text style={styles.label}>Consultation Mode</Text>
-          <View style={styles.modeToggle}>
-            <TouchableOpacity 
-              style={[styles.modeButton, mode === 'ONLINE' && styles.modeButtonActive]}
-              onPress={() => setMode('ONLINE')}
-            >
-              <Text style={[styles.modeText, mode === 'ONLINE' && styles.modeTextActive]}>Online</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.modeButton, mode === 'IN_PERSON' && styles.modeButtonActive]}
-              onPress={() => setMode('IN_PERSON')}
-            >
-              <Text style={[styles.modeText, mode === 'IN_PERSON' && styles.modeTextActive]}>In Person</Text>
-            </TouchableOpacity>
+      <View>
+        {hasActiveAppointment && (
+          <View style={[styles.warningBanner, { backgroundColor: theme.colors.amber50 }]}>
+            <Text style={[styles.warningText, { color: theme.colors.amber700 }]}>
+              You already have a pending or confirmed appointment with this doctor.
+            </Text>
           </View>
+        )}
 
-          <Input
-            label="Reason for Visit"
-            placeholder="E.g., Follow up, General checkup"
-            value={reason}
-            onChangeText={setReason}
-            multiline
-            numberOfLines={3}
+        <Text style={styles.label}>Select Time Slot</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotScroll}>
+          {slots.map((slot, index) => {
+             const isActive = index === selectedIndex;
+             return (
+               <TouchableOpacity 
+                 key={index} 
+                 style={[styles.slotCard, isActive && styles.slotCardActive]}
+                 onPress={() => setSelectedIndex(index)}
+               >
+                   <Text style={[styles.slotDate, isActive && styles.activeText]}>
+                     {slot.start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                   </Text>
+                   <Text style={[styles.slotTime, isActive && styles.activeText]}>
+                     {slot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                   </Text>
+               </TouchableOpacity>
+             )
+          })}
+        </ScrollView>
+
+        <Text style={styles.label}>Consultation Mode</Text>
+        <View style={styles.modeToggle}>
+          <TouchableOpacity 
+            style={[styles.modeButton, mode === 'ONLINE' && styles.modeButtonActive]}
+            onPress={() => setMode('ONLINE')}
+          >
+            <Text style={[styles.modeText, mode === 'ONLINE' && styles.modeTextActive]}>Online</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.modeButton, mode === 'IN_PERSON' && styles.modeButtonActive]}
+            onPress={() => setMode('IN_PERSON')}
+          >
+            <Text style={[styles.modeText, mode === 'IN_PERSON' && styles.modeTextActive]}>In Person</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Input
+          label="Reason for Visit"
+          placeholder="E.g., Follow up, General checkup"
+          value={reason}
+          onChangeText={setReason}
+          multiline
+          numberOfLines={3}
+        />
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <View style={styles.actions}>
+          <Button 
+             title="Cancel" 
+             variant="outline" 
+             onPress={onClose} 
+             disabled={isLoading}
+             style={styles.actionBtn}
           />
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <View style={styles.actions}>
-            <Button 
-               title="Cancel" 
-               variant="outline" 
-               onPress={onClose} 
-               disabled={isLoading}
-               style={styles.actionBtn}
-            />
-            <Button 
-               title={isLoading ? "Booking..." : "Confirm Book"} 
-               onPress={handleBook} 
-               disabled={isLoading || !reason}
-               style={styles.actionBtn}
-               loading={isLoading}
-            />
-          </View>
+          <Button 
+             title={isLoading ? "Booking..." : "Confirm Book"} 
+             onPress={handleBook} 
+             disabled={isLoading || !reason || hasActiveAppointment}
+             style={styles.actionBtn}
+             loading={isLoading}
+          />
         </View>
       </View>
-    </Modal>
+    </ModalBase>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'flex-end',
-    },
-    modalContent: {
-      backgroundColor: theme.colors.background,
-      borderTopLeftRadius: theme.radius.xl,
-      borderTopRightRadius: theme.radius.xl,
-      padding: theme.spacing.xl,
-      minHeight: '60%',
-    },
-    title: {
-      ...theme.typography.h3,
-      color: theme.colors.text,
-      marginBottom: theme.spacing.xs,
-    },
-    subtitle: {
-      ...theme.typography.bodySm,
-      color: theme.colors.textSecondary,
+    warningBanner: {
+      padding: theme.spacing.md,
+      borderRadius: theme.radius.md,
       marginBottom: theme.spacing.lg,
     },
+    warningText: {
+      ...theme.typography.bodySm,
+      fontWeight: '600',
+    },
     label: {
-      ...theme.typography.caption,
+      ...theme.typography.label,
       color: theme.colors.textSecondary,
       marginBottom: theme.spacing.sm,
     },

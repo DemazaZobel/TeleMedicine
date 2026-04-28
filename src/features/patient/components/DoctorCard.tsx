@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card } from '../../../components/ui/Card';
 import { useTheme } from '../../../theme';
 import type { Theme } from '../../../theme';
 import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
@@ -16,88 +15,103 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      <Card style={styles.card}>
-        <View style={styles.header}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.avatarContainer}>
           <Image
             source={require('../../../../assets/images/doctor-avatar.png')}
             style={styles.avatar}
           />
-          <View style={styles.info}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name} numberOfLines={1}>
-                Dr. {doctor.first_name} {doctor.last_name}
-              </Text>
-              {doctor.is_verified && (
-                <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
-              )}
+        </View>
+        <View style={styles.info}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name} numberOfLines={1}>
+              Dr. {doctor.first_name} {doctor.last_name}
+            </Text>
+            {doctor.is_verified && (
+              <Ionicons name="checkmark-circle" size={18} color={theme.colors.primary} style={styles.badge} />
+            )}
+          </View>
+          <Text style={styles.specialization}>{doctor.specialization}</Text>
+          
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Ionicons name="star" size={16} color="#FFB800" />
+              <Text style={styles.statText}>{doctor.average_rating}</Text>
             </View>
-            <Text style={styles.specialization}>{doctor.specialization}</Text>
-            
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Ionicons name="star" size={14} color="#FFB800" />
-                <Text style={styles.statText}>{doctor.average_rating}</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
-                <Text style={styles.statText}>{doctor.years_of_experience} yrs</Text>
-              </View>
+            <Text style={styles.statDot}>•</Text>
+            <View style={styles.statItem}>
+              <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
+              <Text style={styles.statText}>{doctor.years_of_experience} yrs</Text>
             </View>
           </View>
         </View>
+      </View>
 
-        <View style={styles.divider} />
+      <View style={styles.divider} />
 
-        <View style={styles.footer}>
-          <Text style={styles.feeLabel}>Consultation Fee</Text>
-          <Text style={styles.feeAmount}>Br {doctor.consultation_fee}</Text>
-        </View>
-      </Card>
+      <View style={styles.footer}>
+        <Text style={styles.feeLabel}>Consultation Fee</Text>
+        <Text style={styles.feeAmount}>Br {doctor.consultation_fee}</Text>
+      </View>
     </TouchableOpacity>
   );
 });
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    card: {
-      marginBottom: theme.spacing.md,
-      padding: theme.spacing.md,
+    container: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 20,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      shadowOpacity: 0.05,
+      padding: 20,
+      marginBottom: 16,
+      ...theme.shadows.sm,
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
     },
+    avatarContainer: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: theme.colors.primaryLight + '30',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderStyle: 'dashed',
+    },
     avatar: {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: theme.colors.primaryLight,
-      marginRight: theme.spacing.md,
     },
     info: {
       flex: 1,
+      justifyContent: 'center',
     },
     nameRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
+      marginBottom: 4,
     },
     name: {
-      ...theme.typography.h4,
+      fontSize: 22,
+      fontWeight: '800',
       color: theme.colors.text,
-      fontWeight: '700',
+    },
+    badge: {
+      marginLeft: 6,
     },
     specialization: {
-      ...theme.typography.bodySm,
-      color: theme.colors.primary,
+      fontSize: 16,
       fontWeight: '600',
-      marginTop: 2,
-      marginBottom: 6,
+      color: theme.colors.primary,
+      marginBottom: 8,
     },
     statsRow: {
       flexDirection: 'row',
@@ -109,21 +123,20 @@ const createStyles = (theme: Theme) =>
       gap: 4,
     },
     statText: {
-      ...theme.typography.caption,
-      color: theme.colors.textSecondary,
+      fontSize: 15,
       fontWeight: '600',
+      color: theme.colors.textSecondary,
     },
-    statDivider: {
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: theme.colors.textTertiary,
+    statDot: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.textTertiary,
       marginHorizontal: 8,
     },
     divider: {
       height: 1,
       backgroundColor: theme.colors.border,
-      marginVertical: theme.spacing.md,
+      marginVertical: 16,
     },
     footer: {
       flexDirection: 'row',
@@ -131,12 +144,13 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
     },
     feeLabel: {
-      ...theme.typography.caption,
+      fontSize: 15,
       color: theme.colors.textSecondary,
+      fontWeight: '500',
     },
     feeAmount: {
-      ...theme.typography.body,
+      fontSize: 20,
+      fontWeight: '800',
       color: theme.colors.text,
-      fontWeight: '700',
     },
   });
