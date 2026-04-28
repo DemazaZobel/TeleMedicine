@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, ScrollView, ViewStyle, StatusBar } from 'react-native';
+import { View, ScrollView, ViewStyle, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../../theme';
 import { createScreenContainerStyles } from './ScreenContainer.styles';
 
@@ -33,7 +34,7 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         style,
       ]}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
+      keyboardShouldPersistTaps="handled" 
     >
       {children}
     </ScrollView>
@@ -52,11 +53,25 @@ export const ScreenContainer = React.memo(function ScreenContainer({
 
   return (
     <>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
       {safeArea ? (
-        <SafeAreaView style={styles.safeArea}>{content}</SafeAreaView>
+        <SafeAreaView style={styles.safeArea}>
+          <KeyboardAvoidingView
+            style={{ flex: 1, width: '100%' }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            {content}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       ) : (
-        content
+        <KeyboardAvoidingView
+          style={{ flex: 1, width: '100%' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          {content}
+        </KeyboardAvoidingView>
       )}
     </>
   );

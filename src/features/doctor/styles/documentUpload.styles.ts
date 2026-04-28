@@ -4,20 +4,23 @@ import type { Theme } from '../../../theme';
 export const createDocumentUploadStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      paddingTop: theme.spacing['3xl'],
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.xl,
     },
     title: {
       ...theme.typography.h2,
       color: theme.colors.text,
-      marginBottom: theme.spacing.sm,
+      marginBottom: theme.spacing.xs,
+      fontWeight: '700',
     },
     subtitle: {
-      ...theme.typography.bodySm,
+      ...theme.typography.body,
       color: theme.colors.textSecondary,
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing['2xl'],
+      lineHeight: 24,
     },
     uploadArea: {
-      borderWidth: 2,
+      borderWidth: 1,
       borderStyle: 'dashed',
       borderColor: theme.colors.border,
       borderRadius: theme.radius.lg,

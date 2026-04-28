@@ -4,12 +4,14 @@ import type { Theme } from '../../../theme';
 export const createDoctorProfileStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      paddingTop: theme.spacing['3xl'],
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.xl,
     },
     title: {
       ...theme.typography.h2,
       color: theme.colors.text,
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
+      fontWeight: '700',
     },
     section: {
       marginBottom: theme.spacing.xl,
@@ -18,6 +20,7 @@ export const createDoctorProfileStyles = (theme: Theme) =>
       ...theme.typography.h4,
       color: theme.colors.text,
       marginBottom: theme.spacing.md,
+      fontWeight: '600',
     },
     row: {
       flexDirection: 'row',

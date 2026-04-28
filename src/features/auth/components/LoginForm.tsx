@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Input, Button } from '../../../components/ui';
+import { AuthContainer, Input, Button } from '../../../components/ui';
 import { useTheme } from '../../../theme';
 import { useAuthStore } from '../../../store/authStore';
 import { createLoginStyles } from '../styles/login.styles';
@@ -21,19 +21,34 @@ export function LoginForm() {
     try {
       await login({ email: email.trim(), password });
       // AuthGate in root layout will redirect to (tabs) automatically
-    } catch {
-      // Error is set in the store
+    } catch (err: any) {
+      // Check if the backend threw the specific "not verified" error
+      const errorData = err?.response?.data;
+      const detail = errorData?.detail;
+      const isUnverified =
+        detail === 'Please verify your email before logging in.' ||
+        (Array.isArray(detail) && detail[0] === 'Please verify your email before logging in.');
+
+      if (isUnverified) {
+        // Clear the error so it doesn't flash on the next visit
+        clearError();
+        router.push({
+          pathname: '/(auth)/verify-email',
+          params: { email: email.trim() },
+        });
+      }
     }
   }, [email, password, login]);
 
   return (
-    <ScreenContainer scrollable centered>
+    <AuthContainer 
+      illustration={require('../../../../assets/images/login-illustration.png')}
+      darkIllustration={require('../../../../assets/images/dark-login-illustration.png')}
+    >
       <View style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>🏥</Text>
-          <Text style={styles.appName}>MedLink</Text>
-          <Text style={styles.tagline}>Your Health, Connected</Text>
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontSize: 28, fontWeight: '700', color: theme.colors.text }}>Welcome Back</Text>
+          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, marginTop: 4 }}>Sign in to continue to MedLink</Text>
         </View>
 
         {/* Error Banner */}
@@ -91,6 +106,6 @@ export function LoginForm() {
           </Pressable>
         </View>
       </View>
-    </ScreenContainer>
+    </AuthContainer>
   );
 }

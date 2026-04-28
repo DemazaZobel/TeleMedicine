@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import type { User, AuthTokens, LoginRequest, RegisterRequest } from '../types';
+import type {
+  User,
+  AuthTokens,
+  LoginRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
+} from '../types';
 import { authService } from '../features/auth/services/authService';
 import { STORAGE_KEYS } from '../services/api';
 
@@ -21,6 +28,9 @@ interface AuthActions {
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  fetchProfile: () => Promise<void>;
+  updateProfile: (payload: UpdateProfileRequest) => Promise<void>;
+  changePassword: (payload: ChangePasswordRequest) => Promise<void>;
   setUser: (user: User) => void;
   clearError: () => void;
 }
@@ -44,26 +54,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   /**
    * Bootstrap: hydrate auth state from SecureStore on app launch.
    *
-   * Strategy (no /auth/me/ endpoint available):
+   * Strategy (now uses /auth/profile/):
    *  1. Read refresh token from SecureStore
    *  2. Attempt token refresh → validates session is still alive
-   *  3. If refresh succeeds → restore persisted user snapshot
+   *  3. If refresh succeeds → fetch live profile from /auth/profile/
    *  4. If refresh fails → session expired → force logout
-   *
-   * The user object is the snapshot persisted at login time.
-   * It is NOT re-fetched from the server because /auth/me/ does not exist.
    */
   bootstrap: async () => {
     try {
       set({ isBootstrapping: true });
 
-      const [refreshTokenValue, userJson] = await Promise.all([
-        SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
-        SecureStore.getItemAsync(STORAGE_KEYS.USER),
-      ]);
+      const refreshTokenValue = await SecureStore.getItemAsync(
+        STORAGE_KEYS.REFRESH_TOKEN
+      );
 
       // No stored session → stay logged out
-      if (!refreshTokenValue || !userJson) {
+      if (!refreshTokenValue) {
         set({ isBootstrapping: false });
         return;
       }
@@ -75,7 +81,28 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
 
-        const user: User = JSON.parse(userJson);
+        // Read existing stored user (has role from login)
+        const userJson = await SecureStore.getItemAsync(STORAGE_KEYS.USER);
+        const storedUser = userJson ? JSON.parse(userJson) : null;
+
+        // Fetch live profile and merge, preserving role from stored snapshot
+        let user;
+        try {
+          const profileData = await authService.getProfile();
+          user = storedUser
+            ? { ...storedUser, ...profileData, role: storedUser.role }
+            : profileData;
+        } catch {
+          // If profile fetch fails, fall back to stored user
+          user = storedUser;
+        }
+
+        if (!user) {
+          set({ isBootstrapping: false });
+          return;
+        }
+
+        await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(user));
 
         set({
           user,
@@ -104,12 +131,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   /**
-   * Login: authenticate and persist tokens + user snapshot.
-   *
-   * Backend contract:
-   *  - Email must be verified before tokens are issued.
-   *  - Doctors must also be admin-approved before tokens are issued.
-   *  - Response includes user object + JWT tokens.
+   * Login: authenticate and persist tokens + user profile.
    */
   login: async (credentials: LoginRequest) => {
     try {
@@ -131,17 +153,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoading: false,
       });
     } catch (error: any) {
-      console.error('[AUTH STORE] Login Error:', error);
-      
       let message = 'Login failed. Please try again.';
-      if (error?.response?.data) {
-        // Extract exact backend error if available (e.g. { detail: '...' } or { non_field_errors: [...] })
-        const data = error.response.data;
-        message = data.detail || data.non_field_errors?.[0] || data.message || JSON.stringify(data);
+      
+      // Override explicit backend error with generic security message on 401
+      if (axiosError?.response?.status === 401) {
+        message = 'Invalid email or password. Please try again.';
+      } else if (axiosError?.response?.data) {
+        const data = axiosError.response.data;
+        message =
+          (data.detail as string) ||
+          ((data.non_field_errors as string[])?.[0]) ||
+          (data.message as string) ||
+          JSON.stringify(data);
       } else if (error instanceof Error) {
         message = error.message;
       }
-      
+
       set({ isLoading: false, error: message });
       throw error;
     }
@@ -149,8 +176,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /**
    * Register: create account.
-   * User must verify email before they can login.
-   * Doctors additionally need admin approval.
    */
   register: async (payload: RegisterRequest) => {
     try {
@@ -158,12 +183,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       await authService.register(payload);
       set({ isLoading: false });
     } catch (error: any) {
-      console.error('[AUTH STORE] Register Error:', error);
-
       let message = 'Registration failed. Please try again.';
-      if (error?.response?.data) {
-        const data = error.response.data;
-        message = data.detail || data.email?.[0] || data.message || JSON.stringify(data);
+      if (axiosError?.response?.data) {
+        const data = axiosError.response.data;
+        message =
+          (data.detail as string) ||
+          ((data.email as string[])?.[0]) ||
+          (data.message as string) ||
+          JSON.stringify(data);
       } else if (error instanceof Error) {
         message = error.message;
       }
@@ -196,7 +223,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /**
    * Refresh Token: get new access token using refresh token.
-   * Does NOT attempt to refetch user profile (no /auth/me/ endpoint).
    */
   refreshToken: async () => {
     try {
@@ -217,6 +243,72 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   /**
+   * Fetch profile: GET /auth/profile/ and merge with local state.
+   * IMPORTANT: We merge rather than replace because the profile endpoint
+   * may not return fields like `role`, `is_verified`, `is_doctor_approved`
+   * that were present in the original login response.
+   */
+  fetchProfile: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const profileData = await authService.getProfile();
+      const existingUser = get().user;
+      // Merge: keep existing fields (like role), overlay with fresh profile data
+      const mergedUser = existingUser
+        ? { ...existingUser, ...profileData, role: existingUser.role }
+        : profileData;
+      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      set({ user: mergedUser, isLoading: false });
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) || 'Failed to load profile.';
+      set({ isLoading: false, error: message });
+    }
+  },
+
+  /**
+   * Update profile: PUT /auth/profile/ and merge with local user.
+   */
+  updateProfile: async (payload: UpdateProfileRequest) => {
+    try {
+      set({ isLoading: true, error: null });
+      const profileData = await authService.updateProfile(payload);
+      const existingUser = get().user;
+      const mergedUser = existingUser
+        ? { ...existingUser, ...profileData, role: existingUser.role }
+        : profileData;
+      await SecureStore.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      set({ user: mergedUser, isLoading: false });
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) || 'Failed to update profile.';
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  /**
+   * Change password: PUT /auth/password/change/
+   */
+  changePassword: async (payload: ChangePasswordRequest) => {
+    try {
+      set({ isLoading: true, error: null });
+      await authService.changePassword(payload);
+      set({ isLoading: false });
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) ||
+        (axiosError?.response?.data?.old_password as string) ||
+        'Failed to change password.';
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  /**
    * Update the local user snapshot (also persists to SecureStore).
    */
   setUser: (user: User) => {
@@ -226,3 +318,4 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   clearError: () => set({ error: null }),
 }));
+
