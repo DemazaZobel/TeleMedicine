@@ -18,6 +18,8 @@ interface BookingState {
   availabilityRules: ProviderAvailabilityRuleDetail[];
   notifications: NotificationDetail[];
   preferences: NotificationPreferenceDetail | null;
+  wallet: DoctorWalletDetail | null;
+  paymentMethods: PaymentMethodDetail[];
   isLoading: boolean;
   error: string | null;
 }
@@ -32,8 +34,17 @@ interface BookingActions {
   respondToChangeRequest: (id: string | number, payload: AppointmentChangeResponsePayload) => Promise<void>;
   fetchNotifications: () => Promise<void>;
   markNotificationRead: (id: string | number) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
   fetchPreferences: () => Promise<void>;
   updatePreferences: (payload: Partial<NotificationPreferenceDetail>) => Promise<void>;
+  
+  // Payments
+  fetchPaymentMethods: () => Promise<void>;
+  initiatePayment: (appointmentId: string | number, paymentMethodId: string | number) => Promise<string>;
+  completeAppointment: (id: string | number) => Promise<void>;
+  fetchWallet: () => Promise<void>;
+  fetchPaymentHistory: () => Promise<void>;
+
   clearError: () => void;
 }
 
@@ -44,6 +55,8 @@ const initialState: BookingState = {
   availabilityRules: [],
   notifications: [],
   preferences: null,
+  wallet: null,
+  paymentMethods: [],
   isLoading: false,
   error: null,
 };
@@ -206,6 +219,21 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     }
   },
 
+  markAllNotificationsRead: async () => {
+    const { notifications, markNotificationRead } = get();
+    const unread = notifications.filter(n => !n.is_read);
+    
+    // Optimistically update UI
+    set({
+      notifications: notifications.map(n => ({ ...n, is_read: true }))
+    });
+
+    // Send requests in background
+    Promise.allSettled(
+      unread.map(n => bookingService.markNotificationRead(n.id))
+    ).catch(() => {});
+  },
+
   fetchPreferences: async () => {
     try {
       set({ isLoading: true, error: null });
@@ -233,5 +261,70 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     }
   },
 
-  clearError: () => set({ error: null })
+  clearError: () => set({ error: null }),
+
+  // ─── Payments ──────────────────────────────────────────
+
+  fetchPaymentMethods: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const methods = await bookingService.getPaymentMethods();
+      set({ paymentMethods: methods, isLoading: false });
+    } catch (error: any) {
+      const status = error.response?.status;
+      const message = error.response?.data?.detail || error.message;
+      set({ 
+        isLoading: false, 
+        error: status ? `Error ${status}: ${message}` : message 
+      });
+    }
+  },
+
+  initiatePayment: async (appointmentId: string | number, paymentMethodId: string | number) => {
+    try {
+      set({ isLoading: true, error: null });
+      const { checkout_url } = await bookingService.initiatePayment(appointmentId, paymentMethodId);
+      set({ isLoading: false });
+      return checkout_url;
+    } catch (error: any) {
+      set({ isLoading: false, error: error.response?.data?.detail || error.message });
+      throw error;
+    }
+  },
+
+  completeAppointment: async (id: string | number) => {
+    try {
+      set({ isLoading: true, error: null });
+      const updatedApp = await bookingService.completeAppointment(id);
+      set((state) => ({
+        appointments: state.appointments.map(app => 
+          app.id === id ? updatedApp : app
+        ),
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      set({ isLoading: false, error: error.response?.data?.detail || error.message });
+      throw error;
+    }
+  },
+
+  fetchWallet: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const wallet = await bookingService.getWallet();
+      set({ wallet, isLoading: false });
+    } catch (error: any) {
+      set({ isLoading: false, error: error.message });
+    }
+  },
+
+  fetchPaymentHistory: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      await bookingService.getPaymentHistory();
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ isLoading: false, error: error.message });
+    }
+  },
 }));
