@@ -152,9 +152,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { status?: number, data?: Record<string, unknown> }; message?: string };
-
+    } catch (error: any) {
       let message = 'Login failed. Please try again.';
       
       // Override explicit backend error with generic security message on 401
@@ -184,9 +182,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: true, error: null });
       await authService.register(payload);
       set({ isLoading: false });
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: Record<string, unknown> }; message?: string };
-
+    } catch (error: any) {
       let message = 'Registration failed. Please try again.';
       if (axiosError?.response?.data) {
         const data = axiosError.response.data;

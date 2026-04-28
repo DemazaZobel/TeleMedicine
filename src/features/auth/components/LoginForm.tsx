@@ -21,8 +21,22 @@ export function LoginForm() {
     try {
       await login({ email: email.trim(), password });
       // AuthGate in root layout will redirect to (tabs) automatically
-    } catch {
-      // Error is set in the store
+    } catch (err: any) {
+      // Check if the backend threw the specific "not verified" error
+      const errorData = err?.response?.data;
+      const detail = errorData?.detail;
+      const isUnverified =
+        detail === 'Please verify your email before logging in.' ||
+        (Array.isArray(detail) && detail[0] === 'Please verify your email before logging in.');
+
+      if (isUnverified) {
+        // Clear the error so it doesn't flash on the next visit
+        clearError();
+        router.push({
+          pathname: '/(auth)/verify-email',
+          params: { email: email.trim() },
+        });
+      }
     }
   }, [email, password, login]);
 
