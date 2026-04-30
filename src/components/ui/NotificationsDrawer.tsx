@@ -1,27 +1,31 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, SectionList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ActivityIndicator, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, EmptyState } from '../src/components/ui';
-import { useBookingStore } from '../src/store/booking.store';
-import { useTheme, Theme } from '../src/theme';
-import { formatRelativeTime } from '../src/utils';
+import { EmptyState, RightDrawer } from '../../components/ui';
+import { useBookingStore } from '../../store/booking.store';
+import { Theme, useTheme } from '../../theme';
+import { formatRelativeTime } from '../../utils';
 
-export default function NotificationsScreen() {
-  const router = useRouter();
+interface NotificationsDrawerProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export function NotificationsDrawer({ visible, onClose }: NotificationsDrawerProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { notifications, isLoading, fetchNotifications, markNotificationRead, markAllNotificationsRead } = useBookingStore();
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (visible) {
+      fetchNotifications();
+    }
+  }, [visible]);
 
   const handlePress = async (notification: any) => {
     if (!notification.is_read) {
       await markNotificationRead(notification.id);
     }
-    // Logic to navigate based on notification type could be added here
   };
 
   const handleMarkAllAsRead = async () => {
@@ -31,7 +35,7 @@ export default function NotificationsScreen() {
   const sections = useMemo(() => {
     const unread = notifications.filter(n => !n.is_read);
     const read = notifications.filter(n => n.is_read);
-    
+
     const result = [];
     if (unread.length > 0) {
       result.push({ title: 'New', data: unread });
@@ -45,19 +49,19 @@ export default function NotificationsScreen() {
   const hasUnread = notifications.some(n => !n.is_read);
 
   const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={[styles.notificationCard, !item.is_read && styles.unreadCard]} 
+    <TouchableOpacity
+      style={[styles.notificationCard, !item.is_read && styles.unreadCard]}
       onPress={() => handlePress(item)}
       activeOpacity={0.7}
     >
       <View style={[
-        styles.iconContainer, 
+        styles.iconContainer,
         item.type === 'APPOINTMENT' ? styles.iconAppt : styles.iconSystem
       ]}>
-        <Ionicons 
-          name={item.type === 'APPOINTMENT' ? 'calendar' : 'notifications'} 
-          size={22} 
-          color={item.type === 'APPOINTMENT' ? theme.colors.primary : theme.colors.textSecondary} 
+        <Ionicons
+          name={item.type === 'APPOINTMENT' ? 'calendar' : 'notifications'}
+          size={22}
+          color={item.type === 'APPOINTMENT' ? theme.colors.primary : theme.colors.textSecondary}
         />
       </View>
       <View style={styles.content}>
@@ -74,22 +78,21 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <ScreenContainer padded={false}>
-      <View style={styles.customHeader}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        {hasUnread ? (
-          <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllAsRead}>
-            <Ionicons name="checkmark-done" size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.backBtn} />
-        )}
-      </View>
-
+    <RightDrawer
+      visible={visible}
+      onClose={onClose}
+      title="Notifications"
+    >
       <View style={styles.pageWrapper}>
+        <View style={styles.actionsRow}>
+           {hasUnread && (
+            <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllAsRead}>
+              <Ionicons name="checkmark-done" size={20} color={theme.colors.primary} />
+              <Text style={[styles.markAllText, { color: theme.colors.primary }]}>Mark all as read</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {isLoading && notifications.length === 0 ? (
           <View style={styles.loader}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -104,10 +107,10 @@ export default function NotificationsScreen() {
             )}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <EmptyState 
-                  icon="notifications-off-outline" 
-                  title="No Notifications" 
-                  description="You're all caught up! New alerts will appear here." 
+                <EmptyState
+                  icon="notifications-off-outline"
+                  title="No Notifications"
+                  description="You're all caught up! New alerts will appear here."
                 />
               </View>
             }
@@ -119,44 +122,31 @@ export default function NotificationsScreen() {
           />
         )}
       </View>
-    </ScreenContainer>
+    </RightDrawer>
   );
 }
 
 const createStyles = (theme: Theme) => StyleSheet.create({
-  customHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: theme.spacing['2xl'],
-    paddingHorizontal: theme.spacing.sm,
-    backgroundColor: theme.colors.background,
-    paddingBottom: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  markAllBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    ...theme.typography.h3,
-    fontWeight: '700',
-    color: theme.colors.text,
-  },
   pageWrapper: {
     flex: 1,
     width: '100%',
-    maxWidth: 800,
-    alignSelf: 'center',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.xs,
+  },
+  markAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+  },
+  markAllText: {
+    ...theme.typography.buttonSm,
+    marginLeft: 6,
   },
   loader: {
     flex: 1,
@@ -165,7 +155,8 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
   listContent: {
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing['4xl'],
   },
   emptyContainer: {
     marginTop: theme.spacing['4xl'],
@@ -182,15 +173,15 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     alignItems: 'flex-start',
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.md,
     marginBottom: theme.spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   unreadCard: {
     backgroundColor: theme.colors.primaryLight + '15',
@@ -223,7 +214,7 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     ...theme.typography.body,
     fontWeight: '600',
     color: theme.colors.text,
-    fontSize: 16,
+    fontSize: 15,
     flex: 1,
     marginRight: 8,
   },
@@ -241,9 +232,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     fontWeight: '500',
   },
   unreadDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: theme.colors.primary,
     marginLeft: theme.spacing.sm,
     alignSelf: 'center',

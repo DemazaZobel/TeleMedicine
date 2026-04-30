@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../../../theme';
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import type { Theme } from '../../../theme';
+import { useTheme } from '../../../theme';
 
 const SPECIALIZATIONS = [
   'All',
+  'General',
   'Cardiology',
   'Pediatrics',
   'Dentistry',
@@ -62,7 +63,6 @@ export const FilterChips = React.memo(function FilterChips({ selected, onSelect 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      paddingHorizontal: theme.spacing.xl,
       gap: theme.spacing.sm,
       paddingVertical: theme.spacing.md,
     },

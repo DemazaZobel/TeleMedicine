@@ -24,11 +24,11 @@ export const createInputStyles = (theme: Theme) =>
     },
     inputWrapperFocused: {
       borderColor: theme.colors.borderFocused,
-      borderWidth: 1.5,
+      borderWidth: 1,
     },
     inputWrapperError: {
       borderColor: theme.colors.error,
-      borderWidth: 1.5,
+      borderWidth: 1,
     },
     input: {
       flex: 1,

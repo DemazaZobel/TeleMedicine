@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { EmptyState, ScreenContainer } from '../../src/components/ui';
+import { EmptyState, ScreenContainer, PageHeader } from '../../src/components/ui';
 import { AppointmentCard } from '../../src/features/booking/components/AppointmentCard';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
 import { useAuthStore } from '../../src/store/authStore';
@@ -91,12 +91,10 @@ export default function AppointmentsScreen() {
   return (
     <ScreenContainer scrollable={false} padded={false}>
       <View style={styles.pageWrapper}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Appointments</Text>
-          <Text style={styles.subtitle}>
-            {isDoctor ? "Manage your schedule" : "View your upcoming sessions"}
-          </Text>
-        </View>
+        <PageHeader 
+          title="Appointments"
+          subtitle={isDoctor ? "Manage your schedule" : "View your upcoming sessions"}
+        />
 
         {isLoading && !refreshing && appointments.length === 0 ? (
           <View style={styles.loader}>
@@ -137,22 +135,6 @@ const createStyles = (theme: Theme) =>
       width: '100%',
       maxWidth: 1100,
       alignSelf: 'center',
-    },
-    header: {
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing['2xl'],
-      paddingBottom: theme.spacing.md,
-      backgroundColor: theme.colors.background,
-    },
-    title: {
-      ...theme.typography.h2,
-      color: theme.colors.text,
-      fontWeight: '700',
-    },
-    subtitle: {
-      ...theme.typography.body,
-      color: theme.colors.textSecondary,
-      marginTop: theme.spacing.xs,
     },
     listContent: {
       paddingHorizontal: theme.spacing.xl,

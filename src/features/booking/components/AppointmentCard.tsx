@@ -19,7 +19,7 @@ interface AppointmentCardProps {
 export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: AppointmentCardProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { doctorDecision, respondToChangeRequest, isLoading } = useBookingStore();
+  const { doctorDecision, requestReschedule, respondToChangeRequest, isLoading } = useBookingStore();
   const { doctors } = useDiscoveryStore();
   const [rescheduleVisible, setRescheduleVisible] = useState(false);
 
@@ -56,8 +56,8 @@ export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: A
 
   const doc = appointment.doctor as any;
   const doctorProfileId = doc?.id || doc;
-  const foundDoctor = doctors.find(
-    d => String(d.id) === String(doctorProfileId) || String(d.user_id) === String(doctorProfileId)
+  const foundDoctor = (doctors || []).find(
+    d => String(d?.id) === String(doctorProfileId) || String(d?.user_id) === String(doctorProfileId)
   );
 
   const doctorName = doc?.user?.last_name
@@ -80,12 +80,22 @@ export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: A
 
   const handleProposeConfirm = async (payload: any) => {
     try {
-      await doctorDecision(appointment.id, {
-        action: 'propose_change',
-        ...payload
-      });
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      if (isDoctor) {
+        await doctorDecision(appointment.id, {
+          action: 'propose_change',
+          ...payload,
+          expires_at: expiresAt
+        });
+        Alert.alert('Success', 'Reschedule proposed to patient');
+      } else {
+        await requestReschedule(appointment.id, {
+          ...payload,
+          expires_at: expiresAt
+        });
+        Alert.alert('Success', 'Reschedule request sent to doctor');
+      }
       setRescheduleVisible(false);
-      Alert.alert('Success', 'Reschedule proposed to patient');
     } catch (error) { }
   };
 
@@ -178,11 +188,19 @@ export function AppointmentCard({ appointment, isDoctor, onCancel, onAccept }: A
 
       {/* Actions */}
       <View style={styles.actions}>
-        {onCancel && ['REQUESTED', 'CONFIRMED'].includes(appointment.status?.toUpperCase()) && (
-          <TouchableOpacity onPress={() => onCancel(appointment.id)}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.leftActions}>
+          {onCancel && ['REQUESTED', 'CONFIRMED'].includes(appointment.status?.toUpperCase()) && (
+            <TouchableOpacity onPress={() => onCancel(appointment.id)} style={styles.actionBtn}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+
+          {!isDoctor && ['REQUESTED', 'CONFIRMED'].includes(appointment.status?.toUpperCase()) && (
+            <TouchableOpacity onPress={() => setRescheduleVisible(true)} style={styles.actionBtn}>
+              <Text style={styles.rescheduleText}>Reschedule</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Primary CTA */}
         {appointment.status?.toUpperCase() === 'CONFIRMED' &&
@@ -221,22 +239,19 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
       backgroundColor: theme.colors.surface,
-      borderRadius: 18,
-      padding: 16,
-      marginBottom: 12,
+      borderRadius: theme.radius.xl,
+      padding: 20,
+      marginBottom: 16,
       borderWidth: 1,
-      borderColor: theme.colors.border + '30',
-
-      height: 200,
-      display: 'flex',
-      flexDirection: 'column',
+      borderColor: theme.colors.border,
+      ...theme.shadows.sm,
     },
 
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 12,
+      alignItems: 'flex-start',
+      marginBottom: 16,
     },
 
     userInfo: {
@@ -246,51 +261,60 @@ const createStyles = (theme: Theme) =>
     },
 
     avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: theme.colors.primary + '12',
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: theme.colors.primary + '10',
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 10,
+      marginRight: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '20',
     },
 
     avatarText: {
-      fontSize: 15,
+      fontSize: 18,
       fontWeight: '700',
       color: theme.colors.primary,
     },
 
     name: {
-      fontSize: 15,
+      fontSize: 17,
       fontWeight: '700',
       color: theme.colors.text,
     },
 
     subText: {
-      fontSize: 12,
+      fontSize: 13,
       color: theme.colors.textSecondary,
       marginTop: 2,
     },
 
     statusPill: {
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 999,
-      backgroundColor: theme.colors.border + '40',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: theme.radius.full,
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
 
     statusText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '600',
     },
 
     timeBlock: {
-      marginBottom: 12,
+      marginBottom: 16,
+      padding: 12,
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
 
     time: {
-      fontSize: 22,
+      fontSize: 24,
       fontWeight: '800',
       color: theme.colors.text,
     },
@@ -300,41 +324,59 @@ const createStyles = (theme: Theme) =>
     },
 
     date: {
-      fontSize: 13,
+      fontSize: 14,
       color: theme.colors.textSecondary,
-      marginTop: 2,
+      marginTop: 4,
+      fontWeight: '500',
     },
 
     reasonBlock: {
-      minHeight: 40,
+      marginBottom: 20,
     },
 
     reasonLabel: {
-      fontSize: 11,
+      fontSize: 12,
       color: theme.colors.textTertiary,
-      marginBottom: 2,
+      marginBottom: 4,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
 
     reason: {
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textSecondary,
-      lineHeight: 20,
+      lineHeight: 22,
     },
 
     actions: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginTop: 4,
     },
-
+    leftActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 20,
+    },
+    actionBtn: {
+      paddingVertical: 8,
+    },
     cancelText: {
-      fontSize: 13,
-      color: theme.colors.textTertiary,
+      fontSize: 14,
+      color: theme.colors.error,
+      fontWeight: '600',
+    },
+    rescheduleText: {
+      fontSize: 14,
+      color: theme.colors.primary,
+      fontWeight: '600',
     },
 
     primaryBtn: {
-      height: 36,
-      paddingHorizontal: 18,
-      borderRadius: 10,
+      height: 44,
+      paddingHorizontal: 24,
+      borderRadius: theme.radius.md,
     },
   });

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../theme';
 import type { Theme } from '../../../theme';
 import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
+import { StarRating } from '../../../components/ui';
 
 interface DoctorCardProps {
   doctor: ProviderSearchResult;
@@ -16,43 +17,44 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.container}>
-      <View style={styles.header}>
+      <View style={styles.mainContent}>
         <View style={styles.avatarContainer}>
           <Image
             source={require('../../../../assets/images/doctor-avatar.png')}
             style={styles.avatar}
           />
+          {doctor.is_verified && (
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="checkmark-sharp" size={10} color="#FFFFFF" />
+            </View>
+          )}
         </View>
-        <View style={styles.info}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>
-              Dr. {doctor.first_name} {doctor.last_name}
-            </Text>
-            {doctor.is_verified && (
-              <Ionicons name="checkmark-circle" size={18} color={theme.colors.primary} style={styles.badge} />
-            )}
+        
+        <View style={styles.infoContainer}>
+          <View style={styles.topRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name} numberOfLines={1}>
+                Dr. {doctor.first_name} {doctor.last_name}
+              </Text>
+              <Text style={styles.specialization}>{doctor.specialization}</Text>
+            </View>
+            <View style={styles.priceTag}>
+              <Text style={styles.priceText}>Br {doctor.consultation_fee}</Text>
+            </View>
           </View>
-          <Text style={styles.specialization}>{doctor.specialization}</Text>
-          
+
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Ionicons name="star" size={16} color="#FFB800" />
-              <Text style={styles.statText}>{doctor.average_rating}</Text>
+              <StarRating rating={Number(doctor.average_rating)} size={12} />
+              <Text style={styles.statValue}>{doctor.average_rating}</Text>
             </View>
-            <Text style={styles.statDot}>•</Text>
+            <View style={styles.dot} />
             <View style={styles.statItem}>
-              <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
-              <Text style={styles.statText}>{doctor.years_of_experience} yrs</Text>
+              <Ionicons name="briefcase-outline" size={14} color={theme.colors.textTertiary} />
+              <Text style={styles.statLabel}>{doctor.years_of_experience} yrs exp</Text>
             </View>
           </View>
         </View>
-      </View>
-
-      <View style={styles.divider} />
-
-      <View style={styles.footer}>
-        <Text style={styles.feeLabel}>Consultation Fee</Text>
-        <Text style={styles.feeAmount}>Br {doctor.consultation_fee}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -62,95 +64,99 @@ const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       backgroundColor: theme.colors.surface,
-      borderRadius: 20,
+      borderRadius: theme.radius.xl,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      padding: 20,
-      marginBottom: 16,
+      padding: 16,
+      marginBottom: 12,
       ...theme.shadows.sm,
     },
-    header: {
+    mainContent: {
       flexDirection: 'row',
       alignItems: 'center',
     },
     avatarContainer: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: theme.colors.primaryLight + '30',
-      justifyContent: 'center',
-      alignItems: 'center',
+      position: 'relative',
       marginRight: 16,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderStyle: 'dashed',
     },
     avatar: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      borderWidth: 2,
+      borderColor: theme.colors.border,
     },
-    info: {
-      flex: 1,
+    verifiedBadge: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: theme.colors.primary,
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 2,
+      borderColor: theme.colors.surface,
       justifyContent: 'center',
-    },
-    nameRow: {
-      flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 4,
+    },
+    infoContainer: {
+      flex: 1,
+    },
+    topRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 8,
     },
     name: {
-      fontSize: 22,
-      fontWeight: '800',
+      fontSize: 17,
+      fontWeight: '700',
       color: theme.colors.text,
-    },
-    badge: {
-      marginLeft: 6,
+      letterSpacing: -0.3,
     },
     specialization: {
-      fontSize: 16,
+      fontSize: 13,
       fontWeight: '600',
       color: theme.colors.primary,
-      marginBottom: 8,
+      textTransform: 'uppercase',
+      marginTop: 2,
+    },
+    priceTag: {
+      backgroundColor: theme.colors.primary + '10',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+    },
+    priceText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.colors.primary,
     },
     statsRow: {
       flexDirection: 'row',
       alignItems: 'center',
+      marginTop: 4,
     },
     statItem: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
     },
-    statText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.colors.textSecondary,
-    },
-    statDot: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.colors.textTertiary,
-      marginHorizontal: 8,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: theme.colors.border,
-      marginVertical: 16,
-    },
-    footer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    feeLabel: {
-      fontSize: 15,
-      color: theme.colors.textSecondary,
-      fontWeight: '500',
-    },
-    feeAmount: {
-      fontSize: 20,
-      fontWeight: '800',
+    statValue: {
+      fontSize: 13,
+      fontWeight: '700',
       color: theme.colors.text,
+      marginLeft: 2,
+    },
+    statLabel: {
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+    },
+    dot: {
+      width: 3,
+      height: 3,
+      borderRadius: 1.5,
+      backgroundColor: theme.colors.textTertiary,
+      marginHorizontal: 8,
     },
   });

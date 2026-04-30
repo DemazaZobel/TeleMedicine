@@ -1,16 +1,18 @@
 import { create } from 'zustand';
 import { bookingService } from '../features/booking/services/bookingService';
 import type {
-  AppointmentDetail,
   AppointmentBookingPayload,
   AppointmentCancelPayload,
-  ProviderAvailabilityRuleDetail,
-  ProviderAvailabilityRuleCreatePayload,
-  AppointmentChangeRequestDetail,
-  AppointmentDoctorDecisionPayload,
+  AppointmentChangeRequestCreatePayload,
   AppointmentChangeResponsePayload,
+  AppointmentDetail,
+  AppointmentDoctorDecisionPayload,
+  DoctorWalletDetail,
   NotificationDetail,
-  NotificationPreferenceDetail
+  NotificationPreferenceDetail,
+  PaymentMethodDetail,
+  ProviderAvailabilityRuleCreatePayload,
+  ProviderAvailabilityRuleDetail
 } from '../features/booking/types/bookingTypes';
 
 interface BookingState {
@@ -22,12 +24,14 @@ interface BookingState {
   paymentMethods: PaymentMethodDetail[];
   isLoading: boolean;
   error: string | null;
+  isNotificationsDrawerOpen: boolean;
 }
 
 interface BookingActions {
   fetchMyAppointments: () => Promise<void>;
   bookAppointment: (payload: AppointmentBookingPayload) => Promise<AppointmentDetail>;
   cancelAppointment: (id: string | number, payload?: AppointmentCancelPayload) => Promise<void>;
+  requestReschedule: (id: string | number, payload: AppointmentChangeRequestCreatePayload) => Promise<void>;
   fetchAvailabilityRules: () => Promise<void>;
   createAvailabilityRule: (payload: ProviderAvailabilityRuleCreatePayload) => Promise<void>;
   doctorDecision: (id: string | number, payload: AppointmentDoctorDecisionPayload) => Promise<void>;
@@ -37,7 +41,7 @@ interface BookingActions {
   markAllNotificationsRead: () => Promise<void>;
   fetchPreferences: () => Promise<void>;
   updatePreferences: (payload: Partial<NotificationPreferenceDetail>) => Promise<void>;
-  
+
   // Payments
   fetchPaymentMethods: () => Promise<void>;
   initiatePayment: (appointmentId: string | number, paymentMethodId: string | number) => Promise<string>;
@@ -45,6 +49,7 @@ interface BookingActions {
   fetchWallet: () => Promise<void>;
   fetchPaymentHistory: () => Promise<void>;
 
+  setIsNotificationsDrawerOpen: (open: boolean) => void;
   clearError: () => void;
 }
 
@@ -59,6 +64,7 @@ const initialState: BookingState = {
   paymentMethods: [],
   isLoading: false,
   error: null,
+  isNotificationsDrawerOpen: false,
 };
 
 export const useBookingStore = create<BookingStore>((set, get) => ({
@@ -100,7 +106,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({ isLoading: true, error: null });
       const response = await bookingService.cancel(id, payload);
       set((state) => ({
-        appointments: state.appointments.map(app => 
+        appointments: state.appointments.map(app =>
           app.id === id ? response.appointment : app
         ),
         isLoading: false,
@@ -109,6 +115,22 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({
         isLoading: false,
         error: error.response?.data?.detail || error.message || 'Failed to cancel appointment.'
+      });
+      throw error;
+    }
+  },
+
+  requestReschedule: async (id: string | number, payload: AppointmentChangeRequestCreatePayload) => {
+    try {
+      set({ isLoading: true, error: null });
+      await bookingService.createChangeRequest(id, payload);
+      // We don't need to update the appointment here as it just creates a change request
+      // The appointment status remains same until accepted.
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message || 'Failed to request reschedule.'
       });
       throw error;
     }
@@ -148,22 +170,22 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await bookingService.doctorDecision(id, payload);
-      
+
       // The response can either be an AppointmentDetail directly (on accept) 
       // or an object with { message, appointment, change_request } (on propose change)
-      const updatedAppointment = ('appointment' in response && response.appointment) 
-        ? response.appointment 
+      const updatedAppointment = ('appointment' in response && response.appointment)
+        ? response.appointment
         : (response as AppointmentDetail);
 
       if (updatedAppointment.id) {
         set((state) => ({
-          appointments: state.appointments.map(app => 
+          appointments: state.appointments.map(app =>
             app.id === updatedAppointment.id ? updatedAppointment : app
           ),
           isLoading: false,
         }));
       } else {
-         set({ isLoading: false });
+        set({ isLoading: false });
       }
     } catch (error: any) {
       set({
@@ -179,7 +201,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({ isLoading: true, error: null });
       const response = await bookingService.respondToChangeRequest(id, payload);
       set((state) => ({
-        appointments: state.appointments.map(app => 
+        appointments: state.appointments.map(app =>
           app.id === response.appointment.id ? response.appointment : app
         ),
         isLoading: false,
@@ -210,7 +232,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     try {
       await bookingService.markNotificationRead(id);
       set((state) => ({
-        notifications: state.notifications.map(n => 
+        notifications: state.notifications.map(n =>
           n.id === id ? { ...n, is_read: true } : n
         )
       }));
@@ -222,7 +244,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   markAllNotificationsRead: async () => {
     const { notifications, markNotificationRead } = get();
     const unread = notifications.filter(n => !n.is_read);
-    
+
     // Optimistically update UI
     set({
       notifications: notifications.map(n => ({ ...n, is_read: true }))
@@ -231,7 +253,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     // Send requests in background
     Promise.allSettled(
       unread.map(n => bookingService.markNotificationRead(n.id))
-    ).catch(() => {});
+    ).catch(() => { });
   },
 
   fetchPreferences: async () => {
@@ -273,9 +295,9 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     } catch (error: any) {
       const status = error.response?.status;
       const message = error.response?.data?.detail || error.message;
-      set({ 
-        isLoading: false, 
-        error: status ? `Error ${status}: ${message}` : message 
+      set({
+        isLoading: false,
+        error: status ? `Error ${status}: ${message}` : message
       });
     }
   },
@@ -297,7 +319,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({ isLoading: true, error: null });
       const updatedApp = await bookingService.completeAppointment(id);
       set((state) => ({
-        appointments: state.appointments.map(app => 
+        appointments: state.appointments.map(app =>
           app.id === id ? updatedApp : app
         ),
         isLoading: false,
@@ -327,4 +349,6 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({ isLoading: false, error: error.message });
     }
   },
+
+  setIsNotificationsDrawerOpen: (isNotificationsDrawerOpen) => set({ isNotificationsDrawerOpen }),
 }));
