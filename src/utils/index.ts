@@ -35,3 +35,26 @@ export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return `${str.slice(0, maxLength - 1)}…`;
 }
+
+/**
+ * Format a date string as a relative time (e.g. "2 hours ago", "Yesterday").
+ */
+export function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInSecs = Math.floor(diffInMs / 1000);
+  const diffInMins = Math.floor(diffInSecs / 60);
+  const diffInHours = Math.floor(diffInMins / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInSecs < 60) return 'Just now';
+  if (diffInMins < 60) return `${diffInMins}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  
+  if (diffInDays === 1) return `Yesterday at ${formatTime(dateString)}`;
+  if (diffInDays < 7) return `${diffInDays} days ago`;
+  
+  return formatDate(dateString);
+}

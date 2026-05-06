@@ -1,9 +1,10 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  TextInput,
+  Platform,
   Text,
+  TextInput,
   TextInputProps,
+  View,
   ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../theme';
@@ -63,7 +64,7 @@ export const Input = React.memo(function Input({
         <TextInput
           placeholderTextColor={theme.colors.placeholder}
           {...rest}
-          style={styles.input}
+          style={[styles.input, rest.multiline && { minHeight: 48, paddingVertical: Platform.OS === 'web' ? 12 : 8 }]}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />

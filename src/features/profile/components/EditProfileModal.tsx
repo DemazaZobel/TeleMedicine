@@ -1,16 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Input, Button, Banner } from '../../src/components/ui';
-import { useAuthStore } from '../../src/store/authStore';
-import { useTheme, Theme } from '../../src/theme';
+import { Input, Button, Banner } from '../../../components/ui';
+import { ModalBase } from '../../../components/ui/ModalBase';
+import { useAuthStore } from '../../../store/authStore';
+import { useTheme, Theme } from '../../../theme';
 
-export default function EditProfileScreen() {
+interface EditProfileModalProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { user, isLoading, error, fetchProfile, updateProfile, clearError } =
-    useAuthStore();
+  const { user, isLoading, error, fetchProfile, updateProfile, clearError } = useAuthStore();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -20,11 +25,15 @@ export default function EditProfileScreen() {
   const [original, setOriginal] = useState({ firstName: '', lastName: '', phoneNumber: '' });
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (visible) {
+      fetchProfile();
+      setSaved(false);
+      clearError();
+    }
+  }, [visible, fetchProfile, clearError]);
 
   useEffect(() => {
-    if (user) {
+    if (user && visible) {
       const fn = user.first_name ?? '';
       const ln = user.last_name ?? '';
       const pn = user.phone_number ?? '';
@@ -33,7 +42,7 @@ export default function EditProfileScreen() {
       setPhoneNumber(pn);
       setOriginal({ firstName: fn, lastName: ln, phoneNumber: pn });
     }
-  }, [user]);
+  }, [user, visible]);
 
   const hasChanges =
     firstName !== original.firstName ||
@@ -55,15 +64,23 @@ export default function EditProfileScreen() {
         phoneNumber: phoneNumber.trim(),
       });
       setSaved(true);
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch {
       // Error is set in the store
     }
-  }, [firstName, lastName, phoneNumber, updateProfile, clearError]);
+  }, [firstName, lastName, phoneNumber, updateProfile, clearError, onClose]);
 
   const initials = `${user?.first_name?.[0] ?? 'U'}${user?.last_name?.[0] ?? ''}`;
 
   return (
-    <ScreenContainer scrollable>
+    <ModalBase
+      visible={visible}
+      onClose={onClose}
+      title="Edit Profile"
+      subtitle="Update your personal information"
+    >
       <View style={styles.container}>
         {/* ── Avatar with Camera Badge ── */}
         <View style={styles.avatarSection}>
@@ -88,14 +105,14 @@ export default function EditProfileScreen() {
             placeholder="First name"
             value={firstName}
             onChangeText={(t) => { setFirstName(t); clearError(); setSaved(false); }}
-            containerStyle={styles.halfField}
+            style={{ flex: 1 }}
           />
           <Input
             label="Last name"
             placeholder="Last name"
             value={lastName}
             onChangeText={(t) => { setLastName(t); clearError(); setSaved(false); }}
-            containerStyle={styles.halfField}
+            style={{ flex: 1 }}
           />
         </View>
 
@@ -126,16 +143,14 @@ export default function EditProfileScreen() {
           style={styles.saveButton}
         />
       </View>
-    </ScreenContainer>
+    </ModalBase>
   );
 }
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing.lg,
-      paddingBottom: theme.spacing['4xl'],
+      paddingBottom: theme.spacing.xl,
     },
     avatarSection: {
       alignItems: 'center',
@@ -148,37 +163,35 @@ const createStyles = (theme: Theme) =>
       width: 100,
       height: 100,
       borderRadius: 50,
-      backgroundColor: theme.colors.disabled,
+      backgroundColor: theme.colors.primaryLight + '40',
       justifyContent: 'center',
       alignItems: 'center',
     },
     avatarInitials: {
       fontSize: 36,
       fontWeight: '700',
-      color: theme.colors.textSecondary,
+      color: theme.colors.primary,
     },
     cameraBadge: {
       position: 'absolute',
       bottom: 2,
       right: 2,
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
       backgroundColor: theme.colors.primary,
       justifyContent: 'center',
       alignItems: 'center',
-      borderWidth: 2,
+      borderWidth: 3,
       borderColor: theme.colors.background,
     },
     nameRow: {
       flexDirection: 'row',
       gap: theme.spacing.md,
     },
-    halfField: {
-      flex: 1,
-    },
     readOnlyField: {
       marginBottom: theme.spacing.lg,
+      marginTop: theme.spacing.md,
     },
     readOnlyLabel: {
       ...theme.typography.label,
@@ -186,9 +199,9 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.xs,
     },
     readOnlyInput: {
-      backgroundColor: theme.colors.inputBackground,
+      backgroundColor: theme.colors.disabled + '20',
       borderWidth: 1,
-      borderColor: theme.colors.inputBorder,
+      borderColor: theme.colors.border,
       borderRadius: theme.radius.md,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md + 2,
