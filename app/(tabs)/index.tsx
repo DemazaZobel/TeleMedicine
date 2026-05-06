@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-import { Card, EmptyState, ScreenContainer } from '../../src/components/ui';
+import { Card, EmptyState, PageHeader, ScreenContainer } from '../../src/components/ui';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
-import { DoctorCard, FilterChips, SearchBar } from '../../src/features/patient';
+import { DoctorCard, DoctorDetailsModal, FilterChips, SearchBar } from '../../src/features/patient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useBookingStore } from '../../src/store/booking.store';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
@@ -15,31 +15,45 @@ import { useTheme } from '../../src/theme';
 export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
+  const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
   const isVerified = useDoctorStore((s) => s.isDoctorVerified());
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+
   // Booking Store
-  const { notifications, fetchNotifications, appointments, fetchMyAppointments } = useBookingStore();
+  const {
+    notifications,
+    fetchNotifications,
+    appointments,
+    fetchMyAppointments,
+    setIsNotificationsDrawerOpen
+  } = useBookingStore();
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   // Discovery Store (Patient)
   const {
     doctors,
     isLoading,
+    isLoadingMore,
+    hasMore,
     searchQuery,
     selectedSpecialization,
     setSearchQuery,
     setSelectedSpecialization,
-    fetchDoctors
+    fetchDoctors,
+    fetchMoreDoctors
   } = useDiscoveryStore();
 
   // Doctor Store
   const { profile, isLoadingProfile, fetchProfile } = useDoctorStore();
+  const [selectedDoctor, setSelectedDoctor] = React.useState<any>(null);
 
   useEffect(() => {
     if (user?.role === 'PATIENT') {
       fetchDoctors();
+      fetchMyAppointments();
     } else if (user?.role === 'DOCTOR') {
       fetchMyAppointments();
       fetchProfile();
@@ -70,7 +84,7 @@ export default function HomeScreen() {
   }
 
   const renderBellIcon = () => (
-    <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.bell}>
+    <TouchableOpacity onPress={() => setIsNotificationsDrawerOpen(true)} style={styles.bell}>
       <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
       {unreadCount > 0 && (
         <View style={styles.unreadBadge}>
@@ -88,13 +102,11 @@ export default function HomeScreen() {
 
     return (
       <ScreenContainer scrollable>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.greeting}>Welcome Dr. {user.last_name}!</Text>
-            <Text style={styles.subtitle}>Manage your patients and appointments</Text>
-          </View>
-          {renderBellIcon()}
-        </View>
+        <PageHeader
+          title={`Welcome Dr. ${user.last_name}!`}
+          subtitle="Manage your patients and appointments"
+          rightElement={renderBellIcon()}
+        />
 
         <Card style={styles.statsCard}>
           <Text style={styles.cardTitle}>Your Dashboard</Text>
@@ -122,15 +134,15 @@ export default function HomeScreen() {
   // ─── PATIENT UI (Discovery) ─────────────────────────────
   const renderHeader = () => (
     <View style={styles.patientHeaderContainer}>
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.greeting}>Hello, {user?.first_name || 'Patient'}!</Text>
-          <Text style={styles.subtitle}>Find your doctor and book an appointment</Text>
-        </View>
-        {renderBellIcon()}
+      <PageHeader
+        title={`Hello, ${user?.first_name || 'Patient'}!`}
+        subtitle="Find your doctor and book an appointment"
+        rightElement={renderBellIcon()}
+      />
+      <View style={{ paddingHorizontal: theme.spacing.xl, marginTop: -theme.spacing.lg }}>
+        <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
+        <FilterChips selected={selectedSpecialization} onSelect={handleFilter} />
       </View>
-      <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
-      <FilterChips selected={selectedSpecialization} onSelect={handleFilter} />
 
       {isLoading && (
         <View style={styles.loader}>
@@ -151,8 +163,14 @@ export default function HomeScreen() {
     );
   };
 
-  const { width } = useWindowDimensions();
-  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+      </View>
+    );
+  };
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
@@ -165,14 +183,23 @@ export default function HomeScreen() {
           <View style={[styles.cardWrapper, { flex: 1, maxWidth: `${100 / numColumns}%` }]}>
             <DoctorCard
               doctor={item}
-              onPress={() => router.push(`/doctor/${item.id}` as any)}
+              onPress={() => setSelectedDoctor(item)}
             />
           </View>
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        onEndReached={() => fetchMoreDoctors()}
+        onEndReachedThreshold={0.5}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+
+      <DoctorDetailsModal
+        visible={!!selectedDoctor}
+        onClose={() => setSelectedDoctor(null)}
+        doctor={selectedDoctor}
       />
     </ScreenContainer>
   );
@@ -181,16 +208,7 @@ export default function HomeScreen() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     patientHeaderContainer: {
-      paddingBottom: theme.spacing.md,
       backgroundColor: theme.colors.background,
-    },
-    headerRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing['3xl'],
-      paddingBottom: theme.spacing.lg,
     },
     bell: {
       padding: theme.spacing.sm,
@@ -271,5 +289,9 @@ const createStyles = (theme: Theme) =>
       width: 1,
       height: 40,
       backgroundColor: theme.colors.divider,
+    },
+    footerLoader: {
+      paddingVertical: theme.spacing.xl,
+      alignItems: 'center',
     },
   });

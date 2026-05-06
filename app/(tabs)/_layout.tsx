@@ -1,11 +1,13 @@
-import { Tabs } from 'expo-router';
+import { useBookingStore } from '@/store/booking.store';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../src/theme';
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Platform, useWindowDimensions, View } from 'react-native';
+import { MobileWebNav, NotificationsDrawer, Sidebar } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
+import { useTheme } from '../../src/theme';
 import { TAB_CONFIGS } from '../../src/types/navigation';
-import { useWindowDimensions, View, Platform } from 'react-native';
-import { Sidebar, MobileWebNav } from '../../src/components/ui';
 
 export default function TabsLayout() {
   const { theme } = useTheme();
@@ -13,6 +15,7 @@ export default function TabsLayout() {
   const user = useAuthStore((s) => s.user);
   const userRole = user?.role ?? 'PATIENT';
   const verificationStage = useDoctorStore((s) => s.verificationStage());
+  const { isNotificationsDrawerOpen, setIsNotificationsDrawerOpen } = useBookingStore();
 
   const isDesktop = width > 768;
   const isWeb = Platform.OS === 'web';
@@ -40,7 +43,7 @@ export default function TabsLayout() {
     >
       {TAB_CONFIGS.map((tab) => {
         let isTabVisible = tab.roles.includes(userRole);
-        
+
         if (userRole === 'DOCTOR' && verificationStage !== 'APPROVED' && tab.name === 'wallet') {
           isTabVisible = false;
         }
@@ -66,27 +69,35 @@ export default function TabsLayout() {
     </Tabs>
   );
 
-  if (isWeb) {
-    if (isDesktop) {
-      return (
-        <View style={{ flex: 1, flexDirection: 'row' }}>
-          <Sidebar />
-          <View style={{ flex: 1 }}>
-            {tabsElement}
-          </View>
-        </View>
-      );
-    } else {
-      return (
-        <View style={{ flex: 1 }}>
-          <MobileWebNav />
-          <View style={{ flex: 1 }}>
-            {tabsElement}
-          </View>
-        </View>
-      );
-    }
-  }
-
-  return tabsElement;
+  return (
+    <>
+      <View style={{ flex: 1 }}>
+        {isWeb ? (
+          isDesktop ? (
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              {(isDesktop && (userRole !== 'DOCTOR' || verificationStage === 'APPROVED')) && (
+                <Sidebar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+              )}
+              <View style={{ flex: 1 }}>
+                {tabsElement}
+              </View>
+            </View>
+          ) : (
+            <View style={{ flex: 1 }}>
+              <MobileWebNav onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+              <View style={{ flex: 1 }}>
+                {tabsElement}
+              </View>
+            </View>
+          )
+        ) : (
+          tabsElement
+        )}
+      </View>
+      <NotificationsDrawer
+        visible={isNotificationsDrawerOpen}
+        onClose={() => setIsNotificationsDrawerOpen(false)}
+      />
+    </>
+  );
 }

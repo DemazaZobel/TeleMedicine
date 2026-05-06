@@ -32,6 +32,12 @@ export const TAB_CONFIGS: TabConfig[] = [
     roles: ['PATIENT'],
   },
   {
+    name: 'availability',
+    title: 'Schedule',
+    icon: 'time',
+    roles: ['DOCTOR'],
+  },
+  {
     name: 'patients',
     title: 'Patients',
     icon: 'people',

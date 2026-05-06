@@ -23,6 +23,7 @@ export interface AppointmentDetail {
   mode: AppointmentMode;
   reason: string;
   status: AppointmentStatus;
+  payment_status: 'unpaid' | 'charge_pending' | 'paid' | 'failed';
   meeting_link?: string;
   created_at?: string;
   updated_at?: string;
@@ -98,16 +99,48 @@ export type NotificationType = 'APPOINTMENT' | 'GENERAL' | 'SYSTEM';
 
 export interface NotificationDetail {
   id: string | number;
-  user: string | number;
+  user: User;
   title: string;
   body: string;
   type: NotificationType;
   is_read: boolean;
   created_at: string;
-  read_at?: string;
 }
 
 export interface NotificationPreferenceDetail {
   email_appointments: boolean;
   in_app_appointments: boolean;
+  email_payments: boolean;
+  in_app_payments: boolean;
+}
+
+// ─── PAYMENT TYPES ───────────────────────────────────────
+
+export interface PaymentMethodDetail {
+  id: string | number;
+  payment_type: string;
+  provider: string;
+  is_verified: boolean;
+  created_at: string;
+}
+
+export interface PaymentDetail {
+  id: string | number;
+  appointment: string | number;
+  amount: string;
+  currency: string;
+  status: string;
+  chapa_tx_ref?: string;
+  chapa_checkout_url?: string;
+  created_at: string;
+}
+
+export interface DoctorWalletDetail {
+  total_earned: string;
+  updated_at: string;
+}
+
+export interface InitiatePaymentResponse {
+  checkout_url: string;
+  tx_ref: string;
 }

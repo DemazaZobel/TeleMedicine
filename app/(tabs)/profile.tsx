@@ -1,11 +1,14 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, ActivityIndicator } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer } from '../../src/components/ui';
 import { useTheme, Theme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
 import { useBookingStore } from '../../src/store/booking.store';
+import { EditProfileModal } from '../../src/features/profile/components/EditProfileModal';
+import { ChangePasswordModal } from '../../src/features/profile/components/ChangePasswordModal';
+import { MedicalInfoModal } from '../../src/features/patient/components/MedicalInfoModal';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -73,6 +76,10 @@ export default function ProfileScreen() {
   const { preferences, isLoading, fetchPreferences, updatePreferences } = useBookingStore();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  const [isEditProfileVisible, setEditProfileVisible] = useState(false);
+  const [isMedicalInfoVisible, setMedicalInfoVisible] = useState(false);
+  const [isChangePasswordVisible, setChangePasswordVisible] = useState(false);
+
   useEffect(() => {
     fetchProfile();
     fetchPreferences();
@@ -95,13 +102,12 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.avatarContainer}
-            onPress={() => router.push('/settings/edit-profile')}
+            onPress={() => setEditProfileVisible(true)}
             activeOpacity={0.8}
           >
             <View style={styles.avatar}>
               <Text style={styles.avatarInitials}>{initials}</Text>
             </View>
-            {/* Edit badge */}
             <View style={styles.editBadge}>
               <Ionicons name="pencil" size={14} color="#FFFFFF" />
             </View>
@@ -118,7 +124,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon="person-outline"
             label="Edit Profile"
-            onPress={() => router.push('/settings/edit-profile')}
+            onPress={() => setEditProfileVisible(true)}
             theme={theme}
           />
           {user?.role === 'DOCTOR' && (
@@ -138,7 +144,7 @@ export default function ProfileScreen() {
               <MenuItem
                 icon="heart-outline"
                 label="Medical Info"
-                onPress={() => router.push('/settings/medical-info')}
+                onPress={() => setMedicalInfoVisible(true)}
                 theme={theme}
               />
             </>
@@ -147,7 +153,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon="lock-closed-outline"
             label="Change Password"
-            onPress={() => router.push('/settings/change-password')}
+            onPress={() => setChangePasswordVisible(true)}
             theme={theme}
           />
         </View>
@@ -222,6 +228,20 @@ export default function ProfileScreen() {
           />
         </View>
       </View>
+
+      {/* Modals */}
+      <EditProfileModal 
+        visible={isEditProfileVisible} 
+        onClose={() => setEditProfileVisible(false)} 
+      />
+      <MedicalInfoModal 
+        visible={isMedicalInfoVisible} 
+        onClose={() => setMedicalInfoVisible(false)} 
+      />
+      <ChangePasswordModal 
+        visible={isChangePasswordVisible} 
+        onClose={() => setChangePasswordVisible(false)} 
+      />
     </ScreenContainer>
   );
 }

@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image } from 'react-native';
-import { ScreenContainer, Card } from '../../src/components/ui';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Card, ScreenContainer, PageHeader } from '../../src/components/ui';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
 import { useAuthStore } from '../../src/store/authStore';
-import { useDoctorStore } from '../../src/store/doctor.store';
 import { useBookingStore } from '../../src/store/booking.store';
-import { useTheme } from '../../src/theme';
+import { useDoctorStore } from '../../src/store/doctor.store';
 import type { Theme } from '../../src/theme';
+import { useTheme } from '../../src/theme';
 
 /** Doctor-only tab — hidden for PATIENT and ADMIN roles via the tabs layout. */
 export default function PatientsScreen() {
@@ -54,13 +54,13 @@ export default function PatientsScreen() {
   };
 
   return (
-    <ScreenContainer scrollable={false}>
+    <ScreenContainer scrollable={false} padded={false}>
       <View style={styles.pageWrapper}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Your Patients</Text>
-          <Text style={styles.subtitle}>View and manage patients you have consulted with</Text>
-        </View>
-        
+        <PageHeader 
+          title="Your Patients"
+          subtitle="View and manage patients you have consulted with"
+        />
+
         {isLoading && uniquePatients.length === 0 ? (
           <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
         ) : (
@@ -88,23 +88,8 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   pageWrapper: {
     flex: 1,
     width: '100%',
-    maxWidth: 800,
+    maxWidth: 1100,
     alignSelf: 'center',
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing['2xl'],
-  },
-  header: {
-    marginBottom: theme.spacing.xl,
-  },
-  title: {
-    ...theme.typography.h2,
-    fontWeight: '700',
-    color: theme.colors.text,
-  },
-  subtitle: {
-    ...theme.typography.body,
-    color: theme.colors.textSecondary,
-    marginTop: 4,
   },
   listContent: {
     flexGrow: 1,

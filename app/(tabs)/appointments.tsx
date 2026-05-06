@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
-import { ScreenContainer, EmptyState } from '../../src/components/ui';
-import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { EmptyState, ScreenContainer, PageHeader } from '../../src/components/ui';
 import { AppointmentCard } from '../../src/features/booking/components/AppointmentCard';
+import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
 import { useAuthStore } from '../../src/store/authStore';
-import { useDoctorStore } from '../../src/store/doctor.store';
 import { useBookingStore } from '../../src/store/booking.store';
-import { useTheme } from '../../src/theme';
+import { useDoctorStore } from '../../src/store/doctor.store';
 import type { Theme } from '../../src/theme';
+import { useTheme } from '../../src/theme';
 
 export default function AppointmentsScreen() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  
+
   const user = useAuthStore((s) => s.user);
   const isDoctor = user?.role === 'DOCTOR';
   const isVerified = useDoctorStore((s) => s.isDoctorVerified());
-  
-  const { 
-    appointments, 
-    isLoading, 
-    fetchMyAppointments, 
-    cancelAppointment, 
-    doctorDecision 
+
+  const {
+    appointments,
+    isLoading,
+    fetchMyAppointments,
+    cancelAppointment,
+    doctorDecision
   } = useBookingStore();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -40,25 +40,10 @@ export default function AppointmentsScreen() {
     setRefreshing(false);
   };
 
-  const handleCancel = (id: string | number) => {
-    Alert.alert(
-      "Cancel Appointment", 
-      "Are you sure you want to cancel this appointment?",
-      [
-        { text: "No", style: "cancel" },
-        { 
-          text: "Yes, Cancel", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              await cancelAppointment(id);
-            } catch (err) {
-              Alert.alert("Error", "Could not cancel appointment.");
-            }
-          }
-        }
-      ]
-    );
+  const handleCancel = (id: string | number, reason: string) => {
+    // This is now handled inside AppointmentCard for reason collection
+    // but we can keep the prop if we want to bubble it up.
+    // For now, AppointmentCard calls cancelAppointment directly from store.
   };
 
   const handleAccept = async (id: string | number) => {
@@ -91,12 +76,10 @@ export default function AppointmentsScreen() {
   return (
     <ScreenContainer scrollable={false} padded={false}>
       <View style={styles.pageWrapper}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Appointments</Text>
-          <Text style={styles.subtitle}>
-            {isDoctor ? "Manage your schedule" : "View your upcoming sessions"}
-          </Text>
-        </View>
+        <PageHeader 
+          title="Appointments"
+          subtitle={isDoctor ? "Manage your schedule" : "View your upcoming sessions"}
+        />
 
         {isLoading && !refreshing && appointments.length === 0 ? (
           <View style={styles.loader}>
@@ -109,11 +92,15 @@ export default function AppointmentsScreen() {
             numColumns={numColumns}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
+            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
             renderItem={({ item }) => (
-              <View style={{ flex: 1, maxWidth: `${100 / numColumns}%`, paddingRight: numColumns > 1 ? theme.spacing.md : 0 }}>
-                <AppointmentCard 
-                  appointment={item} 
-                  isDoctor={isDoctor} 
+              <View style={[
+                styles.cardContainer, 
+                { maxWidth: `${100 / numColumns}%` }
+              ]}>
+                <AppointmentCard
+                  appointment={item}
+                  isDoctor={isDoctor}
                   onCancel={handleCancel}
                   onAccept={isDoctor ? handleAccept : undefined}
                 />
@@ -138,27 +125,18 @@ const createStyles = (theme: Theme) =>
       maxWidth: 1100,
       alignSelf: 'center',
     },
-    header: {
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing['2xl'],
-      paddingBottom: theme.spacing.md,
-      backgroundColor: theme.colors.background,
-    },
-    title: {
-      ...theme.typography.h2,
-      color: theme.colors.text,
-      fontWeight: '700',
-    },
-    subtitle: {
-      ...theme.typography.body,
-      color: theme.colors.textSecondary,
-      marginTop: theme.spacing.xs,
-    },
     listContent: {
       paddingHorizontal: theme.spacing.xl,
       paddingBottom: 100, // accommodate tab bar
       paddingTop: theme.spacing.md,
       flexGrow: 1,
+    },
+    columnWrapper: {
+      gap: theme.spacing.md,
+    },
+    cardContainer: {
+      flex: 1,
+      marginBottom: theme.spacing.md,
     },
     loader: {
       flex: 1,

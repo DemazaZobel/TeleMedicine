@@ -1,15 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { AuthContainer, Input, Button } from '../../src/components/ui';
-import { useTheme } from '../../src/theme';
+import React, { useMemo, useState } from 'react';
+import { Text, View, StyleSheet, Pressable } from 'react-native';
+import { AuthContainer, Button, Input } from '../../src/components/ui';
 import { authService } from '../../src/features/auth/services/authService';
-import { createForgotPasswordStyles } from '../../src/features/auth/styles/forgotPassword.styles';
+import { useTheme, Theme } from '../../src/theme';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
-  const styles = useMemo(() => createForgotPasswordStyles(theme), [theme]);
+  const { theme, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,56 +34,130 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <AuthContainer 
+    <AuthContainer
       illustration={require('../../assets/images/forgot-password-illustration.png')}
       showBackButton
+      onBack={() => router.back()}
     >
       <View style={styles.container}>
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 28, fontWeight: '700', color: theme.colors.text }}>Reset Password</Text>
-          <Text style={{ fontSize: 16, color: theme.colors.textSecondary, marginTop: 4 }}>
+        {/* Icon */}
+        <View style={styles.iconContainer}>
+          <View style={styles.iconBadge}>
+            <Ionicons
+              name={sent ? 'checkmark-circle' : 'key-outline'}
+              size={32}
+              color={sent ? theme.colors.success : theme.colors.primary}
+            />
+          </View>
+        </View>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {sent ? 'Check Your Email' : 'Reset Password'}
+          </Text>
+          <Text style={styles.subtitle}>
             {sent
-              ? 'Check your email for the reset code.'
-              : "Enter your email and we'll send you a reset code."}
+              ? 'We sent a reset code to your email. Check your inbox and follow the instructions.'
+              : "Enter your email and we'll send you a code to reset your password."}
           </Text>
         </View>
 
         {!sent ? (
-          <>
+          <View style={styles.form}>
             <Input
-              label="Email"
-              placeholder="you@example.com"
+              placeholder="email address"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(t) => { setEmail(t); setError(''); }}
               keyboardType="email-address"
               autoCapitalize="none"
               error={error}
+              leftIcon={<Ionicons name="mail-outline" size={20} color={theme.colors.textTertiary} />}
             />
+
             <Button
               title="Send Reset Code"
               onPress={handleSubmit}
               loading={loading}
               fullWidth
+              style={styles.submitBtn}
+              disabled={!email.trim()}
             />
-          </>
+          </View>
         ) : (
           <Button
             title="Back to Login"
             variant="outline"
-            onPress={() => router.back()}
+            onPress={() => router.replace('/(auth)/login')}
             fullWidth
+            style={styles.submitBtn}
           />
         )}
 
         {!sent && (
-          <Button
-            title="Back to Login"
-            variant="ghost"
-            onPress={() => router.back()}
-            style={styles.backButton}
-          />
+          <Pressable onPress={() => router.back()} style={styles.backLink}>
+            <Ionicons name="arrow-back" size={16} color={theme.colors.textTertiary} style={{ marginRight: 4 }} />
+            <Text style={styles.backLinkText}>Back to Login</Text>
+          </Pressable>
         )}
       </View>
     </AuthContainer>
   );
 }
+
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      alignItems: 'center',
+    },
+    iconContainer: {
+      marginBottom: 24,
+    },
+    iconBadge: {
+      width: 64,
+      height: 64,
+      borderRadius: 20,
+      backgroundColor: theme.colors.primary + '12',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '20',
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: 28,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: '700',
+      color: theme.colors.text,
+      letterSpacing: -0.5,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      lineHeight: 22,
+      textAlign: 'center',
+    },
+    form: {
+      width: '100%',
+      gap: 16,
+    },
+    submitBtn: {
+      height: 50,
+      borderRadius: 14,
+    },
+    backLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 28,
+      paddingVertical: 8,
+    },
+    backLinkText: {
+      fontSize: 14,
+      color: theme.colors.textTertiary,
+      fontWeight: '500',
+    },
+  });

@@ -1,4 +1,4 @@
-import { TextStyle } from 'react-native';
+import { ColorValue, TextStyle } from 'react-native';
 
 // ─── Color Palette ───────────────────────────────────────
 const palette = {
@@ -44,16 +44,24 @@ const palette = {
   // Neutrals
   white: '#FFFFFF',
   gray50: '#FAFAFA',
-  gray100: '#F5F5F5',
-  gray200: '#E8E8E8',
-  gray300: '#D9D9D9',
-  gray400: '#BFBFBF',
-  gray500: '#8C8C8C',
-  gray600: '#595959',
-  gray700: '#434343',
-  gray800: '#262626',
-  gray900: '#1A1A1A',
-  black: '#000000',
+  gray100: '#F4F4F5', // Zinc 100
+  gray200: '#E4E4E7', // Zinc 200
+  gray300: '#D4D4D8', // Zinc 300
+  gray400: '#A1A1AA', // Zinc 400
+  gray500: '#71717A', // Zinc 500
+  gray600: '#52525B', // Zinc 600
+
+  primary: '#10B981', // Emerald 500
+  primaryDark: '#059669', // Emerald 600
+  primaryLight: '#34D399', // Emerald 400
+  primaryText: '#FFFFFF',
+
+  secondary: '#0F172A',
+  accent: '#10B981',
+  gray700: '#3F3F46', // Zinc 700
+  gray800: '#27272A', // Zinc 800
+  gray900: '#18181B', // Zinc 900
+  black: '#09090B', // Zinc 950
 } as const;
 
 // ─── Spacing Scale ───────────────────────────────────────
@@ -87,17 +95,19 @@ export const typography: Record<string, TextStyle> = {
 
 // ─── Border Radius ───────────────────────────────────────
 export const radius = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  xs: 2,
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
   '2xl': 24,
   full: 9999,
 } as const;
 
 // ─── Theme Colors ────────────────────────────────────────
 export interface ThemeColors {
+  amber700: ColorValue | undefined;
+  amber50: ColorValue | undefined;
   // Backgrounds
   background: string;
   surface: string;
@@ -126,6 +136,8 @@ export interface ThemeColors {
   warningLight: string;
   error: string;
   errorLight: string;
+  danger: string;
+  dangerLight: string;
 
   // UI
   border: string;
@@ -185,22 +197,22 @@ export interface Theme {
 export const lightTheme: Theme = {
   dark: false,
   colors: {
-    background: palette.gray50,
-    surface: palette.white,
-    surfaceElevated: palette.white,
-    card: palette.white,
+    background: '#FAFAFA', // zinc-50
+    surface: '#FFFFFF',
+    surfaceElevated: '#FFFFFF',
+    card: '#FFFFFF',
 
-    text: palette.gray900,
-    textSecondary: palette.gray600,
-    textTertiary: palette.gray500,
-    textInverse: palette.white,
+    text: '#09090B', // zinc-950
+    textSecondary: '#71717A', // zinc-500
+    textTertiary: '#A1A1AA', // zinc-400
+    textInverse: '#FAFAFA',
 
-    primary: palette.blue500,
-    primaryLight: palette.blue50,
-    primaryDark: palette.blue700,
+    primary: palette.primary,
+    primaryLight: palette.primary + '15',
+    primaryDark: palette.primaryDark,
 
-    secondary: palette.teal500,
-    secondaryLight: palette.teal50,
+    secondary: palette.gray100,
+    secondaryLight: palette.gray50,
 
     success: palette.green500,
     successLight: palette.green50,
@@ -208,48 +220,52 @@ export const lightTheme: Theme = {
     warningLight: palette.amber50,
     error: palette.red500,
     errorLight: palette.red50,
+    danger: palette.red500,
+    dangerLight: palette.red50,
 
     border: palette.gray200,
-    borderFocused: palette.blue500,
+    borderFocused: palette.primary,
     divider: palette.gray200,
     placeholder: palette.gray400,
-    icon: palette.gray600,
+    icon: palette.gray500,
     iconSecondary: palette.gray400,
-    disabled: palette.gray300,
-    overlay: 'rgba(0, 0, 0, 0.5)',
+    disabled: palette.gray200,
+    overlay: 'rgba(9, 9, 11, 0.4)',
 
     inputBackground: palette.white,
-    inputBorder: palette.gray300,
+    inputBorder: palette.gray200,
 
     tabBar: palette.white,
     tabBarBorder: palette.gray200,
-    tabActive: palette.blue500,
+    tabActive: palette.primary,
     tabInactive: palette.gray400,
+    amber50: palette.amber50,
+    amber700: palette.amber700
   },
   spacing,
   typography,
   radius,
   shadows: {
     sm: {
-      shadowColor: palette.black,
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 2,
       elevation: 1,
     },
     md: {
-      shadowColor: palette.black,
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 3,
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
     },
     lg: {
-      shadowColor: palette.black,
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 16,
-      elevation: 6,
+      shadowOpacity: 0.05,
+      shadowRadius: 12,
+      elevation: 3,
     },
   },
 };
@@ -258,71 +274,75 @@ export const lightTheme: Theme = {
 export const darkTheme: Theme = {
   dark: true,
   colors: {
-    background: palette.gray900,
-    surface: palette.gray800,
-    surfaceElevated: palette.gray700,
-    card: palette.gray800,
+    background: palette.black,
+    surface: palette.black,
+    surfaceElevated: palette.gray800,
+    card: palette.black,
 
-    text: palette.gray100,
+    text: palette.gray50,
     textSecondary: palette.gray400,
     textTertiary: palette.gray500,
-    textInverse: palette.gray900,
+    textInverse: palette.black,
 
-    primary: palette.blue400,
-    primaryLight: palette.blue900,
-    primaryDark: palette.blue300,
+    primary: palette.primary,
+    primaryLight: palette.primary + '20',
+    primaryDark: palette.primaryDark,
 
-    secondary: palette.teal400,
-    secondaryLight: palette.teal900,
+    secondary: palette.gray800,
+    secondaryLight: palette.gray900,
 
-    success: palette.green500,
-    successLight: 'rgba(56, 199, 118, 0.15)',
+    success: palette.primary,
+    successLight: palette.primary + '25',
     warning: palette.amber500,
-    warningLight: 'rgba(245, 158, 11, 0.15)',
+    warningLight: palette.amber500 + '25',
     error: palette.red500,
-    errorLight: 'rgba(255, 77, 79, 0.15)',
+    errorLight: palette.red500 + '25',
+    danger: palette.red500,
+    dangerLight: palette.red500 + '25',
 
-    border: palette.gray700,
-    borderFocused: palette.blue400,
-    divider: palette.gray700,
+    border: palette.gray800,
+    borderFocused: palette.primary,
+    divider: palette.gray800,
     placeholder: palette.gray600,
     icon: palette.gray400,
-    iconSecondary: palette.gray600,
-    disabled: palette.gray700,
-    overlay: 'rgba(0, 0, 0, 0.7)',
+    iconSecondary: palette.gray500,
+    disabled: palette.gray800,
+    overlay: 'rgba(0, 0, 0, 0.8)',
 
-    inputBackground: palette.gray800,
-    inputBorder: palette.gray700,
+    inputBackground: palette.black,
+    inputBorder: palette.gray800,
 
-    tabBar: palette.gray800,
-    tabBarBorder: palette.gray700,
-    tabActive: palette.blue400,
+    tabBar: palette.black,
+    tabBarBorder: palette.gray800,
+    tabActive: palette.primary,
     tabInactive: palette.gray600,
+    amber50: palette.amber50,
+    amber700: palette.amber700
   },
   spacing,
   typography,
   radius,
   shadows: {
     sm: {
-      shadowColor: palette.black,
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.5,
       shadowRadius: 2,
       elevation: 1,
     },
     md: {
-      shadowColor: palette.black,
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.4,
-      shadowRadius: 8,
-      elevation: 3,
+      shadowOpacity: 0.5,
+      shadowRadius: 4,
+      elevation: 2,
     },
     lg: {
-      shadowColor: palette.black,
+      shadowColor: '#000000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.5,
-      shadowRadius: 16,
-      elevation: 6,
+      shadowRadius: 12,
+      elevation: 3,
     },
   },
 };

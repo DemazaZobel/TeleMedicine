@@ -4,7 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme';
 import { Sidebar } from './Sidebar';
 
-export function MobileWebNav() {
+interface MobileWebNavProps {
+  onNotificationsPress?: () => void;
+}
+
+export function MobileWebNav({ onNotificationsPress }: MobileWebNavProps) {
   const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -15,9 +19,14 @@ export function MobileWebNav() {
           <Ionicons name="medical" size={24} color={theme.colors.primary} />
           <Text style={[styles.logoText, { color: theme.colors.primary }]}>MedLink</Text>
         </View>
-        <TouchableOpacity onPress={() => setIsOpen(true)} style={styles.menuButton}>
-          <Ionicons name="menu" size={28} color={theme.colors.text} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={onNotificationsPress} style={styles.menuButton}>
+            <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsOpen(true)} style={styles.menuButton}>
+            <Ionicons name="menu" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Modal visible={isOpen} transparent animationType="fade">
@@ -26,7 +35,13 @@ export function MobileWebNav() {
             <View style={styles.modalBackground} />
           </TouchableWithoutFeedback>
           <View style={styles.drawer}>
-            <Sidebar onNavigate={() => setIsOpen(false)} />
+            <Sidebar 
+              onNavigate={() => setIsOpen(false)} 
+              onNotificationsPress={() => {
+                setIsOpen(false);
+                onNotificationsPress?.();
+              }}
+            />
           </View>
         </View>
       </Modal>

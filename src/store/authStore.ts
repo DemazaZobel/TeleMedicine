@@ -78,8 +78,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       try {
         const response = await authService.refreshToken(refreshTokenValue);
         const newAccessToken = response.access;
+        const newRefreshToken = response.refresh || refreshTokenValue;
 
-        await Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+        await Promise.all([
+          Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken),
+          Storage.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
+        ]);
 
         // Read existing stored user (has role from login)
         const userJson = await Storage.getItemAsync(STORAGE_KEYS.USER);
@@ -106,7 +110,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         set({
           user,
-          tokens: { access: newAccessToken, refresh: refreshTokenValue },
+          tokens: { access: newAccessToken, refresh: newRefreshToken },
           isAuthenticated: true,
           isBootstrapping: false,
         });
