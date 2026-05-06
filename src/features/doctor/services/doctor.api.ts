@@ -7,6 +7,13 @@ import type {
   ProviderSearchResult,
 } from '../types/doctor.types';
 
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 const DOCTOR_BASE = '/providers';
 
 export const doctorApi = {
@@ -49,10 +56,15 @@ export const doctorApi = {
 
   // Search (Patient-facing)
   searchProviders: async (params?: ProviderSearchParams) => {
-    const response = await apiClient.get<ProviderSearchResult[]>(
+    const response = await apiClient.get<PaginatedResponse<ProviderSearchResult>>(
       `${DOCTOR_BASE}/search/`,
       { params }
     );
+    return response.data;
+  },
+
+  fetchNextPage: async (url: string) => {
+    const response = await apiClient.get<PaginatedResponse<ProviderSearchResult>>(url);
     return response.data;
   },
 };

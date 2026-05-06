@@ -7,11 +7,12 @@ export const createCardStyles = (theme: Theme) =>
       backgroundColor: theme.colors.card,
       borderRadius: theme.radius.lg,
       padding: theme.spacing.lg,
-      ...theme.shadows.md,
-    },
-    cardBordered: {
       borderWidth: 1,
       borderColor: theme.colors.border,
+      ...theme.shadows.sm,
+    },
+    cardBordered: {
+      // Keep for backwards compatibility, but default is bordered now
     },
     cardPressable: {
       opacity: 1,

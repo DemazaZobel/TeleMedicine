@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Banner, Button, Card, Input, ScreenContainer } from '../../../components/ui';
 import { usePatientStore } from '../../../store/patient.store';
 import type { Theme } from '../../../theme';
@@ -13,6 +15,8 @@ const GENDER_OPTIONS = ['Male', 'Female'];
 export function MedicalInfoForm() {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const router = useRouter();
+  const isWeb = Platform.OS === 'web';
 
   const {
     medicalInfo,
@@ -59,8 +63,22 @@ export function MedicalInfoForm() {
   const handleSave = useCallback(async () => {
     setSaved(false);
     clearError();
+
+    // Ensure the date of birth is properly formatted to YYYY-MM-DD
+    let formattedDob = dateOfBirth.trim() || null;
+    if (formattedDob) {
+      // Very basic parsing for common inputs like YYYY/M/D or YYYY.MM.DD
+      const dateParts = formattedDob.split(/[-/.]/);
+      if (dateParts.length === 3) {
+        const year = dateParts[0].padStart(4, '0');
+        const month = dateParts[1].padStart(2, '0');
+        const day = dateParts[2].padStart(2, '0');
+        formattedDob = `${year}-${month}-${day}`;
+      }
+    }
+
     const payload: PatientProfileUpdate = {
-      date_of_birth: dateOfBirth.trim() || null,
+      date_of_birth: formattedDob,
       gender: gender.trim(),
       blood_type: bloodType.trim(),
       medical_history: medicalHistory.trim() || null,
@@ -90,6 +108,17 @@ export function MedicalInfoForm() {
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
+        {/* Web-only breadcrumb */}
+        {isWeb && (
+          <Pressable
+            onPress={() => router.push('/(tabs)/profile' as any)}
+            style={styles.breadcrumb}
+          >
+            <Ionicons name="arrow-back" size={18} color={theme.colors.primary} />
+            <Text style={styles.breadcrumbText}>Back to Profile</Text>
+          </Pressable>
+        )}
+
         <Text style={styles.title}>Medical Information</Text>
         <Text style={styles.subtitle}>
           Keep your medical record up to date so doctors can serve you better.
@@ -212,9 +241,24 @@ export function MedicalInfoForm() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
+      flex: 1,
+      width: '100%',
+      maxWidth: 800,
+      alignSelf: 'center',
       paddingHorizontal: theme.spacing.xl,
       paddingTop: theme.spacing.xl,
       paddingBottom: theme.spacing['4xl'],
+    },
+    breadcrumb: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+      gap: theme.spacing.xs,
+    },
+    breadcrumbText: {
+      ...theme.typography.body,
+      color: theme.colors.primary,
+      fontWeight: '500',
     },
     title: {
       ...theme.typography.h2,

@@ -1,17 +1,18 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
-  Pressable,
-  Text,
   ActivityIndicator,
+  Pressable,
   PressableProps,
-  ViewStyle,
+  StyleProp,
+  Text,
   TextStyle,
+  ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../theme';
 import {
-  createButtonStyles,
-  ButtonVariant,
   ButtonSize,
+  ButtonVariant,
+  createButtonStyles,
 } from './Button.styles';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
@@ -21,8 +22,8 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   loading?: boolean;
   fullWidth?: boolean;
   icon?: React.ReactNode;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export const Button = React.memo(function Button({
@@ -46,6 +47,7 @@ export const Button = React.memo(function Button({
       secondary: styles.secondary,
       outline: styles.outline,
       ghost: styles.ghost,
+      danger: styles.danger,
     }),
     [styles]
   );
@@ -56,16 +58,18 @@ export const Button = React.memo(function Button({
       secondary: styles.secondaryPressed,
       outline: styles.outlinePressed,
       ghost: styles.ghostPressed,
+      danger: styles.dangerPressed,
     }),
     [styles]
   );
 
-  const getTextStyle = useCallback((): TextStyle[] => {
+  const getTextStyle = useCallback(() => {
     const variantTextMap: Record<ButtonVariant, TextStyle> = {
       primary: styles.textPrimary,
       secondary: styles.textSecondary,
       outline: styles.textOutline,
       ghost: styles.textGhost,
+      danger: styles.textDanger,
     };
     const sizeTextMap: Record<ButtonSize, TextStyle> = {
       sm: styles.textSm,
@@ -77,14 +81,14 @@ export const Button = React.memo(function Button({
       sizeTextMap[size],
       ...(disabled ? [styles.disabledText] : []),
       ...(textStyle ? [textStyle] : []),
-    ];
+    ] as StyleProp<TextStyle>;
   }, [variant, size, disabled, textStyle, styles]);
 
   return (
     <Pressable
       disabled={disabled || loading}
       {...rest}
-      style={({ pressed }): ViewStyle[] => [
+      style={({ pressed }) => [
         styles.base,
         styles[size],
         variantContainerMap[variant],

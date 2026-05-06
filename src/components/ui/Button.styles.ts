@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import type { Theme } from '../../theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export const createButtonStyles = (theme: Theme) =>
@@ -56,14 +56,20 @@ export const createButtonStyles = (theme: Theme) =>
     ghostPressed: {
       backgroundColor: theme.colors.primaryLight,
     },
-
+    danger: {
+      backgroundColor: theme.colors.danger,
+    },
+    dangerPressed: {
+      backgroundColor: theme.colors.error,
+      opacity: 0.8,
+    },
     // ── Text ──────────────────────────────────────
     textPrimary: {
       color: theme.colors.textInverse,
       ...theme.typography.button,
     },
     textSecondary: {
-      color: theme.colors.textInverse,
+      color: theme.colors.primary,
       ...theme.typography.button,
     },
     textOutline: {
@@ -74,6 +80,11 @@ export const createButtonStyles = (theme: Theme) =>
       color: theme.colors.primary,
       ...theme.typography.button,
     },
+    textDanger: {
+      color: theme.colors.textInverse,
+      ...theme.typography.button,
+    },
+
     textSm: {
       ...theme.typography.buttonSm,
     },

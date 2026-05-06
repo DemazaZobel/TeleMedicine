@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import type { Theme } from '../../theme';
 
 export const createInputStyles = (theme: Theme) =>
@@ -19,21 +19,28 @@ export const createInputStyles = (theme: Theme) =>
       borderRadius: theme.radius.md,
       backgroundColor: theme.colors.inputBackground,
       paddingHorizontal: theme.spacing.lg,
-      height: 48,
+      paddingVertical: Platform.OS === 'web' ? theme.spacing.sm : 0,
+      minHeight: 48,
     },
     inputWrapperFocused: {
       borderColor: theme.colors.borderFocused,
-      borderWidth: 1.5,
+      borderWidth: 1,
     },
     inputWrapperError: {
       borderColor: theme.colors.error,
-      borderWidth: 1.5,
+      borderWidth: 1,
     },
     input: {
       flex: 1,
       ...theme.typography.body,
       color: theme.colors.text,
       paddingVertical: 0,
+      ...Platform.select({
+        web: {
+          outlineStyle: 'none',
+        } as any,
+        default: {},
+      }),
     },
     leftIcon: {
       marginRight: theme.spacing.sm,

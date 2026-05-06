@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "antigravity-medlink",
-    "slug": "antigravity-medlink",
+    "name": "medlink",
+    "slug": "medlink",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "antigravitymedlink",
+    "scheme": "medlink",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -22,7 +22,8 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "bundler": "metro",
+      "output": "single-page",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
