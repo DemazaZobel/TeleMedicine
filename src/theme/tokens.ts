@@ -50,12 +50,12 @@ const palette = {
   gray400: '#A1A1AA', // Zinc 400
   gray500: '#71717A', // Zinc 500
   gray600: '#52525B', // Zinc 600
-  
+
   primary: '#10B981', // Emerald 500
   primaryDark: '#059669', // Emerald 600
   primaryLight: '#34D399', // Emerald 400
   primaryText: '#FFFFFF',
-  
+
   secondary: '#0F172A',
   accent: '#10B981',
   gray700: '#3F3F46', // Zinc 700
@@ -136,6 +136,8 @@ export interface ThemeColors {
   warningLight: string;
   error: string;
   errorLight: string;
+  danger: string;
+  dangerLight: string;
 
   // UI
   border: string;
@@ -218,6 +220,8 @@ export const lightTheme: Theme = {
     warningLight: palette.amber50,
     error: palette.red500,
     errorLight: palette.red50,
+    danger: palette.red500,
+    dangerLight: palette.red50,
 
     border: palette.gray200,
     borderFocused: palette.primary,
@@ -293,6 +297,8 @@ export const darkTheme: Theme = {
     warningLight: palette.amber500 + '25',
     error: palette.red500,
     errorLight: palette.red500 + '25',
+    danger: palette.red500,
+    dangerLight: palette.red500 + '25',
 
     border: palette.gray800,
     borderFocused: palette.primary,

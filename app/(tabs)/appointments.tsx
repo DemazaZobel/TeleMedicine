@@ -40,25 +40,10 @@ export default function AppointmentsScreen() {
     setRefreshing(false);
   };
 
-  const handleCancel = (id: string | number) => {
-    Alert.alert(
-      "Cancel Appointment",
-      "Are you sure you want to cancel this appointment?",
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Yes, Cancel",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await cancelAppointment(id);
-            } catch (err) {
-              Alert.alert("Error", "Could not cancel appointment.");
-            }
-          }
-        }
-      ]
-    );
+  const handleCancel = (id: string | number, reason: string) => {
+    // This is now handled inside AppointmentCard for reason collection
+    // but we can keep the prop if we want to bubble it up.
+    // For now, AppointmentCard calls cancelAppointment directly from store.
   };
 
   const handleAccept = async (id: string | number) => {
@@ -107,8 +92,12 @@ export default function AppointmentsScreen() {
             numColumns={numColumns}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
+            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
             renderItem={({ item }) => (
-              <View style={{ flex: 1, maxWidth: `${100 / numColumns}%`, paddingRight: numColumns > 1 ? theme.spacing.md : 0 }}>
+              <View style={[
+                styles.cardContainer, 
+                { maxWidth: `${100 / numColumns}%` }
+              ]}>
                 <AppointmentCard
                   appointment={item}
                   isDoctor={isDoctor}
@@ -141,6 +130,13 @@ const createStyles = (theme: Theme) =>
       paddingBottom: 100, // accommodate tab bar
       paddingTop: theme.spacing.md,
       flexGrow: 1,
+    },
+    columnWrapper: {
+      gap: theme.spacing.md,
+    },
+    cardContainer: {
+      flex: 1,
+      marginBottom: theme.spacing.md,
     },
     loader: {
       flex: 1,

@@ -2,17 +2,24 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme';
 import type { Theme } from '../../theme';
+import { Button } from './Button';
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
   rightElement?: React.ReactNode;
+  action?: {
+    label: string;
+    onPress: () => void;
+    icon?: string;
+  };
 }
 
 export const PageHeader = React.memo(function PageHeader({ 
   title, 
   subtitle, 
-  rightElement 
+  rightElement,
+  action
 }: PageHeaderProps) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -23,7 +30,20 @@ export const PageHeader = React.memo(function PageHeader({
         <Text style={styles.title}>{title}</Text>
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
-      {rightElement && <View style={styles.rightCol}>{rightElement}</View>}
+      {(rightElement || action) && (
+        <View style={styles.rightCol}>
+          {rightElement}
+          {action && (
+            <Button 
+              variant="primary" 
+              size="sm" 
+              title={action.label} 
+              onPress={action.onPress} 
+              icon={action.icon as any}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 });

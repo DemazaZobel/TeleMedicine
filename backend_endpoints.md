@@ -3,9 +3,11 @@
 Comprehensive mapping of every API endpoint required to fulfill **FR1–FR27**.
 Endpoints marked ✅ are already implemented. All others are **needed**.
 
+> **Last updated:** May 6, 2026
+
 ---
 
-## 1. Authentication (`accounts` app) — FR1, FR4, FR26
+## 1. Authentication (`auth` app) — FR1, FR4, FR26
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
@@ -13,25 +15,35 @@ Endpoints marked ✅ are already implemented. All others are **needed**.
 | ✅ | POST | `/api/auth/login/` | Email + password login, returns JWT pair | FR1 |
 | ✅ | POST | `/api/auth/verify-email/` | Verify email with OTP code | FR1 |
 | ✅ | POST | `/api/auth/token/refresh/` | Refresh access token | FR1 |
-| ✅ | POST | `/api/auth/password/reset/` | Request password reset email/OTP | FR4 |
-| ✅ | POST | `/api/auth/password/reset/confirm/` | Confirm new password with code | FR4 |
-| 🔲 | POST | `/api/auth/logout/` | Blacklist refresh token on logout | FR1 |
-| 🔲 | PUT | `/api/auth/password/change/` | Change password (authenticated) | FR4 |
+| ✅ | POST | `/api/auth/forgot-password/` | Request password reset email/OTP | FR4 |
+| ✅ | POST | `/api/auth/reset-password/` | Confirm new password with code | FR4 |
+| ✅ | POST | `/api/auth/logout/` | Blacklist refresh token on logout | FR1 |
+| ✅ | PUT | `/api/auth/password/change/` | Change password (authenticated) | FR4 |
+| ✅ | POST | `/api/auth/resend-otp/` | Resend email verification OTP | FR1 |
+| ✅ | GET | `/api/auth/profile/` | Get current user's profile | FR3, FR4 |
+| ✅ | PUT | `/api/auth/profile/` | Update current user's profile | FR3, FR4 |
 
 ---
 
-## 2. User Profiles (`accounts` app) — FR3, FR4
+## 2. User Profiles (`users` app) — FR3, FR4
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
-| 🔲 | GET | `/api/users/me/` | Get current user profile | FR3, FR4 |
-| 🔲 | PUT | `/api/users/me/` | Update current user profile (name, phone, avatar) | FR3, FR4 |
-| 🔲 | GET | `/api/users/me/medical-info/` | Get patient medical info (blood type, allergies, conditions) | FR3 |
-| 🔲 | PUT | `/api/users/me/medical-info/` | Update patient medical info | FR3 |
+| ✅ | GET | `/api/users/me/` | Get current user profile | FR3, FR4 |
+| ✅ | PUT | `/api/users/me/` | Update current user profile (name, phone, avatar) | FR3, FR4 |
 
 ---
 
-## 3. Provider / Doctor (`providers` app) — FR2, FR7, FR17
+## 3. Patient (`patients` app) — FR3
+
+| Status | Method | Endpoint | Description | FR |
+|--------|--------|----------|-------------|-----|
+| ✅ | GET | `/api/patients/me/medical-info/` | Get patient medical info (blood type, allergies, conditions) | FR3 |
+| ✅ | PUT | `/api/patients/me/medical-info/` | Update patient medical info | FR3 |
+
+---
+
+## 4. Provider / Doctor (`providers` app) — FR2, FR5, FR6, FR7, FR17
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
@@ -39,17 +51,7 @@ Endpoints marked ✅ are already implemented. All others are **needed**.
 | ✅ | PUT | `/api/providers/profile/` | Update specialization, experience, fee | FR2 |
 | ✅ | POST | `/api/providers/documents/` | Upload verification document (multipart) | FR2 |
 | ✅ | GET | `/api/providers/documents/list/` | List own uploaded documents | FR2 |
-| 🔲 | GET | `/api/providers/availability/` | Get doctor's availability slots | FR7, FR8 |
-| 🔲 | PUT | `/api/providers/availability/` | Set/update availability schedule | FR7, FR8 |
-
----
-
-## 4. Doctor Discovery (`providers` app, public) — FR5, FR6, FR7, FR17, FR21
-
-| Status | Method | Endpoint | Description | FR |
-|--------|--------|----------|-------------|-----|
-| 🔲 | GET | `/api/providers/search/` | Search verified doctors (query, filters) | FR5, FR6 |
-| | | | Params: `?specialization=&min_fee=&max_fee=&min_rating=&sort_by=fee,rating,distance&lat=&lng=` | |
+| ✅ | GET | `/api/providers/search/` | Search verified doctors (query, filters) | FR5, FR6 |
 | 🔲 | GET | `/api/providers/{id}/` | Get public doctor detail (bio, experience, ratings, availability, fee) | FR7, FR17 |
 | 🔲 | GET | `/api/providers/{id}/reviews/` | List reviews for a specific doctor | FR21 |
 
@@ -59,26 +61,38 @@ Endpoints marked ✅ are already implemented. All others are **needed**.
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
-| 🔲 | POST | `/api/appointments/` | Patient creates appointment request (doctor_id, date, time, type: online/in-person) | FR8 |
-| 🔲 | GET | `/api/appointments/` | List own appointments (patient or doctor) | FR8, FR9 |
-| 🔲 | GET | `/api/appointments/{id}/` | Get appointment detail | FR10 |
-| 🔲 | PATCH | `/api/appointments/{id}/` | Doctor: accept/reject/reschedule. System: complete/cancel | FR9, FR10 |
-| 🔲 | POST | `/api/appointments/{id}/cancel/` | Cancel an appointment (either party) | FR10 |
-| 🔲 | POST | `/api/appointments/{id}/complete/` | Mark consultation as completed | FR10 |
+| ✅ | POST | `/api/appointments/book/` | Patient creates appointment request | FR8 |
+| ✅ | GET | `/api/appointments/my/` | List own appointments (patient or doctor) | FR8, FR9 |
+| ✅ | POST | `/api/appointments/{id}/cancel/` | Cancel an appointment (either party) | FR10 |
+| ✅ | POST | `/api/appointments/{id}/doctor-decision/` | Doctor: accept or propose changes | FR9, FR10 |
+| ✅ | POST | `/api/appointments/{id}/change-request/` | Provider proposes appointment changes | FR9 |
+| ✅ | POST | `/api/appointments/change-requests/{id}/respond/` | Patient accepts/rejects provider changes | FR9 |
+| ✅ | GET | `/api/appointments/{id}/join/` | View meeting link / join consultation | FR14 |
 
 ---
 
-## 6. Notifications — FR11
+## 6. Provider Availability — FR7, FR8
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
-| 🔲 | GET | `/api/notifications/` | List user notifications (paginated) | FR11 |
-| 🔲 | PATCH | `/api/notifications/{id}/read/` | Mark notification as read | FR11 |
+| ✅ | GET | `/api/appointments/availability/` | Get doctor's availability slots | FR7, FR8 |
+| ✅ | POST | `/api/appointments/availability/` | Set/update availability schedule | FR7, FR8 |
+
+---
+
+## 7. Notifications — FR11
+
+| Status | Method | Endpoint | Description | FR |
+|--------|--------|----------|-------------|-----|
+| ✅ | GET | `/api/appointments/notifications/` | List user notifications (paginated) | FR11 |
+| ✅ | POST | `/api/appointments/notifications/{id}/read/` | Mark notification as read | FR11 |
+| ✅ | GET | `/api/appointments/notification-preferences/` | Get notification preferences | FR11 |
+| ✅ | PUT | `/api/appointments/notification-preferences/` | Update notification preferences | FR11 |
 | 🔲 | POST | `/api/notifications/register-device/` | Register push token (Expo/FCM) | FR11 |
 
 ---
 
-## 7. Chat / Messaging — FR12, FR13, FR14, FR15
+## 8. Chat / Messaging — FR12, FR13, FR14, FR15
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
@@ -92,20 +106,25 @@ Endpoints marked ✅ are already implemented. All others are **needed**.
 
 ---
 
-## 8. Payments (`payments` app) — FR16, FR17, FR18, FR19
+## 9. Payments (`payments` app) — FR16, FR17, FR18, FR19
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
-| 🔲 | POST | `/api/payments/initialize/` | Initialize Chapa payment for an appointment | FR16 |
-| 🔲 | GET | `/api/payments/verify/{tx_ref}/` | Verify Chapa payment callback | FR16 |
-| 🔲 | GET | `/api/payments/history/` | Payment history for current user | FR16, FR17 |
+| ✅ | POST | `/api/payments/initiate/{appointment_id}/` | Initialize Chapa payment for an appointment | FR16 |
+| ✅ | GET | `/api/payments/methods/` | List patient payment methods | FR16 |
+| ✅ | POST | `/api/payments/methods/` | Add payment method | FR16 |
+| ✅ | POST | `/api/payments/methods/{id}/verify/` | Verify payment method | FR16 |
+| ✅ | GET | `/api/payments/history/` | Payment history for current user | FR16, FR17 |
+| ✅ | POST | `/api/payments/complete/{appointment_id}/` | Mark appointment complete and release payout | FR10, FR19 |
+| ✅ | POST | `/api/payments/no-show/{appointment_id}/` | Mark appointment as no-show | FR10 |
+| ✅ | GET | `/api/payments/wallet/` | Doctor wallet balance | FR19 |
+| ✅ | POST | `/api/payments/webhook/` | Chapa webhook callback | FR16 |
 | 🔲 | GET | `/api/payments/{id}/receipt/` | Download PDF/email receipt for a payment | FR18 |
-| 🔲 | GET | `/api/payments/wallet/` | Doctor wallet balance and payout history | FR19 |
 | 🔲 | POST | `/api/payments/wallet/withdraw/` | Doctor requests withdrawal of earnings | FR19 |
 
 ---
 
-## 9. Reviews & Ratings — FR20, FR21
+## 10. Reviews & Ratings — FR20, FR21
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
@@ -114,24 +133,21 @@ Endpoints marked ✅ are already implemented. All others are **needed**.
 
 ---
 
-## 10. Admin Management — FR22, FR23, FR24, FR25
-
-> [!NOTE]
-> Admin endpoints are primarily Django Admin panel + DRF admin-restricted views.
+## 11. Admin Management — FR22, FR23, FR24, FR25
 
 | Status | Method | Endpoint | Description | FR |
 |--------|--------|----------|-------------|-----|
-| 🔲 | GET | `/api/admin/doctors/` | List all doctors with verification status | FR22 |
-| 🔲 | PATCH | `/api/admin/doctors/{id}/verify/` | Approve or reject a doctor's profile | FR22 |
-| 🔲 | GET | `/api/admin/users/` | List/search all users | FR23 |
-| 🔲 | PATCH | `/api/admin/users/{id}/` | Update user status (suspend/deactivate) | FR24 |
-| 🔲 | GET | `/api/admin/consultations/` | List all consultations | FR23 |
-| 🔲 | GET | `/api/admin/payments/` | List all payments | FR23 |
-| 🔲 | GET | `/api/admin/analytics/` | Dashboard metrics (user count, revenue, active doctors, etc.) | FR25 |
+| ✅ | GET | `/api/admin/doctors/` | List all doctors with verification status | FR22 |
+| ✅ | PATCH | `/api/admin/doctors/{id}/verify/` | Approve or reject a doctor's profile | FR22 |
+| ✅ | GET | `/api/admin/users/` | List/search all users | FR23 |
+| ✅ | PATCH | `/api/admin/users/{id}/` | Update user status (suspend/deactivate) | FR24 |
+| ✅ | GET | `/api/admin/consultations/` | List all consultations | FR23 |
+| ✅ | GET | `/api/admin/payments/` | List all payments | FR23 |
+| ✅ | GET | `/api/admin/analytics/` | Dashboard metrics (user count, revenue, active doctors, etc.) | FR25 |
 
 ---
 
-## 11. System / Security — FR26, FR27
+## 12. System / Security — FR26, FR27
 
 These are **not traditional REST endpoints** but backend middleware and configuration:
 
@@ -148,14 +164,15 @@ These are **not traditional REST endpoints** but backend middleware and configur
 
 | Module | Implemented | Needed | Total |
 |--------|------------|--------|-------|
-| Auth | 6 | 2 | 8 |
-| User Profiles | 0 | 4 | 4 |
-| Provider (Doctor) | 4 | 2 | 6 |
-| Doctor Discovery | 0 | 3 | 3 |
-| Appointments | 0 | 6 | 6 |
-| Notifications | 0 | 3 | 3 |
+| Auth | 11 | 0 | 11 |
+| User Profiles | 2 | 0 | 2 |
+| Patient | 2 | 0 | 2 |
+| Provider (Doctor) | 5 | 2 | 7 |
+| Appointments | 7 | 0 | 7 |
+| Availability | 2 | 0 | 2 |
+| Notifications | 4 | 1 | 5 |
 | Chat | 0 | 7 | 7 |
-| Payments | 0 | 6 | 6 |
+| Payments | 9 | 2 | 11 |
 | Reviews | 0 | 2 | 2 |
-| Admin | 0 | 7 | 7 |
-| **Total** | **10** | **42** | **52** |
+| Admin | 7 | 0 | 7 |
+| **Total** | **49** | **14** | **63** |
