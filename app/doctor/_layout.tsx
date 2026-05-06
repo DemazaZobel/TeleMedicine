@@ -1,16 +1,18 @@
 import React from 'react';
 import { Stack, useRouter } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
 
 export default function DoctorLayout() {
   const { theme } = useTheme();
   const router = useRouter();
+  const isWeb = Platform.OS === 'web';
 
   return (
     <Stack
       screenOptions={{
+        headerShown: !isWeb,
         headerStyle: { backgroundColor: theme.colors.background },
         headerTintColor: theme.colors.text,
         headerShadowVisible: false,
@@ -37,7 +39,7 @@ export default function DoctorLayout() {
       />
       <Stack.Screen 
         name="pending-approval" 
-        options={{ title: 'Verification', headerShown: true }} 
+        options={{ title: 'Verification', headerShown: !isWeb }} 
       />
     </Stack>
   );

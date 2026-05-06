@@ -121,11 +121,24 @@ export const useDoctorStore = create<DoctorStore>((set, get) => ({
       await get().fetchDocuments();
       await get().fetchProfile();
       set({ isUploadingDocument: false });
-    } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { detail?: string | string[] } } };
-      const detail = axiosError?.response?.data?.detail;
-      const message =
-        (Array.isArray(detail) ? detail[0] : detail) || 'Failed to upload document.';
+    } catch (error: any) {
+      const data = error.response?.data;
+      let message = 'Failed to upload document.';
+
+      if (data) {
+        if (typeof data === 'string') {
+          message = data;
+        } else if (data.detail) {
+          message = Array.isArray(data.detail) ? data.detail[0] : data.detail;
+        } else {
+          // Check for field specific errors (e.g. { file: ["..."] })
+          const fieldErrors = Object.entries(data)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
+            .join('\n');
+          if (fieldErrors) message = fieldErrors;
+        }
+      }
+
       set({ isUploadingDocument: false, error: message });
       throw error;
     }

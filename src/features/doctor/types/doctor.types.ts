@@ -38,10 +38,12 @@ export interface DoctorDocument {
 // ─── Provider Search (Patient-side) ─────────────────────
 export interface ProviderSearchParams {
   query?: string;
+  search?: string;
   specialization?: string;
-  min_fee?: number;
-  max_fee?: number;
+  min_price?: number;
+  max_price?: number;
   min_rating?: number;
+  availability?: 'any' | 'today' | 'this-week';
   sort_by?: 'fee' | 'rating' | 'experience';
 }
 

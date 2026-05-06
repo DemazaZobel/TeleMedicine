@@ -1,13 +1,13 @@
-import { useEffect } from 'react';
-import { Slot, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ThemeProvider } from '../src/theme';
-import { useAuthStore } from '../src/store/authStore';
+import { useEffect } from 'react';
 import { Loader } from '../src/components/ui';
+import { useAuthStore } from '../src/store/authStore';
+import { ThemeProvider, useTheme } from '../src/theme';
 
-// Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+// Prevent the splash screen from auto-hiding (no-op on web)
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -35,6 +35,38 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import { Platform, StyleSheet, View } from 'react-native';
+
+function WebLayoutWrapper({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
+
+  if (Platform.OS !== 'web') {
+    return <View style={{ flex: 1 }}>{children}</View>;
+  }
+
+  return (
+    <View style={[styles.webRoot, { backgroundColor: theme.colors.background }]}>
+      <View style={[
+        styles.webContainer,
+        { backgroundColor: theme.colors.background }
+      ]}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  webRoot: {
+    flex: 1,
+  },
+  webContainer: {
+    flex: 1,
+    width: '100%',
+    overflow: 'hidden',
+  },
+});
+
 export default function RootLayout() {
   const bootstrap = useAuthStore((state) => state.bootstrap);
 
@@ -58,9 +90,11 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <AuthGate>
-        <Slot />
-      </AuthGate>
+      <WebLayoutWrapper>
+        <AuthGate>
+          <Slot />
+        </AuthGate>
+      </WebLayoutWrapper>
     </ThemeProvider>
   );
 }
