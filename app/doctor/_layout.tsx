@@ -1,82 +1,46 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { COLORS } from "../../src/constants/theme";
-import { useAppointmentStore } from "../../src/store/appointmentStore";
+import React from 'react';
+import { Stack, useRouter } from 'expo-router';
+import { TouchableOpacity, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../src/theme';
 
-export default function DoctorTabLayout() {
-  const unreadCount = useAppointmentStore((s) => s.unreadCount);
+export default function DoctorLayout() {
+  const { theme } = useTheme();
+  const router = useRouter();
+  const isWeb = Platform.OS === 'web';
 
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarStyle: {
-          backgroundColor: COLORS.surface,
-          borderTopColor: COLORS.border,
-          paddingBottom: 4,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-        },
+        headerShown: !isWeb,
+        headerStyle: { backgroundColor: theme.colors.background },
+        headerTintColor: theme.colors.text,
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: theme.colors.background },
+        headerTitleAlign: 'center',
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ paddingHorizontal: theme.spacing.md }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+        ),
       }}
     >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
+      <Stack.Screen 
+        name="profile" 
+        options={{ title: 'Provider Profile' }} 
       />
-
-      <Tabs.Screen
-        name="appointments"
-        options={{
-          title: "Appointments",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
-          ),
-        }}
+      <Stack.Screen 
+        name="documents" 
+        options={{ title: 'Secure Documents' }} 
       />
-
-      <Tabs.Screen
-        name="availability"
-        options={{
-          title: "Availability",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
-          ),
-        }}
+      <Stack.Screen 
+        name="pending-approval" 
+        options={{ title: 'Verification', headerShown: !isWeb }} 
       />
-
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: "Notifications",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications" size={size} color={color} />
-          ),
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: COLORS.error,
-            fontSize: 10,
-            minWidth: 18,
-            height: 18,
-          },
-        }}
-      />
-
-      {/* Hide the pending screen from tabs */}
-      <Tabs.Screen
-        name="pending"
-        options={{
-          href: null,
-        }}
-      />
-    </Tabs>
+    </Stack>
   );
 }

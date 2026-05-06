@@ -1,274 +1,146 @@
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AppointmentCard from "../../components/AppointmentCard";
-import { COLORS, RADII, SPACING } from "../../src/constants/theme";
-import { useAppointmentStore } from "../../src/store/appointmentStore";
-import { useAuthStore } from "../../src/store/authStore";
-import { Appointment, AppointmentStatus } from "../../src/types/appointment";
-
-type FilterTab = "upcoming" | "past" | "cancelled";
-
-const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: "upcoming", label: "Upcoming" },
-  { key: "past", label: "Past" },
-  { key: "cancelled", label: "Cancelled" },
-];
-
-function filterAppointments(
-  list: Appointment[],
-  tab: FilterTab
-): Appointment[] {
-  const now = new Date();
-  switch (tab) {
-    case "upcoming":
-      return list.filter(
-        (a) =>
-          (a.status === "REQUESTED" || a.status === "CONFIRMED") &&
-          new Date(a.scheduled_start) >= now
-      );
-    case "past":
-      return list.filter(
-        (a) =>
-          a.status === "COMPLETED" ||
-          (a.status === "CONFIRMED" && new Date(a.scheduled_end) < now)
-      );
-    case "cancelled":
-      return list.filter((a) => a.status === "CANCELLED");
-    default:
-      return list;
-  }
-}
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { EmptyState, ScreenContainer, PageHeader } from '../../src/components/ui';
+import { AppointmentCard } from '../../src/features/booking/components/AppointmentCard';
+import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
+import { useAuthStore } from '../../src/store/authStore';
+import { useBookingStore } from '../../src/store/booking.store';
+import { useDoctorStore } from '../../src/store/doctor.store';
+import type { Theme } from '../../src/theme';
+import { useTheme } from '../../src/theme';
 
 export default function AppointmentsScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const user = useAuthStore((s) => s.user);
-  const { appointments, loading, fetchAppointments, error, clearError } =
-    useAppointmentStore();
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
 
-  const [activeTab, setActiveTab] = useState<FilterTab>("upcoming");
+  const user = useAuthStore((s) => s.user);
+  const isDoctor = user?.role === 'DOCTOR';
+  const isVerified = useDoctorStore((s) => s.isDoctorVerified());
+
+  const {
+    appointments,
+    isLoading,
+    fetchMyAppointments,
+    cancelAppointment,
+    doctorDecision
+  } = useBookingStore();
+
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    // Basic initial fetch
+    if (!isDoctor || (isDoctor && isVerified)) {
+      fetchMyAppointments();
+    }
+  }, [isDoctor, isVerified]);
 
-  const onRefresh = useCallback(async () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    await fetchAppointments();
+    await fetchMyAppointments();
     setRefreshing(false);
-  }, [fetchAppointments]);
+  };
 
-  const filtered = filterAppointments(appointments, activeTab);
+  const handleCancel = (id: string | number, reason: string) => {
+    // This is now handled inside AppointmentCard for reason collection
+    // but we can keep the prop if we want to bubble it up.
+    // For now, AppointmentCard calls cancelAppointment directly from store.
+  };
+
+  const handleAccept = async (id: string | number) => {
+    try {
+      await doctorDecision(id, { action: 'accept' });
+      Alert.alert("Success", "Appointment accepted.");
+    } catch (err) {
+      Alert.alert("Error", "Could not accept appointment.");
+    }
+  };
+
+  if (isDoctor && !isVerified) {
+    return <PendingApproval />;
+  }
 
   const renderEmpty = () => {
-    if (loading) return null;
-    const messages: Record<FilterTab, string> = {
-      upcoming: "No upcoming appointments.\nBook one to get started!",
-      past: "No past appointments yet.",
-      cancelled: "No cancelled appointments.",
-    };
+    if (isLoading && !refreshing) return null;
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons
-          name="calendar-outline"
-          size={56}
-          color={`${COLORS.textMuted}60`}
-        />
-        <Text style={styles.emptyText}>{messages[activeTab]}</Text>
-      </View>
+      <EmptyState
+        icon="calendar-outline"
+        title="No Appointments"
+        description="You don't have any upcoming appointments scheduled."
+      />
     );
   };
 
+  const { width } = useWindowDimensions();
+  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Appointments</Text>
-      </View>
-
-      {/* Filter Tabs */}
-      <View style={styles.filterRow}>
-        {FILTER_TABS.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              style={[styles.filterTab, isActive && styles.filterTabActive]}
-              onPress={() => setActiveTab(tab.key)}
-            >
-              <Text
-                style={[
-                  styles.filterLabel,
-                  isActive && styles.filterLabelActive,
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Error banner */}
-      {error ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={clearError}>
-            <Ionicons name="close" size={18} color={COLORS.error} />
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      {/* Loading */}
-      {loading && appointments.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <AppointmentCard
-              appointment={item}
-              role={user?.role ?? "PATIENT"}
-              onPress={() =>
-                router.push({
-                  pathname: "/appointment/[id]",
-                  params: { id: item.id },
-                } as any)
-              }
-            />
-          )}
-          ListEmptyComponent={renderEmpty}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={COLORS.primary}
-              colors={[COLORS.primary]}
-            />
-          }
+    <ScreenContainer scrollable={false} padded={false}>
+      <View style={styles.pageWrapper}>
+        <PageHeader 
+          title="Appointments"
+          subtitle={isDoctor ? "Manage your schedule" : "View your upcoming sessions"}
         />
-      )}
 
-      {/* FAB — Book Appointment */}
-      {user?.role === "PATIENT" && (
-        <TouchableOpacity
-          style={[styles.fab, { bottom: insets.bottom + 24 }]}
-          onPress={() => router.push("/appointment/book" as any)}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      )}
-    </View>
+        {isLoading && !refreshing && appointments.length === 0 ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            key={`grid-${numColumns}`}
+            data={appointments}
+            numColumns={numColumns}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
+            renderItem={({ item }) => (
+              <View style={[
+                styles.cardContainer, 
+                { maxWidth: `${100 / numColumns}%` }
+              ]}>
+                <AppointmentCard
+                  appointment={item}
+                  isDoctor={isDoctor}
+                  onCancel={handleCancel}
+                  onAccept={isDoctor ? handleAccept : undefined}
+                />
+              </View>
+            )}
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        )}
+      </View>
+    </ScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    paddingHorizontal: SPACING.l,
-    paddingVertical: SPACING.m,
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: COLORS.text,
-  },
-  filterRow: {
-    flexDirection: "row",
-    paddingHorizontal: SPACING.l,
-    marginBottom: SPACING.m,
-    gap: SPACING.s,
-  },
-  filterTab: {
-    paddingHorizontal: SPACING.m,
-    paddingVertical: SPACING.s,
-    borderRadius: RADII.round,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  filterTabActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: COLORS.textMuted,
-  },
-  filterLabelActive: {
-    color: "#fff",
-  },
-  list: {
-    paddingHorizontal: SPACING.l,
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    paddingTop: 60,
-    gap: SPACING.m,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: SPACING.m,
-    paddingVertical: SPACING.s,
-    marginHorizontal: SPACING.l,
-    borderRadius: RADII.s,
-    marginBottom: SPACING.s,
-    justifyContent: "space-between",
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 13,
-    flex: 1,
-    marginRight: SPACING.s,
-  },
-  fab: {
-    position: "absolute",
-    right: SPACING.l,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-});
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    pageWrapper: {
+      flex: 1,
+      width: '100%',
+      maxWidth: 1100,
+      alignSelf: 'center',
+    },
+    listContent: {
+      paddingHorizontal: theme.spacing.xl,
+      paddingBottom: 100, // accommodate tab bar
+      paddingTop: theme.spacing.md,
+      flexGrow: 1,
+    },
+    columnWrapper: {
+      gap: theme.spacing.md,
+    },
+    cardContainer: {
+      flex: 1,
+      marginBottom: theme.spacing.md,
+    },
+    loader: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });

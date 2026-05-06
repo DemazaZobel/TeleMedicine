@@ -1,241 +1,297 @@
-import React, { useEffect } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AppointmentCard from "../../components/AppointmentCard";
-import { COLORS, RADII, SPACING } from "../../src/constants/theme";
-import { useAppointmentStore } from "../../src/store/appointmentStore";
-import { useAuthStore } from "../../src/store/authStore";
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Card, EmptyState, PageHeader, ScreenContainer } from '../../src/components/ui';
+import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
+import { DoctorCard, DoctorDetailsModal, FilterChips, SearchBar } from '../../src/features/patient';
+import { useAuthStore } from '../../src/store/authStore';
+import { useBookingStore } from '../../src/store/booking.store';
+import { useDiscoveryStore } from '../../src/store/discovery.store';
+import { useDoctorStore } from '../../src/store/doctor.store';
+import type { Theme } from '../../src/theme';
+import { useTheme } from '../../src/theme';
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const logout = useAuthStore((s) => s.logout);
+  const { theme, isDark, toggleTheme } = useTheme();
+  const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
-  const { appointments, fetchAppointments, fetchNotifications, unreadCount } =
-    useAppointmentStore();
+  const isVerified = useDoctorStore((s) => s.isDoctorVerified());
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+
+  // Booking Store
+  const {
+    notifications,
+    fetchNotifications,
+    appointments,
+    fetchMyAppointments,
+    setIsNotificationsDrawerOpen
+  } = useBookingStore();
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  // Discovery Store (Patient)
+  const {
+    doctors,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    searchQuery,
+    selectedSpecialization,
+    setSearchQuery,
+    setSelectedSpecialization,
+    fetchDoctors,
+    fetchMoreDoctors
+  } = useDiscoveryStore();
+
+  // Doctor Store
+  const { profile, isLoadingProfile, fetchProfile } = useDoctorStore();
+  const [selectedDoctor, setSelectedDoctor] = React.useState<any>(null);
 
   useEffect(() => {
-    fetchAppointments();
+    if (user?.role === 'PATIENT') {
+      fetchDoctors();
+      fetchMyAppointments();
+    } else if (user?.role === 'DOCTOR') {
+      fetchMyAppointments();
+      fetchProfile();
+    }
     fetchNotifications();
-  }, []);
+  }, [user?.role, fetchDoctors, fetchMyAppointments, fetchNotifications, fetchProfile]);
 
-  const upcoming = appointments.filter(
-    (a) =>
-      (a.status === "CONFIRMED" || a.status === "REQUESTED") &&
-      new Date(a.scheduled_start) >= new Date()
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, [setSearchQuery]);
+
+  const handleFilter = useCallback((spec: string | null) => {
+    setSelectedSpecialization(spec);
+  }, [setSelectedSpecialization]);
+
+  // Guard for doctor loading and verification
+  if (user?.role === 'DOCTOR') {
+    if (isLoadingProfile && !profile) {
+      return (
+        <ScreenContainer centered>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </ScreenContainer>
+      );
+    }
+    if (profile && !profile.is_verified) {
+      return <PendingApproval />;
+    }
+  }
+
+  const renderBellIcon = () => (
+    <TouchableOpacity onPress={() => setIsNotificationsDrawerOpen(true)} style={styles.bell}>
+      <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
+      {unreadCount > 0 && (
+        <View style={styles.unreadBadge}>
+          <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 
-  return (
-    <ScrollView
-      style={[styles.screen, { paddingTop: insets.top }]}
-      contentContainerStyle={styles.content}
-    >
-      {/* Greeting */}
-      <View style={styles.greetingRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.greeting}>
-            Hello, {user?.first_name} 👋
-          </Text>
-          <Text style={styles.greetingSub}>
-            How are you feeling today?
-          </Text>
+  // ─── DOCTOR UI ─────────────────────────────────────────
+  if (user?.role === 'DOCTOR') {
+    const upcomingCount = appointments.filter(a => ['REQUESTED', 'CONFIRMED'].includes(a.status)).length;
+    const completedCount = appointments.filter(a => a.status === 'COMPLETED').length;
+    const cancelledCount = appointments.filter(a => a.status === 'CANCELLED').length;
+
+    return (
+      <ScreenContainer scrollable>
+        <PageHeader
+          title={`Welcome Dr. ${user.last_name}!`}
+          subtitle="Manage your patients and appointments"
+          rightElement={renderBellIcon()}
+        />
+
+        <Card style={styles.statsCard}>
+          <Text style={styles.cardTitle}>Your Dashboard</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{upcomingCount}</Text>
+              <Text style={styles.statLabel}>Upcoming</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{completedCount}</Text>
+              <Text style={styles.statLabel}>Completed</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{cancelledCount}</Text>
+              <Text style={styles.statLabel}>Cancelled</Text>
+            </View>
+          </View>
+        </Card>
+      </ScreenContainer>
+    );
+  }
+
+  // ─── PATIENT UI (Discovery) ─────────────────────────────
+  const renderHeader = () => (
+    <View style={styles.patientHeaderContainer}>
+      <PageHeader
+        title={`Hello, ${user?.first_name || 'Patient'}!`}
+        subtitle="Find your doctor and book an appointment"
+        rightElement={renderBellIcon()}
+      />
+      <View style={{ paddingHorizontal: theme.spacing.xl, marginTop: -theme.spacing.lg }}>
+        <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
+        <FilterChips selected={selectedSpecialization} onSelect={handleFilter} />
+      </View>
+
+      {isLoading && (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <Ionicons name="log-out-outline" size={22} color={COLORS.error} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickRow}>
-        <TouchableOpacity
-          style={styles.quickCard}
-          onPress={() => router.push("/appointment/book" as any)}
-        >
-          <View style={[styles.quickIcon, { backgroundColor: `${COLORS.primary}14` }]}>
-            <Ionicons name="add-circle" size={28} color={COLORS.primary} />
-          </View>
-          <Text style={styles.quickLabel}>Book{"\n"}Appointment</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickCard}
-          onPress={() => router.push("/(tabs)/appointments" as any)}
-        >
-          <View style={[styles.quickIcon, { backgroundColor: `${COLORS.secondary}14` }]}>
-            <Ionicons name="calendar" size={28} color={COLORS.secondary} />
-          </View>
-          <Text style={styles.quickLabel}>My{"\n"}Appointments</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickCard}
-          onPress={() => router.push("/(tabs)/notifications" as any)}
-        >
-          <View style={[styles.quickIcon, { backgroundColor: "#FEF3C714" }]}>
-            <Ionicons name="notifications" size={28} color="#F59E0B" />
-          </View>
-          <Text style={styles.quickLabel}>
-            Notifications{unreadCount > 0 ? ` (${unreadCount})` : ""}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Upcoming Appointments */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)/appointments" as any)}
-        >
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
-      </View>
-
-      {upcoming.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Ionicons
-            name="calendar-outline"
-            size={40}
-            color={`${COLORS.textMuted}60`}
-          />
-          <Text style={styles.emptyText}>
-            No upcoming appointments.{"\n"}Book one to get started!
-          </Text>
-          <TouchableOpacity
-            style={styles.emptyBtn}
-            onPress={() => router.push("/appointment/book" as any)}
-          >
-            <Text style={styles.emptyBtnText}>Book Now</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        upcoming.slice(0, 3).map((apt) => (
-          <AppointmentCard
-            key={apt.id}
-            appointment={apt}
-            role="PATIENT"
-            onPress={() =>
-              router.push({
-                pathname: "/appointment/[id]",
-                params: { id: apt.id },
-              } as any)
-            }
-          />
-        ))
       )}
-    </ScrollView>
+    </View>
+  );
+
+  const renderEmpty = () => {
+    if (isLoading) return null;
+    return (
+      <EmptyState
+        icon="search-outline"
+        title="No Doctors Found"
+        description="Try adjusting your search or selecting a different specialization."
+      />
+    );
+  };
+
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+      </View>
+    );
+  };
+
+  return (
+    <ScreenContainer scrollable={false} padded={false}>
+      <FlatList
+        key={`grid-${numColumns}`}
+        data={doctors}
+        numColumns={numColumns}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={[styles.cardWrapper, { flex: 1, maxWidth: `${100 / numColumns}%` }]}>
+            <DoctorCard
+              doctor={item}
+              onPress={() => setSelectedDoctor(item)}
+            />
+          </View>
+        )}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        onEndReached={() => fetchMoreDoctors()}
+        onEndReachedThreshold={0.5}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <DoctorDetailsModal
+        visible={!!selectedDoctor}
+        onClose={() => setSelectedDoctor(null)}
+        doctor={selectedDoctor}
+      />
+    </ScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    padding: SPACING.l,
-    paddingBottom: 40,
-  },
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.l,
-  },
-  greeting: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: COLORS.text,
-  },
-  greetingSub: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  logoutBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FEE2E2",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quickRow: {
-    flexDirection: "row",
-    gap: SPACING.s,
-    marginBottom: SPACING.l,
-  },
-  quickCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADII.l,
-    padding: SPACING.m,
-    alignItems: "center",
-    gap: SPACING.s,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  quickIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  quickLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.text,
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  seeAll: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.primary,
-  },
-  emptyCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADII.l,
-    padding: SPACING.xl,
-    alignItems: "center",
-    gap: SPACING.s,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  emptyBtn: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.l,
-    paddingVertical: SPACING.s,
-    borderRadius: RADII.round,
-    marginTop: SPACING.s,
-  },
-  emptyBtnText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-});
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    patientHeaderContainer: {
+      backgroundColor: theme.colors.background,
+    },
+    bell: {
+      padding: theme.spacing.sm,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.full,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      position: 'relative',
+    },
+    unreadBadge: {
+      position: 'absolute',
+      top: -2,
+      right: -2,
+      backgroundColor: theme.colors.error,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 4,
+      borderWidth: 2,
+      borderColor: theme.colors.surface,
+    },
+    unreadBadgeText: {
+      color: '#FFF',
+      fontSize: 10,
+      fontWeight: 'bold',
+    },
+    greeting: {
+      ...theme.typography.h2,
+      color: theme.colors.text,
+      fontWeight: '700',
+    },
+    subtitle: {
+      ...theme.typography.body,
+      color: theme.colors.textSecondary,
+      marginTop: theme.spacing.xs,
+    },
+    loader: {
+      marginTop: theme.spacing.xl,
+      alignItems: 'center',
+    },
+    listContent: {
+      flexGrow: 1,
+      paddingBottom: 100, // accommodate bottom tab bar
+    },
+    cardWrapper: {
+      paddingHorizontal: theme.spacing.xl,
+    },
+    // Doctor specific styles
+    cardTitle: {
+      ...theme.typography.h4,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.md,
+    },
+    statsCard: {
+      marginHorizontal: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statItem: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    statNumber: {
+      ...theme.typography.h3,
+      color: theme.colors.primary,
+    },
+    statLabel: {
+      ...theme.typography.caption,
+      color: theme.colors.textSecondary,
+      marginTop: theme.spacing.xs,
+    },
+    statDivider: {
+      width: 1,
+      height: 40,
+      backgroundColor: theme.colors.divider,
+    },
+    footerLoader: {
+      paddingVertical: theme.spacing.xl,
+      alignItems: 'center',
+    },
+  });
