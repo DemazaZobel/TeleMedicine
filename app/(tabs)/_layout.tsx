@@ -75,7 +75,7 @@ export default function TabsLayout() {
         {isWeb ? (
           isDesktop ? (
             <View style={{ flex: 1, flexDirection: 'row' }}>
-              {(isDesktop && (userRole !== 'DOCTOR' || verificationStage === 'APPROVED')) && (
+              {isDesktop && user && (
                 <Sidebar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
               )}
               <View style={{ flex: 1 }}>

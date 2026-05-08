@@ -88,7 +88,7 @@ export default function AppointmentsScreen() {
         ) : (
           <FlatList
             key={`grid-${numColumns}`}
-            data={appointments}
+            data={appointments.filter(a => a.status?.toUpperCase() !== 'CANCELLED')}
             numColumns={numColumns}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}

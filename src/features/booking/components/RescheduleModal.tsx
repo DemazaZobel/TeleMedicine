@@ -126,7 +126,10 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     padding: theme.spacing.xl,
     width: '100%',
     maxWidth: 500, // Max width for web
-    ...theme.shadows.xl,
+    ...theme.shadows.lg,
+  },
+  container: {
+    width: '100%',
   },
   title: {
     ...theme.typography.h3,

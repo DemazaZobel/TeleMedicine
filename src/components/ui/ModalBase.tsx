@@ -57,6 +57,13 @@ export function ModalBase({ visible, onClose, title, subtitle, maxWidth, childre
               !isDesktop && { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }
             ]}
           >
+            {/* Drag Indicator for mobile */}
+            {!isDesktop && (
+              <View style={styles.dragIndicatorContainer}>
+                <View style={[styles.dragIndicator, { backgroundColor: theme.colors.border }]} />
+              </View>
+            )}
+
             {/* Header */}
             <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
               <View style={styles.headerTextContainer}>
@@ -106,21 +113,32 @@ const styles = StyleSheet.create({
   contentContainer: {
     width: '100%',
     maxHeight: '90%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 20,
+    shadowRadius: 20,
+    elevation: 25,
   },
   contentContainerDesktop: {
     width: 500,
     maxHeight: '85%',
     alignSelf: 'center',
-    marginBottom: 'auto', // Center vertically
+    marginBottom: 'auto',
     marginTop: 'auto',
     borderRadius: 24,
+  },
+  dragIndicatorContainer: {
+    width: '100%',
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dragIndicator: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
   },
   header: {
     flexDirection: 'row',

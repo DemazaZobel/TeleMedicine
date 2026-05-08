@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { EmptyState, RightDrawer } from '../../components/ui';
 import { useBookingStore } from '../../store/booking.store';
 import { Theme, useTheme } from '../../theme';
-import { formatRelativeTime } from '../../utils';
+import { formatRelativeTime, humanizeNotificationBody } from '../../utils';
 
 interface NotificationsDrawerProps {
   visible: boolean;
@@ -56,12 +56,22 @@ export function NotificationsDrawer({ visible, onClose }: NotificationsDrawerPro
     >
       <View style={[
         styles.iconContainer,
-        item.type === 'APPOINTMENT' ? styles.iconAppt : styles.iconSystem
+        item.type === 'APPOINTMENT' ? styles.iconAppt :
+        item.type === 'PAYMENT' ? styles.iconPayment :
+        styles.iconSystem
       ]}>
         <Ionicons
-          name={item.type === 'APPOINTMENT' ? 'calendar' : 'notifications'}
+          name={
+            item.type === 'APPOINTMENT' ? 'calendar' :
+            item.type === 'PAYMENT' ? 'card' :
+            'notifications'
+          }
           size={22}
-          color={item.type === 'APPOINTMENT' ? theme.colors.primary : theme.colors.textSecondary}
+          color={
+            item.type === 'APPOINTMENT' ? theme.colors.primary :
+            item.type === 'PAYMENT' ? theme.colors.success :
+            theme.colors.textSecondary
+          }
         />
       </View>
       <View style={styles.content}>
@@ -71,7 +81,7 @@ export function NotificationsDrawer({ visible, onClose }: NotificationsDrawerPro
             {formatRelativeTime(item.created_at)}
           </Text>
         </View>
-        <Text style={styles.body}>{item.body}</Text>
+        <Text style={styles.body}>{humanizeNotificationBody(item.body)}</Text>
       </View>
       {!item.is_read && <View style={styles.unreadDot} />}
     </TouchableOpacity>
@@ -197,6 +207,9 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
   iconAppt: {
     backgroundColor: theme.colors.primaryLight + '30',
+  },
+  iconPayment: {
+    backgroundColor: theme.colors.success + '25',
   },
   iconSystem: {
     backgroundColor: theme.colors.border,

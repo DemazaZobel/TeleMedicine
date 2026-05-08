@@ -1,12 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { Card, Button, Input } from '../../../components/ui';
-import { ModalBase } from '../../../components/ui/ModalBase';
-import { useBookingStore } from '../../../store/booking.store';
-import { useDiscoveryStore } from '../../../store/discovery.store';
-import { useTheme } from '../../../theme';
-import type { Theme } from '../../../theme';
-import type { AppointmentMode } from '../types/bookingTypes';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Button, Input } from "../../../components/ui";
+import { ModalBase } from "../../../components/ui/ModalBase";
+import { useBookingStore } from "../../../store/booking.store";
+import { useDiscoveryStore } from "../../../store/discovery.store";
+import type { Theme } from "../../../theme";
+import { useTheme } from "../../../theme";
+import type { AppointmentMode } from "../types/bookingTypes";
 
 interface BookingModalProps {
   visible: boolean;
@@ -15,69 +23,123 @@ interface BookingModalProps {
   onSuccess: () => void;
 }
 
-export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingModalProps) {
+export function BookingModal({
+  visible,
+  doctorId,
+  onClose,
+  onSuccess,
+}: BookingModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { bookAppointment, fetchMyAppointments, appointments, isLoading, error } = useBookingStore();
+  const {
+    bookAppointment,
+    fetchMyAppointments,
+    fetchDoctorAvailability,
+    doctorAvailabilityRules,
+    appointments,
+    isLoading,
+    error,
+  } = useBookingStore();
 
-  const [mode, setMode] = useState<AppointmentMode>('ONLINE');
-  const [reason, setReason] = useState('');
+  const [mode, setMode] = useState<AppointmentMode>("ONLINE");
+  const [reason, setReason] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const { doctors } = useDiscoveryStore();
 
-  // Check if there is already an active appointment with this doctor
+  // Fetch real availability when modal opens
+  useEffect(() => {
+    if (visible && doctorId) {
+      fetchDoctorAvailability(doctorId);
+    }
+  }, [visible, doctorId]);
+
+  // Generate real slots from doctor rules
+  const slots = useMemo(() => {
+    if (!doctorAvailabilityRules || doctorAvailabilityRules.length === 0)
+      return [];
+
+    const generatedSlots = [];
+    const today = new Date();
+
+    // Generate slots for the next 14 days (including today)
+    for (let dayOffset = 0; dayOffset <= 14; dayOffset++) {
+      const currentDay = new Date(today);
+      currentDay.setDate(today.getDate() + dayOffset);
+      const weekday = currentDay.getDay();
+
+      const rulesForDay = doctorAvailabilityRules.filter(
+        (r) => r.weekday === weekday && r.is_active,
+      );
+
+      for (const rule of rulesForDay) {
+        const [h, m] = rule.start_time.split(":").map(Number);
+        const [eh, em] = rule.end_time.split(":").map(Number);
+
+        const start = new Date(currentDay);
+        start.setHours(h, m, 0, 0);
+
+        // If it's today, only show future slots
+        if (dayOffset === 0 && start.getTime() < today.getTime()) continue;
+
+        const end = new Date(currentDay);
+        end.setHours(eh, em, 0, 0);
+
+        generatedSlots.push({ start, end });
+      }
+    }
+
+    // Sort slots by date
+    return generatedSlots.sort((a, b) => a.start.getTime() - b.start.getTime());
+  }, [doctorAvailabilityRules]);
+
   const hasActiveAppointment = useMemo(() => {
-    const doctor = doctors.find(d => String(d.id) === String(doctorId));
+    const doctor = doctors.find((d) => String(d.id) === String(doctorId));
     return appointments.some((a) => {
       const docId = String(a.doctor?.id || a.doctor);
-      const matchId = docId === String(doctorId) || (doctor && docId === String(doctor.user_id));
-      const matchStatus = ['requested', 'confirmed', 'pending'].includes(a.status?.toLowerCase() || '');
+      const matchId =
+        docId === String(doctorId) ||
+        (doctor && docId === String(doctor.user_id));
+      const matchStatus = ["requested", "confirmed", "pending"].includes(
+        a.status?.toLowerCase() || "",
+      );
       return matchId && matchStatus;
     });
   }, [appointments, doctorId, doctors]);
 
   useEffect(() => {
     if (visible) {
-      setReason('');
-      setMode('ONLINE');
+      setReason("");
+      setMode("ONLINE");
       setSelectedIndex(0);
       fetchMyAppointments(); // Fetch latest to ensure accurate double-booking check
     }
   }, [visible, fetchMyAppointments]);
 
-  // Generate generic future times for demo purposes
-  const getMockSlots = () => {
-    const slots = [];
-    const base = new Date();
-    base.setHours(10, 0, 0, 0);
-
-    for (let i = 1; i <= 3; i++) {
-        const start = new Date(base);
-        start.setDate(base.getDate() + i);
-        
-        const end = new Date(start);
-        end.setHours(start.getHours() + 1);
-
-        slots.push({ start, end });
-    }
-    return slots;
-  };
-
-  const [slots] = useState(getMockSlots());
-
   const handleBook = async () => {
     if (hasActiveAppointment) {
-      Alert.alert('Booking Exists', 'You already have an active appointment with this doctor.');
+      Alert.alert(
+        "Booking Exists",
+        "You already have an active appointment with this doctor.",
+      );
       return;
     }
 
     try {
       const selectedSlot = slots[selectedIndex];
+      const start = selectedSlot.start;
+      const end = new Date(start.getTime() + 60 * 60 * 1000); // Default to 1 hour duration
+      
+      console.log('[BookingModal] Booking appointment:', {
+        doctorId,
+        start: start.toISOString(),
+        end: end.toISOString(),
+      });
+
       await bookAppointment({
         doctor_id: doctorId,
-        scheduled_start: selectedSlot.start.toISOString(),
-        scheduled_end: selectedSlot.end.toISOString(),
+        scheduled_start: start.toISOString(),
+        scheduled_end: end.toISOString(),
         appointment_type: mode,
         reason,
       });
@@ -93,50 +155,114 @@ export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingM
       onClose={onClose}
       title="Book Appointment"
       subtitle="Select your preferred mode and provide a reason."
+      maxWidth={520}
     >
       <View>
         {hasActiveAppointment && (
-          <View style={[styles.warningBanner, { backgroundColor: theme.colors.amber50 }]}>
-            <Text style={[styles.warningText, { color: theme.colors.amber700 }]}>
-              You already have a pending or confirmed appointment with this doctor.
+          <View
+            style={[
+              styles.warningBanner,
+              { backgroundColor: theme.colors.amber50 },
+            ]}
+          >
+            <Text
+              style={[styles.warningText, { color: theme.colors.amber700 }]}
+            >
+              You already have a pending or confirmed appointment with this
+              doctor.
             </Text>
           </View>
         )}
 
-        <Text style={styles.label}>Select Time Slot</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotScroll}>
-          {slots.map((slot, index) => {
-             const isActive = index === selectedIndex;
-             return (
-               <TouchableOpacity 
-                 key={index} 
-                 style={[styles.slotCard, isActive && styles.slotCardActive]}
-                 onPress={() => setSelectedIndex(index)}
-               >
-                   <Text style={[styles.slotDate, isActive && styles.activeText]}>
-                     {slot.start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                   </Text>
-                   <Text style={[styles.slotTime, isActive && styles.activeText]}>
-                     {slot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                   </Text>
-               </TouchableOpacity>
-             )
-          })}
-        </ScrollView>
+        <Text style={styles.label}>Select Available Slot</Text>
+        {slots && slots.length > 0 ? (
+          <View style={styles.slotsGrid}>
+            {slots.slice(0, 9).map((slot, index) => {
+              const isActive = index === selectedIndex;
+              const isToday = slot.start.toDateString() === new Date().toDateString();
+              
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.gridSlot, isActive && styles.gridSlotActive]}
+                  onPress={() => setSelectedIndex(index)}
+                >
+                  <Text style={[styles.gridDayName, isActive && styles.activeText]}>
+                    {isToday ? 'TODAY' : slot.start.toLocaleDateString(undefined, { weekday: 'long' }).toUpperCase()}
+                  </Text>
+                  <Text style={[styles.gridTime, isActive && styles.activeText]}>
+                    {slot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.emptySlots}>
+            <Ionicons name="calendar-outline" size={32} color={theme.colors.textTertiary} />
+            <Text style={styles.emptyText}>
+              {isLoading
+                ? "Fetching doctor's schedule..."
+                : "No available slots found for the next two weeks."}
+            </Text>
+          </View>
+        )}
 
         <Text style={styles.label}>Consultation Mode</Text>
-        <View style={styles.modeToggle}>
-          <TouchableOpacity 
-            style={[styles.modeButton, mode === 'ONLINE' && styles.modeButtonActive]}
-            onPress={() => setMode('ONLINE')}
+        <View style={styles.segmentedControl}>
+          <TouchableOpacity
+            style={[
+              styles.segmentButton,
+              mode === "ONLINE" && styles.segmentButtonActive,
+            ]}
+            onPress={() => setMode("ONLINE")}
           >
-            <Text style={[styles.modeText, mode === 'ONLINE' && styles.modeTextActive]}>Online</Text>
+            <View style={styles.segmentInner}>
+              <Ionicons
+                name="videocam"
+                size={18}
+                color={
+                  mode === "ONLINE"
+                    ? theme.colors.primary
+                    : theme.colors.textTertiary
+                }
+              />
+              <Text
+                style={[
+                  styles.segmentText,
+                  mode === "ONLINE" && styles.segmentTextActive,
+                ]}
+              >
+                Online
+              </Text>
+            </View>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.modeButton, mode === 'IN_PERSON' && styles.modeButtonActive]}
-            onPress={() => setMode('IN_PERSON')}
+          <TouchableOpacity
+            style={[
+              styles.segmentButton,
+              mode === "IN_PERSON" && styles.segmentButtonActive,
+            ]}
+            onPress={() => setMode("IN_PERSON")}
           >
-            <Text style={[styles.modeText, mode === 'IN_PERSON' && styles.modeTextActive]}>In Person</Text>
+            <View style={styles.segmentInner}>
+              <Ionicons
+                name="location"
+                size={18}
+                color={
+                  mode === "IN_PERSON"
+                    ? theme.colors.primary
+                    : theme.colors.textTertiary
+                }
+              />
+              <Text
+                style={[
+                  styles.segmentText,
+                  mode === "IN_PERSON" && styles.segmentTextActive,
+                ]}
+              >
+                In Person
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -152,19 +278,19 @@ export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingM
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.actions}>
-          <Button 
-             title="Cancel" 
-             variant="outline" 
-             onPress={onClose} 
-             disabled={isLoading}
-             style={styles.actionBtn}
+          <Button
+            title="Cancel"
+            variant="outline"
+            onPress={onClose}
+            disabled={isLoading}
+            style={styles.actionBtn}
           />
-          <Button 
-             title={isLoading ? "Booking..." : "Confirm Book"} 
-             onPress={handleBook} 
-             disabled={isLoading || !reason || hasActiveAppointment}
-             style={styles.actionBtn}
-             loading={isLoading}
+          <Button
+            title={isLoading ? "Booking..." : "Confirm Book"}
+            onPress={handleBook}
+            disabled={isLoading || !reason || hasActiveAppointment}
+            style={styles.actionBtn}
+            loading={isLoading}
           />
         </View>
       </View>
@@ -181,81 +307,126 @@ const createStyles = (theme: Theme) =>
     },
     warningText: {
       ...theme.typography.bodySm,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     label: {
       ...theme.typography.label,
       color: theme.colors.textSecondary,
-      marginBottom: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.5,
     },
-    slotScroll: {
-      flexGrow: 0,
-      marginBottom: theme.spacing.lg,
+    slotsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+      marginBottom: theme.spacing.xl,
     },
-    slotCard: {
-      padding: theme.spacing.md,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.md,
-      borderWidth: 1,
+    gridSlot: {
+      width: '31%',
+      paddingVertical: 12,
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1.5,
       borderColor: theme.colors.border,
-      marginRight: theme.spacing.sm,
-      minWidth: 120,
-      alignItems: 'center',
+      alignItems: "center",
+      justifyContent: 'center',
     },
-    slotCardActive: {
-      backgroundColor: theme.colors.primaryLight,
+    gridSlotActive: {
+      backgroundColor: theme.colors.primaryLight + "10",
       borderColor: theme.colors.primary,
     },
-    slotDate: {
-      ...theme.typography.bodySm,
-      color: theme.colors.textSecondary,
+    slotDateBox: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 4,
       marginBottom: 4,
     },
-    slotTime: {
-      ...theme.typography.body,
+    gridDayNum: {
+      fontSize: 18,
+      fontWeight: '800',
       color: theme.colors.text,
+    },
+    gridDayName: {
+      fontSize: 10,
       fontWeight: '700',
+      color: theme.colors.textSecondary,
+    },
+    gridTime: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: theme.colors.textSecondary,
     },
     activeText: {
       color: theme.colors.primary,
     },
-    modeToggle: {
-      flexDirection: 'row',
+    emptySlots: {
+      padding: 32,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.radius.lg,
       marginBottom: theme.spacing.lg,
-      gap: theme.spacing.sm,
-    },
-    modeButton: {
-      flex: 1,
-      paddingVertical: theme.spacing.md,
-      alignItems: 'center',
       borderWidth: 1,
       borderColor: theme.colors.border,
-      borderRadius: theme.radius.md,
+      borderStyle: "dashed",
     },
-    modeButtonActive: {
-      backgroundColor: theme.colors.primaryLight,
-      borderColor: theme.colors.primary,
-    },
-    modeText: {
+    emptyText: {
       ...theme.typography.bodySm,
-      fontWeight: '600',
+      color: theme.colors.textTertiary,
+      textAlign: "center",
+      marginTop: 8,
+    },
+    segmentedControl: {
+      flexDirection: "row",
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.radius.md,
+      padding: 4,
+      marginBottom: theme.spacing.xl,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    segmentButton: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: "center",
+      borderRadius: theme.radius.sm,
+    },
+    segmentButtonActive: {
+      backgroundColor: theme.colors.surface,
+      ...theme.shadows.sm,
+    },
+    segmentInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    segmentText: {
+      ...theme.typography.bodySm,
+      fontWeight: "600",
       color: theme.colors.textSecondary,
     },
-    modeTextActive: {
-      color: theme.colors.primary,
+    segmentTextActive: {
+      color: theme.colors.text,
     },
     errorText: {
+      ...theme.typography.bodySm,
       color: theme.colors.error,
-      marginBottom: theme.spacing.md,
-      textAlign: 'center',
+      marginTop: theme.spacing.sm,
+      textAlign: "center",
     },
     actions: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      marginTop: theme.spacing.lg,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: theme.spacing.xl,
+      paddingTop: theme.spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
       gap: theme.spacing.md,
     },
     actionBtn: {
       flex: 1,
+      height: 48,
     },
   });

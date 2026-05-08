@@ -58,3 +58,27 @@ export function formatRelativeTime(dateString: string): string {
   
   return formatDate(dateString);
 }
+
+/**
+ * Replace raw ISO timestamps in notification body text with human-readable dates.
+ * e.g. "2026-04-27 07:00:00+00:00" → "Sun, Apr 27 at 10:00 AM"
+ */
+export function humanizeNotificationBody(body: string): string {
+  // Match patterns like "2026-04-27 07:00:00+00:00" or "2026-04-21T07:00:00Z"
+  const isoPattern = /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[+-]\d{2}:\d{2}|Z)?/g;
+  return body.replace(isoPattern, (match) => {
+    try {
+      const date = new Date(match.replace(' ', 'T'));
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      }) + ' at ' + date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return match;
+    }
+  });
+}
