@@ -2,13 +2,13 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { LayoutAnimation, Pressable, Text, View } from "react-native";
 import { useAuthStore } from "../../store/authStore";
 import { useDoctorStore } from "../../store/doctor.store";
 import { useTheme } from "../../theme";
 import { TAB_CONFIGS } from "../../types/navigation";
-import { createSidebarStyles } from "./Sidebar.styles";
+import { cn } from "../../lib/utils";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -16,9 +16,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
-  const { theme, isDark, toggleTheme } = useTheme();
-  const styles = useMemo(() => createSidebarStyles(theme), [theme]);
-
+  const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
   const segments = useSegments();
 
@@ -52,16 +50,20 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
   };
 
   return (
-    <View style={[styles.container, isCollapsed && styles.containerCollapsed]}>
-
+    <View 
+      className={cn(
+        "bg-background border-r border-border py-6 px-4 justify-between transition-all",
+        isCollapsed ? "w-16 items-center px-0" : "w-60"
+      )}
+    >
       {/* HEADER */}
       <View>
-        <View style={[styles.header, isCollapsed && styles.headerCollapsed]}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Ionicons name="medical" size={20} color={theme.colors.primary} />
+        <View className={cn("flex-row items-center justify-between h-10 mb-4 px-2", isCollapsed && "px-0 justify-center gap-1")}>
+          <View className="flex-row items-center">
+            <Ionicons name="medical" size={20} className="text-primary" />
 
             {!isCollapsed && (
-              <Text style={styles.workspaceName}>MedLink</Text>
+              <Text className="ml-2 text-[15px] font-semibold text-foreground">MedLink</Text>
             )}
           </View>
 
@@ -71,24 +73,25 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
               LayoutAnimation.easeInEaseOut();
               setIsCollapsed(!isCollapsed);
             }}
-            style={styles.toggleBtn}
+            className="w-7 h-7 rounded-md items-center justify-center hover:bg-muted"
           >
             <Ionicons
               name={isCollapsed ? "chevron-forward" : "chevron-back"}
               size={18}
-              color={theme.colors.iconSecondary}
+              className="text-muted-foreground"
             />
           </Pressable>
         </View>
 
         {/* NAVIGATION */}
-        <View style={styles.section}>
+        <View className="mt-2">
           {!isCollapsed && (
-            <Text style={styles.sectionLabel}>Overview</Text>
+            <Text className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1.5 px-1.5">Overview</Text>
           )}
 
           {visibleTabs.map((tab) => {
             const isActive = activeSegment === tab.name;
+            const isHovered = hovered === tab.name;
 
             return (
               <Pressable
@@ -101,42 +104,38 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
                   );
                   onNavigate?.();
                 }}
-                style={[
-                  styles.item,
-                  isCollapsed && styles.itemCollapsed,
-                  isActive && styles.itemActive,
-                  !isActive && hovered === tab.name && styles.itemHover,
-                ]}
+                className={cn(
+                  "flex-row items-center h-10 rounded-lg px-3 mb-1 relative",
+                  isCollapsed && "px-0 justify-center w-10",
+                  isActive && "bg-transparent",
+                  !isActive && isHovered && "bg-muted"
+                )}
               >
                 {isActive && (
-                  <View style={[styles.activeBar, isCollapsed && styles.activeBarCollapsed]} />
+                  <View className={cn("absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-primary", isCollapsed && "left-1")} />
                 )}
 
                 <Ionicons
                   name={tab.icon as any}
                   size={20}
-                  color={
-                    isActive
-                      ? theme.colors.primary
-                      : theme.colors.iconSecondary
-                  }
+                  className={isActive ? "text-primary" : "text-muted-foreground"}
                 />
 
                 {!isCollapsed && (
                   <Text
-                    style={[
-                      styles.itemText,
-                      isActive && styles.itemTextActive,
-                    ]}
+                    className={cn(
+                      "ml-2.5 text-sm font-medium text-muted-foreground",
+                      isActive && "text-foreground font-semibold"
+                    )}
                   >
                     {tab.title}
                   </Text>
                 )}
 
                 {/* Tooltip (collapsed mode) */}
-                {isCollapsed && hovered === tab.name && (
-                  <View style={styles.tooltip}>
-                    <Text style={styles.tooltipText}>{tab.title}</Text>
+                {isCollapsed && isHovered && (
+                  <View className="absolute left-[50px] bg-popover py-1.5 px-2.5 rounded-md border border-border shadow-sm">
+                    <Text className="text-xs text-popover-foreground">{tab.title}</Text>
                   </View>
                 )}
               </Pressable>
@@ -146,39 +145,39 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
       </View>
 
       {/* FOOTER */}
-      <View style={styles.footer}>
-        <Pressable style={styles.item} onPress={onNotificationsPress}>
+      <View className="mt-3 border-t border-border pt-3">
+        <Pressable className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted" onPress={onNotificationsPress}>
           <Ionicons
             name="notifications-outline"
             size={20}
-            color={theme.colors.iconSecondary}
+            className="text-muted-foreground"
           />
           {!isCollapsed && (
-            <Text style={styles.itemText}>Notifications</Text>
+            <Text className="ml-2.5 text-sm font-medium text-muted-foreground">Notifications</Text>
           )}
         </Pressable>
 
-        <Pressable style={styles.item} onPress={toggleTheme}>
+        <Pressable className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted" onPress={toggleTheme}>
           <Ionicons
             name={isDark ? "sunny" : "moon"}
             size={20}
-            color={theme.colors.iconSecondary}
+            className="text-muted-foreground"
           />
           {!isCollapsed && (
-            <Text style={styles.itemText}>
+            <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
               {isDark ? "Light Mode" : "Dark Mode"}
             </Text>
           )}
         </Pressable>
 
-        <Pressable style={styles.item} onPress={handleLogout}>
+        <Pressable className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10" onPress={handleLogout}>
           <Ionicons
             name="log-out-outline"
             size={20}
-            color={theme.colors.error}
+            className="text-destructive"
           />
           {!isCollapsed && (
-            <Text style={[styles.itemText, { color: theme.colors.error }]}>
+            <Text className="ml-2.5 text-sm font-medium text-destructive">
               Logout
             </Text>
           )}

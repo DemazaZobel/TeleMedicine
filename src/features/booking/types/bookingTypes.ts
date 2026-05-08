@@ -1,6 +1,6 @@
 import type { User, DoctorProfile } from '../../../types/models';
 
-export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 export type AppointmentMode = 'ONLINE' | 'IN_PERSON';
 
 // Simplified nested objects from backend
@@ -16,15 +16,31 @@ export interface DoctorProfileMin {
 
 export interface AppointmentDetail {
   id: string | number;
-  patient: PatientProfileMin;
-  doctor: DoctorProfileMin;
-  scheduled_start: string; // ISO String
-  scheduled_end: string; // ISO String
+  // Flat patient fields from backend
+  patient_user_id?: string;
+  patient_first_name?: string;
+  patient_last_name?: string;
+  // Flat doctor fields from backend
+  doctor_user_id?: string;
+  doctor_first_name?: string;
+  doctor_last_name?: string;
+  // Legacy nested objects (may be present on older responses)
+  patient?: PatientProfileMin;
+  doctor?: DoctorProfileMin;
+  // Appointment details
+  scheduled_start: string;
+  scheduled_end: string;
   mode: AppointmentMode;
   reason: string;
+  notes?: string;
   status: AppointmentStatus;
-  payment_status: 'unpaid' | 'charge_pending' | 'paid' | 'failed';
+  payment_status: 'unpaid' | 'charge_pending' | 'paid' | 'failed' | 'refunded';
+  payment_amount?: string;
+  payment_currency?: string;
+  payment_method_provider?: string;
+  payment_method_account?: string;
   meeting_link?: string;
+  latest_change_request?: AppointmentChangeRequestDetail;
   created_at?: string;
   updated_at?: string;
 }
@@ -38,7 +54,7 @@ export interface AppointmentBookingPayload {
 }
 
 export interface AppointmentCancelPayload {
-  reason?: string;
+  confirm: boolean;
 }
 
 export type ChangeRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
@@ -95,7 +111,8 @@ export interface ProviderAvailabilityRuleCreatePayload {
   is_active?: boolean;
 }
 
-export type NotificationType = 'APPOINTMENT' | 'GENERAL' | 'SYSTEM';
+// Backend schema: SYSTEM | APPOINTMENT | PAYMENT | MESSAGE
+export type NotificationType = 'APPOINTMENT' | 'PAYMENT' | 'SYSTEM' | 'MESSAGE' | 'GENERAL';
 
 export interface NotificationDetail {
   id: string | number;

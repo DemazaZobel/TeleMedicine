@@ -18,6 +18,7 @@ import type {
 interface BookingState {
   appointments: AppointmentDetail[];
   availabilityRules: ProviderAvailabilityRuleDetail[];
+  doctorAvailabilityRules: ProviderAvailabilityRuleDetail[]; // Rules for the doctor being booked
   notifications: NotificationDetail[];
   preferences: NotificationPreferenceDetail | null;
   wallet: DoctorWalletDetail | null;
@@ -33,7 +34,9 @@ interface BookingActions {
   cancelAppointment: (id: string | number, payload?: AppointmentCancelPayload) => Promise<void>;
   requestReschedule: (id: string | number, payload: AppointmentChangeRequestCreatePayload) => Promise<void>;
   fetchAvailabilityRules: () => Promise<void>;
+  fetchDoctorAvailability: (doctorId: string | number) => Promise<void>;
   createAvailabilityRule: (payload: ProviderAvailabilityRuleCreatePayload) => Promise<void>;
+  deleteAvailabilityRule: (id: string | number) => Promise<void>;
   doctorDecision: (id: string | number, payload: AppointmentDoctorDecisionPayload) => Promise<void>;
   respondToChangeRequest: (id: string | number, payload: AppointmentChangeResponsePayload) => Promise<void>;
   fetchNotifications: () => Promise<void>;
@@ -44,10 +47,13 @@ interface BookingActions {
 
   // Payments
   fetchPaymentMethods: () => Promise<void>;
+  addPaymentMethod: (payload: any) => Promise<PaymentMethodDetail>;
+  verifyPaymentMethod: (id: string | number, otp: string) => Promise<PaymentMethodDetail>;
   initiatePayment: (appointmentId: string | number, paymentMethodId: string | number) => Promise<string>;
   completeAppointment: (id: string | number) => Promise<void>;
   fetchWallet: () => Promise<void>;
   fetchPaymentHistory: () => Promise<void>;
+  verifyPayment: (id: string | number) => Promise<void>;
 
   setIsNotificationsDrawerOpen: (open: boolean) => void;
   clearError: () => void;
@@ -58,6 +64,7 @@ type BookingStore = BookingState & BookingActions;
 const initialState: BookingState = {
   appointments: [],
   availabilityRules: [],
+  doctorAvailabilityRules: [],
   notifications: [],
   preferences: null,
   wallet: null,
@@ -149,6 +156,20 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     }
   },
 
+
+  fetchDoctorAvailability: async (doctorId: string | number) => {
+    try {
+      set({ isLoading: true, error: null, doctorAvailabilityRules: [] }); // Clear previous
+      const rules = await bookingService.getAvailabilityRules(doctorId);
+      set({ doctorAvailabilityRules: rules, isLoading: false });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || 'Failed to fetch doctor availability.'
+      });
+    }
+  },
+
   createAvailabilityRule: async (payload: ProviderAvailabilityRuleCreatePayload) => {
     try {
       set({ isLoading: true, error: null });
@@ -161,6 +182,27 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({
         isLoading: false,
         error: error.response?.data?.detail || 'Failed to create availability rule.'
+      });
+      throw error;
+    }
+  },
+
+
+  deleteAvailabilityRule: async (id: string | number) => {
+    try {
+      console.log('[BookingStore] Deleting availability rule:', id);
+      set({ isLoading: true, error: null });
+      await bookingService.deleteAvailabilityRule(id);
+      console.log('[BookingStore] Delete successful, updating state...');
+      set((state) => ({
+        availabilityRules: state.availabilityRules.filter((r) => String(r.id) !== String(id)),
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      console.error('[BookingStore] Delete failed:', error);
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || 'Failed to delete availability rule.'
       });
       throw error;
     }
@@ -302,6 +344,33 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     }
   },
 
+  addPaymentMethod: async (payload: any) => {
+    try {
+      set({ isLoading: true, error: null });
+      const method = await bookingService.addPaymentMethod(payload);
+      set((state) => ({ paymentMethods: [...state.paymentMethods, method], isLoading: false }));
+      return method;
+    } catch (error: any) {
+      set({ isLoading: false, error: error.response?.data?.detail || error.message });
+      throw error;
+    }
+  },
+
+  verifyPaymentMethod: async (id: string | number, otp: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      const method = await bookingService.verifyPaymentMethod(id, otp);
+      set((state) => ({
+        paymentMethods: state.paymentMethods.map(m => m.id === id ? method : m),
+        isLoading: false
+      }));
+      return method;
+    } catch (error: any) {
+      set({ isLoading: false, error: error.response?.data?.detail || error.message });
+      throw error;
+    }
+  },
+
   initiatePayment: async (appointmentId: string | number, paymentMethodId: string | number) => {
     try {
       set({ isLoading: true, error: null });
@@ -317,7 +386,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   completeAppointment: async (id: string | number) => {
     try {
       set({ isLoading: true, error: null });
-      const updatedApp = await bookingService.completeAppointment(id);
+      const updatedApp = await bookingService.completePayment(id);
       set((state) => ({
         appointments: state.appointments.map(app =>
           app.id === id ? updatedApp : app
@@ -327,6 +396,22 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     } catch (error: any) {
       set({ isLoading: false, error: error.response?.data?.detail || error.message });
       throw error;
+    }
+  },
+
+  verifyPayment: async (id: string | number) => {
+    try {
+      set({ isLoading: true, error: null });
+      const updatedApp = await bookingService.completePayment(id);
+      set((state) => ({
+        appointments: state.appointments.map(app =>
+          app.id === id ? updatedApp : app
+        ),
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      set({ isLoading: false });
+      // Don't throw here, just stop loading
     }
   },
 

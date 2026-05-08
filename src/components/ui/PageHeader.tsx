@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme';
 import type { Theme } from '../../theme';
 import { Button } from './Button';
@@ -39,7 +40,7 @@ export const PageHeader = React.memo(function PageHeader({
               size="sm" 
               title={action.label} 
               onPress={action.onPress} 
-              icon={action.icon as any}
+              icon={action.icon ? <Ionicons name={action.icon as any} size={16} color="#fff" style={{ marginRight: 4 }} /> : undefined}
             />
           )}
         </View>
