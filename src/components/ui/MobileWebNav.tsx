@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { useTheme } from '../../theme';
-import { Sidebar } from './Sidebar';
+import { Navbar } from './Navbar';
 
 interface MobileWebNavProps {
   onNotificationsPress?: () => void;
@@ -35,7 +35,7 @@ export function MobileWebNav({ onNotificationsPress }: MobileWebNavProps) {
             <View style={styles.modalBackground} />
           </TouchableWithoutFeedback>
           <View style={styles.drawer}>
-            <Sidebar 
+            <Navbar 
               onNavigate={() => setIsOpen(false)} 
               onNotificationsPress={() => {
                 setIsOpen(false);

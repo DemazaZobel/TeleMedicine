@@ -19,15 +19,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (isBootstrapping) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if user is not authenticated
-      router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
+    if (isAuthenticated && inAuthGroup) {
       // Redirect to tabs if user is authenticated but in auth group
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isBootstrapping, segments]);
+  }, [isAuthenticated, isBootstrapping, segments, router]);
 
   if (isBootstrapping) {
     return <Loader message="Starting MedLink..." />;

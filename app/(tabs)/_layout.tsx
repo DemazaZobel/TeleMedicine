@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, useWindowDimensions, View } from 'react-native';
-import { MobileWebNav, NotificationsDrawer, Sidebar } from '../../src/components/ui';
+import { MobileWebNav, Navbar, NotificationsDrawer } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
 import { useTheme } from '../../src/theme';
@@ -13,6 +13,7 @@ export default function TabsLayout() {
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userRole = user?.role ?? 'PATIENT';
   const verificationStage = useDoctorStore((s) => s.verificationStage());
   const { isNotificationsDrawerOpen, setIsNotificationsDrawerOpen } = useBookingStore();
@@ -42,6 +43,16 @@ export default function TabsLayout() {
       }}
     >
       {TAB_CONFIGS.map((tab) => {
+        if (!isAuthenticated && tab.name !== 'index') {
+          return (
+            <Tabs.Screen
+              key={tab.name}
+              name={tab.name}
+              options={{ href: null }}
+            />
+          );
+        }
+
         let isTabVisible = tab.roles.includes(userRole);
 
         if (userRole === 'DOCTOR' && verificationStage !== 'APPROVED' && tab.name === 'wallet') {
@@ -74,9 +85,9 @@ export default function TabsLayout() {
       <View style={{ flex: 1 }}>
         {isWeb ? (
           isDesktop ? (
-            <View style={{ flex: 1, flexDirection: 'row' }}>
-              {isDesktop && user && (
-                <Sidebar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+            <View style={{ flex: 1 }}>
+              {user && (
+                <Navbar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
               )}
               <View style={{ flex: 1 }}>
                 {tabsElement}
