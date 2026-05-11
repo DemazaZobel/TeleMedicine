@@ -2,17 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-  StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../theme';
 import type { Theme } from '../../theme';
+import { useTheme } from '../../theme';
 
 interface AuthContainerProps {
   children: React.ReactNode;
@@ -34,23 +34,24 @@ export const AuthContainer = React.memo(function AuthContainer({
 
   const isDesktop = width > 768;
 
-  // Background pattern using decorative corner nodes
+  // Background pattern using beautiful glowing blobs
   const renderDecorativeNodes = () => {
-    if (Platform.OS !== 'web') return null;
-    const nodeColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
-    const lineColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {/* Corner decorative rectangles */}
-        <View style={[styles.cornerNode, { top: 60, left: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        <View style={[styles.cornerNode, { top: 60, right: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        <View style={[styles.cornerNode, { bottom: 60, left: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        <View style={[styles.cornerNode, { bottom: 60, right: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        {/* Subtle grid lines */}
-        <View style={[styles.gridLine, { top: '20%', left: 0, right: 0, height: 1, backgroundColor: lineColor }]} />
-        <View style={[styles.gridLine, { top: '80%', left: 0, right: 0, height: 1, backgroundColor: lineColor }]} />
-        <View style={[styles.gridLine, { left: '20%', top: 0, bottom: 0, width: 1, backgroundColor: lineColor }]} />
-        <View style={[styles.gridLine, { right: '20%', top: 0, bottom: 0, width: 1, backgroundColor: lineColor }]} />
+        {/* Glow Top Right */}
+        <View style={[styles.glowBlob, styles.glowBlobTopRight]} />
+        {/* Glow Bottom Left */}
+        <View style={[styles.glowBlob, styles.glowBlobBottomLeft]} />
+        
+        {Platform.OS === 'web' && (
+          <>
+            {/* Subtle grid lines */}
+            <View style={[styles.gridLine, { top: '20%', left: 0, right: 0, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+            <View style={[styles.gridLine, { top: '80%', left: 0, right: 0, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+            <View style={[styles.gridLine, { left: '20%', top: 0, bottom: 0, width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+            <View style={[styles.gridLine, { right: '20%', top: 0, bottom: 0, width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+          </>
+        )}
       </View>
     );
   };
@@ -136,7 +137,7 @@ export const AuthContainer = React.memo(function AuthContainer({
 
 const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) => {
   const isDesktop = windowWidth > 768;
-  const bgColor = theme.dark ? '#0D1117' : '#F0F2F5';
+  const bgColor = theme.dark ? '#0a0d14' : '#F4FCF7';
 
   return StyleSheet.create({
     outerContainer: {
@@ -150,24 +151,24 @@ const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) =
       width: '100%',
       maxWidth: 460,
       maxHeight: windowHeight - 80,
-      backgroundColor: theme.dark ? 'rgba(22, 27, 34, 0.95)' : 'rgba(255, 255, 255, 0.97)',
-      borderRadius: 24,
+      backgroundColor: theme.dark ? 'rgba(20, 24, 32, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+      borderRadius: 32,
       borderWidth: 1,
-      borderColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+      borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
       overflow: 'hidden',
       ...Platform.select({
         web: {
           boxShadow: theme.dark
-            ? '0 24px 80px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.05)'
-            : '0 24px 80px rgba(0,0,0,0.1), 0 0 1px rgba(0,0,0,0.08)',
-          backdropFilter: 'blur(20px)',
+            ? '0 32px 80px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.05)'
+            : '0 32px 80px rgba(0,100,80,0.08), 0 0 1px rgba(0,0,0,0.05)',
+          backdropFilter: 'blur(30px)',
         },
         default: {
           elevation: 24,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.3,
-          shadowRadius: 24,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: theme.dark ? 0.2 : 0.08,
+          shadowRadius: 32,
         },
       }),
     },
@@ -186,23 +187,24 @@ const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) =
       width: '100%',
       maxWidth: 420,
       alignSelf: 'center',
-      backgroundColor: theme.dark ? 'rgba(22, 27, 34, 0.95)' : 'rgba(255, 255, 255, 0.97)',
-      borderRadius: 24,
+      backgroundColor: theme.dark ? 'rgba(20, 24, 32, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+      borderRadius: 32,
       padding: 28,
       borderWidth: 1,
-      borderColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+      borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
       ...Platform.select({
         web: {
           boxShadow: theme.dark
             ? '0 16px 48px rgba(0,0,0,0.4)'
-            : '0 16px 48px rgba(0,0,0,0.08)',
+            : '0 16px 48px rgba(0,100,80,0.06)',
+          backdropFilter: 'blur(20px)',
         },
         default: {
           elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 16,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: theme.dark ? 0.2 : 0.08,
+          shadowRadius: 24,
         },
       }),
     },
@@ -231,6 +233,24 @@ const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) =
       alignItems: 'center',
     },
     // Decorative elements
+    glowBlob: {
+      position: 'absolute',
+      width: windowWidth * 0.8,
+      height: windowWidth * 0.8,
+      borderRadius: windowWidth * 0.4,
+      opacity: theme.dark ? 0.15 : 0.08,
+      filter: 'blur(80px)' as any,
+    },
+    glowBlobTopRight: {
+      top: -windowHeight * 0.2,
+      right: -windowWidth * 0.2,
+      backgroundColor: theme.colors.primary,
+    },
+    glowBlobBottomLeft: {
+      bottom: -windowHeight * 0.2,
+      left: -windowWidth * 0.2,
+      backgroundColor: theme.colors.secondary || '#34d399',
+    },
     cornerNode: {
       position: 'absolute',
       width: 80,

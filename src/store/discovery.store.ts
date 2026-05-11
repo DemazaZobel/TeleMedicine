@@ -94,11 +94,18 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
 
       console.log('[DiscoveryStore] Fetching with params:', params);
       const response = await doctorApi.searchProviders(params);
-      console.log('[DiscoveryStore] API Response:', response);
       
       const isPaginated = response && typeof response === 'object' && 'results' in response;
       const results = isPaginated ? response.results : (Array.isArray(response) ? response : []);
       const nextUrl = isPaginated ? response.next : null;
+      
+      // Explicit debug logs as requested
+      console.log('--- DOCTORS FETCH DEBUG ---');
+      console.log('Doctors response:', response);
+      console.log('Doctors data:', results);
+      console.log('Doctors count:', results?.length);
+      console.log('Selected category:', selectedSpecialization);
+      console.log('---------------------------');
       
       set({ 
         doctors: results, 
@@ -123,11 +130,18 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
     try {
       console.log('[DiscoveryStore] Loading more from:', nextPageUrl);
       const response = await doctorApi.fetchNextPage(nextPageUrl);
-      console.log('[DiscoveryStore] Load More Response:', response);
 
       const isPaginated = response && typeof response === 'object' && 'results' in response;
       const results = isPaginated ? response.results : (Array.isArray(response) ? response : []);
       const nextUrl = isPaginated ? response.next : null;
+      
+      // Explicit debug logs as requested
+      console.log('--- DOCTORS LOAD MORE DEBUG ---');
+      console.log('Doctors response:', response);
+      console.log('Doctors data:', results);
+      console.log('Doctors count:', results?.length);
+      console.log('Selected category:', get().selectedSpecialization);
+      console.log('-------------------------------');
       
       set((state) => ({ 
         doctors: [...state.doctors, ...results], 

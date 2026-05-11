@@ -14,10 +14,10 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Card, EmptyState, PageHeader, ScreenContainer } from '../../src/components/ui';
+import { Card, PageHeader, ScreenContainer } from '../../src/components/ui';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
-import { DoctorDetailsModal, FilterChips } from '../../src/features/patient';
 import type { ProviderSearchResult } from '../../src/features/doctor/types/doctor.types';
+import { DoctorDetailsModal, FilterChips } from '../../src/features/patient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useBookingStore } from '../../src/store/booking.store';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
@@ -120,9 +120,55 @@ function FadeInSection({
 }
 
 export default function HomeScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { width } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const baseStyles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const styles = useMemo(() => ({
+    ...baseStyles,
+    emptyCategoryCard: {
+      borderRadius: 18,
+      padding: 32,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      backgroundColor: isDark ? theme.colors.surface : '#f8faf9',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginTop: 16,
+    },
+    emptyCategoryIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: isDark ? theme.colors.primary + '22' : '#e9fbf4',
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      marginBottom: 16,
+    },
+    emptyCategoryTitle: {
+      fontSize: 18,
+      fontWeight: '700' as const,
+      color: theme.colors.text,
+      marginBottom: 8,
+    },
+    emptyCategoryText: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      textAlign: 'center' as const,
+      maxWidth: 320,
+      marginBottom: 24,
+    },
+    clearFilterBtn: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: theme.colors.primary,
+    },
+    clearFilterBtnText: {
+      fontSize: 14,
+      color: '#fff',
+      fontWeight: '700' as const,
+    },
+  }), [baseStyles, theme, isDark]);
   const router = useRouter();
 
   const user = useAuthStore((s) => s.user);
@@ -248,7 +294,7 @@ export default function HomeScreen() {
   }, [doctors]);
 
   const filteredDoctors = useMemo(() => {
-    if (!selectedSpecialization) return mixedAllDoctors;
+    if (!selectedSpecialization || selectedSpecialization.toLowerCase() === 'all') return mixedAllDoctors;
     const selected = selectedSpecialization.toLowerCase();
     return doctors.filter((doctor) =>
       (doctor.specialization || '').toLowerCase().includes(selected),
@@ -325,9 +371,9 @@ export default function HomeScreen() {
         <FadeInSection delay={30}>
           <View style={styles.headerWrap}>
             <PageHeader
-              title={`Hello, ${user?.first_name || 'Patient'}!`}
-              subtitle="Book care quickly from Ethiopia's modern healthcare network"
-              rightElement={(
+              title={isAuthenticated ? `Hello, ${user?.first_name || 'Patient'}!` : "Your health, simplified"}
+              subtitle={isAuthenticated ? "Book care quickly from Ethiopia's modern healthcare network" : "Find and book trusted healthcare providers near you."}
+              rightElement={isAuthenticated ? (
                 <TouchableOpacity onPress={() => setIsNotificationsDrawerOpen(true)} style={styles.bell}>
                   <Ionicons name="notifications-outline" size={22} color={theme.colors.text} />
                   {unreadCount > 0 && (
@@ -336,6 +382,13 @@ export default function HomeScreen() {
                     </View>
                   )}
                 </TouchableOpacity>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [styles.headerCtaBtn, pressed && styles.viewBtnPressed]}
+                  onPress={() => router.push('/(auth)/register')}
+                >
+                  <Text style={styles.headerCtaText}>Get Started</Text>
+                </Pressable>
               )}
             />
           </View>
@@ -406,16 +459,24 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <Card style={styles.authCtaCard}>
                 <View style={styles.authCtaGlowTop} />
-                <Text style={styles.authCtaTitle}>Sign in to book appointments and access personalized care</Text>
-                <Text style={styles.authCtaText}>
-                  You can explore doctors freely now. Login only when you are ready to book.
-                </Text>
+                <View style={styles.authCtaGlowBottom} />
+                <View style={styles.authCtaContent}>
+                  <View style={styles.authCtaIconWrap}>
+                    <Ionicons name="medical" size={28} color="#fff" />
+                  </View>
+                  <View style={styles.authCtaTextContent}>
+                    <Text style={styles.authCtaTitle}>Join thousands accessing healthcare digitally</Text>
+                    <Text style={styles.authCtaText}>
+                      Create an account to book appointments, access your medical history, and get personalized care.
+                    </Text>
+                  </View>
+                </View>
                 <View style={styles.authCtaActions}>
-                  <Pressable style={({ pressed }) => [styles.authLoginBtn, pressed && styles.viewBtnPressed]} onPress={() => router.push('/(auth)/login')}>
-                    <Text style={styles.authLoginBtnText}>Login</Text>
-                  </Pressable>
                   <Pressable style={({ pressed }) => [styles.authSignupBtn, pressed && styles.viewBtnPressed]} onPress={() => router.push('/(auth)/register')}>
-                    <Text style={styles.authSignupBtnText}>Sign up</Text>
+                    <Text style={styles.authSignupBtnText}>Create Account</Text>
+                  </Pressable>
+                  <Pressable style={({ pressed }) => [styles.authLoginBtn, pressed && styles.viewBtnPressed]} onPress={() => router.push('/(auth)/login')}>
+                    <Text style={styles.authLoginBtnText}>Log In</Text>
                   </Pressable>
                 </View>
               </Card>
@@ -439,15 +500,7 @@ export default function HomeScreen() {
           </FadeInSection>
         )}
 
-        {!isLoading && !doctors.length ? (
-          <EmptyState
-            icon="search-outline"
-            title="No Doctors Found"
-            description="Try adjusting your filters to discover more providers."
-          />
-        ) : (
-          <>
-            <FadeInSection delay={170}>
+        <FadeInSection delay={170}>
               <View style={styles.section}>
                 <View style={styles.doctorsHeaderRow}>
                   <Text style={styles.sectionTitle}>Browse Doctors</Text>
@@ -460,18 +513,37 @@ export default function HomeScreen() {
                 </Text>
 
                 <Animated.View style={isCategoryTransitioning ? styles.transitionFade : undefined}>
-                  <View style={styles.grid}>
-                    {(isLoading || isCategoryTransitioning)
-                      ? Array.from({ length: isMobile ? 2 : isTablet ? 4 : 6 }).map((_, idx) => (
-                          <Card key={`skeleton-${idx}`} style={[styles.gridCard, { width: doctorCardWidth }]}>
-                            <View style={styles.skeletonAvatar} />
-                            <View style={styles.skeletonLineLg} />
-                            <View style={styles.skeletonLineSm} />
-                            <View style={styles.skeletonLineMd} />
-                            <View style={styles.skeletonBtn} />
-                          </Card>
-                        ))
-                      : doctorsToRender.map((doctor) => {
+                  {(isLoading || isCategoryTransitioning) ? (
+                    <View style={styles.grid}>
+                      {Array.from({ length: isMobile ? 2 : isTablet ? 4 : 6 }).map((_, idx) => (
+                        <Card key={`skeleton-${idx}`} style={[styles.gridCard, { width: doctorCardWidth }]}>
+                          <View style={styles.skeletonAvatar} />
+                          <View style={styles.skeletonLineLg} />
+                          <View style={styles.skeletonLineSm} />
+                          <View style={styles.skeletonLineMd} />
+                          <View style={styles.skeletonBtn} />
+                        </Card>
+                      ))}
+                    </View>
+                  ) : filteredDoctors.length === 0 ? (
+                    <Card style={styles.emptyCategoryCard}>
+                      <View style={styles.emptyCategoryIconWrap}>
+                        <Ionicons name="search-outline" size={32} color={theme.colors.primary} />
+                      </View>
+                      <Text style={styles.emptyCategoryTitle}>No doctors found</Text>
+                      <Text style={styles.emptyCategoryText}>
+                        We couldn&apos;t find any {selectedSpecialization && selectedSpecialization !== 'All' ? selectedSpecialization : ''} doctors matching your criteria.
+                      </Text>
+                      <Pressable 
+                        style={({ pressed }) => [styles.clearFilterBtn, pressed && styles.viewBtnPressed]}
+                        onPress={() => setSelectedSpecialization('All')}
+                      >
+                        <Text style={styles.clearFilterBtnText}>Clear Filter</Text>
+                      </Pressable>
+                    </Card>
+                  ) : (
+                    <View style={styles.grid}>
+                      {doctorsToRender.map((doctor) => {
                           const rating = Number(doctor.average_rating || 0);
                           const isTopRated = rating >= 4.7;
                           const isFeatured = isTopRated || doctor.is_verified;
@@ -542,7 +614,8 @@ export default function HomeScreen() {
                             </Pressable>
                           );
                         })}
-                  </View>
+                    </View>
+                  )}
                 </Animated.View>
 
                 {!isLoading && !isCategoryTransitioning && hasMoreDoctors && (
@@ -664,7 +737,7 @@ export default function HomeScreen() {
                 <View style={[styles.footerCol, { width: isMobile ? '100%' : '32%' }]}>
                   <Text style={styles.footerBrand}>MedLink</Text>
                   <Text style={styles.footerTag}>
-                    Ethiopia's modern healthcare platform for fast, trusted digital care.
+                    Ethiopia&apos;s modern healthcare platform for fast, trusted digital care.
                   </Text>
                 </View>
                 <View style={[styles.footerCol, { width: isMobile ? '100%' : '32%' }]}>
@@ -688,8 +761,6 @@ export default function HomeScreen() {
                 </View>
               </View>
             </FadeInSection>
-          </>
-        )}
       </ScrollView>
 
       <DoctorDetailsModal visible={!!selectedDoctor} onClose={() => setSelectedDoctor(null)} doctor={selectedDoctor} />
@@ -697,11 +768,23 @@ export default function HomeScreen() {
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isDark: boolean) =>
   StyleSheet.create({
-    root: { flex: 1, backgroundColor: '#F4FCF7' },
-    content: { paddingBottom: 128 },
+    root: { flex: 1, backgroundColor: theme.colors.background },
+    content: { paddingBottom: 0 },
     headerWrap: { paddingHorizontal: theme.spacing.xl, paddingTop: theme.spacing.md },
+    headerCtaBtn: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 999,
+      ...theme.shadows.sm,
+    },
+    headerCtaText: {
+      ...theme.typography.bodySm,
+      color: '#fff',
+      fontWeight: '700' as const,
+    },
 
     bell: {
       width: 40,
@@ -807,63 +890,86 @@ const createStyles = (theme: Theme) =>
     metricDivider: { width: 1, height: 36, backgroundColor: theme.colors.divider },
     filterWrap: { marginTop: 24, marginHorizontal: theme.spacing.xl },
     authCtaCard: {
-      borderRadius: 22,
-      padding: 18,
-      backgroundColor: '#E9FBF2',
+      borderRadius: 24,
+      padding: 24,
+      backgroundColor: '#0a6f5f',
       overflow: 'hidden',
-      ...theme.shadows.sm,
+      ...theme.shadows.md,
     },
     authCtaGlowTop: {
       position: 'absolute',
-      width: 170,
-      height: 170,
-      borderRadius: 85,
-      top: -80,
-      right: -40,
-      backgroundColor: '#BBF7D055',
+      width: 250,
+      height: 250,
+      borderRadius: 125,
+      top: -120,
+      right: -80,
+      backgroundColor: '#6ee7d844',
+    },
+    authCtaGlowBottom: {
+      position: 'absolute',
+      width: 200,
+      height: 200,
+      borderRadius: 100,
+      bottom: -100,
+      left: -60,
+      backgroundColor: '#34d39933',
+    },
+    authCtaContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+      marginBottom: 20,
+    },
+    authCtaIconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: '#138b7a',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    authCtaTextContent: {
+      flex: 1,
     },
     authCtaTitle: {
       ...theme.typography.h4,
-      color: '#065f46',
+      color: '#ffffff',
       fontWeight: '800',
-      marginBottom: 8,
-      maxWidth: 640,
+      marginBottom: 4,
+      lineHeight: 26,
     },
     authCtaText: {
       ...theme.typography.bodySm,
-      color: '#0f766e',
+      color: '#dcfce7',
       lineHeight: 20,
-      marginBottom: 14,
-      maxWidth: 640,
     },
     authCtaActions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
-      flexWrap: 'wrap',
-    },
-    authLoginBtn: {
-      backgroundColor: theme.colors.primary,
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-    },
-    authLoginBtnText: {
-      ...theme.typography.bodySm,
-      color: '#fff',
-      fontWeight: '700',
+      gap: 12,
     },
     authSignupBtn: {
       backgroundColor: '#ffffff',
-      borderWidth: 1,
-      borderColor: '#99d9c9',
-      borderRadius: 10,
-      paddingHorizontal: 14,
-      paddingVertical: 10,
+      borderRadius: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
     },
     authSignupBtnText: {
       ...theme.typography.bodySm,
-      color: theme.colors.primary,
+      color: '#065f46',
+      fontWeight: '800',
+    },
+    authLoginBtn: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: '#99d9c9',
+      borderRadius: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+    },
+    authLoginBtnText: {
+      ...theme.typography.bodySm,
+      color: '#ffffff',
       fontWeight: '700',
     },
     welcomeCard: {
@@ -895,7 +1001,7 @@ const createStyles = (theme: Theme) =>
       fontWeight: '700',
     },
 
-    section: { marginTop: 32, paddingHorizontal: theme.spacing.xl },
+    section: { marginTop: 40, paddingHorizontal: theme.spacing.xl },
     transitionFade: { opacity: 0.7 },
     doctorsHeaderRow: {
       flexDirection: 'row',
@@ -958,6 +1064,49 @@ const createStyles = (theme: Theme) =>
     gridCardFeatured: {
       borderWidth: 1,
       borderColor: theme.colors.primary + '55',
+    },
+    emptyCategoryCard: {
+      borderRadius: 18,
+      padding: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#f8faf9',
+      borderWidth: 1,
+      borderColor: '#e5ece9',
+      marginTop: 16,
+    },
+    emptyCategoryIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: '#e9fbf4',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    emptyCategoryTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.colors.text,
+      marginBottom: 8,
+    },
+    emptyCategoryText: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      maxWidth: 320,
+      marginBottom: 24,
+    },
+    clearFilterBtn: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: theme.colors.primary,
+    },
+    clearFilterBtnText: {
+      fontSize: 14,
+      color: '#fff',
+      fontWeight: '700',
     },
     badgeRow: {
       width: '100%',
@@ -1134,26 +1283,26 @@ const createStyles = (theme: Theme) =>
     stepTitle: { ...theme.typography.bodySm, color: theme.colors.text, fontWeight: '700', textAlign: 'center' },
 
     testimonialSection: {
-      backgroundColor: '#0f8f7c',
-      borderRadius: 24,
+      backgroundColor: isDark ? theme.colors.surface : '#0f8f7c',
       marginHorizontal: theme.spacing.xl,
+      borderRadius: 24,
       paddingHorizontal: 0,
-      paddingTop: 22,
-      paddingBottom: 12,
+      paddingTop: 32,
+      paddingBottom: 24,
       overflow: 'hidden',
-      ...theme.shadows.md,
+      marginTop: 48,
     },
     sectionTitleLight: {
       ...theme.typography.h3,
-      color: '#fff',
+      color: isDark ? theme.colors.text : '#fff',
       fontWeight: '800',
       textAlign: 'center',
     },
     sectionSubtitleLight: {
       ...theme.typography.bodySm,
-      color: '#d1fae5',
+      color: isDark ? theme.colors.textSecondary : '#d1fae5',
       marginTop: 6,
-      marginBottom: 14,
+      marginBottom: 24,
       textAlign: 'center',
     },
     testimonialCarousel: { marginBottom: 4 },
@@ -1176,18 +1325,20 @@ const createStyles = (theme: Theme) =>
 
     platformPromo: {
       borderRadius: 24,
-      padding: 20,
-      backgroundColor: '#e9fbf4',
+      padding: 32,
+      backgroundColor: isDark ? theme.colors.surface : '#e9fbf4',
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
-      rowGap: 16,
-      ...theme.shadows.sm,
+      rowGap: 24,
+      marginTop: 24,
+      borderWidth: 1,
+      borderColor: isDark ? theme.colors.border : '#caefe4',
     },
-    platformLeft: { gap: 10 },
-    platformTitle: { ...theme.typography.h2, fontWeight: '800', color: '#065f53', lineHeight: 34 },
-    platformSubtitle: { ...theme.typography.body, color: '#0f766e' },
-    storeButtons: { flexDirection: 'row', gap: 10, marginTop: 8 },
+    platformLeft: { gap: 12, justifyContent: 'center' },
+    platformTitle: { ...theme.typography.h2, fontWeight: '800', color: isDark ? theme.colors.text : '#065f53', lineHeight: 34 },
+    platformSubtitle: { ...theme.typography.body, color: isDark ? theme.colors.textSecondary : '#0f766e', lineHeight: 24 },
+    storeButtons: { flexDirection: 'row', gap: 12, marginTop: 12 },
     storeBtn: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1212,61 +1363,59 @@ const createStyles = (theme: Theme) =>
     storeBtnSecondaryText: { color: theme.colors.primary, fontWeight: '700', fontSize: 13 },
     platformRight: { alignItems: 'center', justifyContent: 'center' },
     phoneMock: {
-      width: 170,
-      height: 300,
+      width: 180,
+      height: 320,
       borderRadius: 28,
-      backgroundColor: '#ffffff',
+      backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
       borderWidth: 1,
-      borderColor: '#b7e4d5',
-      padding: 14,
-      ...theme.shadows.sm,
+      borderColor: isDark ? '#333' : '#b7e4d5',
+      padding: 16,
     },
     phoneNotch: {
-      width: 70,
+      width: 80,
       height: 8,
       borderRadius: 4,
       alignSelf: 'center',
-      backgroundColor: '#d7efe8',
-      marginBottom: 14,
+      backgroundColor: isDark ? '#333' : '#d7efe8',
+      marginBottom: 16,
     },
-    mockHeader: { height: 16, borderRadius: 8, backgroundColor: '#c6eee2', marginBottom: 12 },
-    mockLine: { height: 10, borderRadius: 5, backgroundColor: '#dff7f0', marginBottom: 8 },
+    mockHeader: { height: 16, borderRadius: 8, backgroundColor: isDark ? '#2a2a2a' : '#c6eee2', marginBottom: 16 },
+    mockLine: { height: 10, borderRadius: 5, backgroundColor: isDark ? '#222' : '#dff7f0', marginBottom: 10 },
     mockCard: {
-      marginTop: 10,
-      height: 120,
-      borderRadius: 14,
-      backgroundColor: '#ebfff8',
+      marginTop: 12,
+      height: 140,
+      borderRadius: 16,
+      backgroundColor: isDark ? '#222' : '#ebfff8',
       borderWidth: 1,
-      borderColor: '#caefe4',
+      borderColor: isDark ? '#333' : '#caefe4',
     },
 
     footer: {
-      marginTop: 36,
-      marginHorizontal: theme.spacing.xl,
-      borderRadius: 24,
-      backgroundColor: '#0b5d53',
-      padding: 20,
+      marginTop: 48,
+      backgroundColor: isDark ? theme.colors.surface : '#0b5d53',
+      padding: 24,
+      paddingHorizontal: theme.spacing.xl,
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
       rowGap: 16,
-      ...theme.shadows.sm,
     },
     footerCol: { gap: 8 },
-    footerBrand: { ...theme.typography.h3, fontWeight: '800', color: '#ecfdf5' },
-    footerTag: { ...theme.typography.bodySm, color: '#d7efe8', lineHeight: 20 },
-    footerColTitle: { ...theme.typography.body, color: '#ecfdf5', fontWeight: '700' },
-    footerLink: { ...theme.typography.bodySm, color: '#d7efe8' },
-    footerText: { ...theme.typography.bodySm, color: '#d7efe8' },
+    footerBrand: { ...theme.typography.h3, fontWeight: '800', color: isDark ? theme.colors.text : '#ecfdf5' },
+    footerTag: { ...theme.typography.bodySm, color: isDark ? theme.colors.textSecondary : '#d7efe8', lineHeight: 20 },
+    footerColTitle: { ...theme.typography.body, color: isDark ? theme.colors.text : '#ecfdf5', fontWeight: '700' },
+    footerLink: { ...theme.typography.bodySm, color: isDark ? theme.colors.textSecondary : '#d7efe8' },
+    footerText: { ...theme.typography.bodySm, color: isDark ? theme.colors.textSecondary : '#d7efe8' },
     socials: { flexDirection: 'row', gap: 10, marginTop: 6 },
     footerBottom: {
       width: '100%',
       borderTopWidth: 1,
-      borderTopColor: '#1c766b',
-      marginTop: 8,
-      paddingTop: 12,
+      borderTopColor: isDark ? theme.colors.border : '#1c766b',
+      marginTop: 16,
+      paddingTop: 16,
+      paddingBottom: 24,
     },
-    footerBottomText: { ...theme.typography.caption, color: '#b7dfd4', textAlign: 'center' },
+    footerBottomText: { ...theme.typography.caption, color: isDark ? theme.colors.textSecondary : '#b7dfd4', textAlign: 'center' },
 
     loader: { marginTop: 36, alignItems: 'center' },
 
