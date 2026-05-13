@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TextInputProps,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -17,7 +18,7 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerStyle?: ViewStyle;
-  inputStyle?: ViewStyle;
+  inputStyle?: TextStyle;
 }
 
 export const Input = React.memo(function Input({

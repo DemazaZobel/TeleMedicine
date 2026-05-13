@@ -421,6 +421,9 @@ const createStyles = (theme: Theme, isDark: boolean, isCollapsed?: boolean) =>
       borderWidth: 0,
       backgroundColor: 'transparent',
     },
+    inputContainer: {
+      marginBottom: 0,
+    },
     input: {
       fontSize: 13,
       fontWeight: '500',
