@@ -17,6 +17,7 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerStyle?: ViewStyle;
+  inputStyle?: ViewStyle;
 }
 
 export const Input = React.memo(function Input({
@@ -26,6 +27,7 @@ export const Input = React.memo(function Input({
   leftIcon,
   rightIcon,
   containerStyle,
+  inputStyle,
   ...rest
 }: InputProps) {
   const { theme } = useTheme();
@@ -64,7 +66,11 @@ export const Input = React.memo(function Input({
         <TextInput
           placeholderTextColor={theme.colors.placeholder}
           {...rest}
-          style={[styles.input, rest.multiline && { minHeight: 48, paddingVertical: Platform.OS === 'web' ? 12 : 8 }]}
+          style={[
+            styles.input, 
+            rest.multiline && { minHeight: 48, paddingVertical: Platform.OS === 'web' ? 12 : 8 },
+            inputStyle
+          ]}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />

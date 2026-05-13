@@ -4,11 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
 import React, { useState } from "react";
 import { LayoutAnimation, Pressable, Text, View } from "react-native";
+import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import { useDoctorStore } from "../../store/doctor.store";
 import { useTheme } from "../../theme";
 import { TAB_CONFIGS } from "../../types/navigation";
-import { cn } from "../../lib/utils";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -19,6 +19,7 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
   const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
   const segments = useSegments();
+  const { theme } = useTheme();
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -50,20 +51,32 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
   };
 
   return (
-    <View 
+    <View
+      style={{
+        backgroundColor: theme.colors.background,
+        borderRightWidth: 1,
+        borderRightColor: theme.colors.border,
+      }}
       className={cn(
-        "bg-background border-r border-border py-6 px-4 justify-between transition-all",
-        isCollapsed ? "w-16 items-center px-0" : "w-60"
+        "py-6 px-4 justify-between transition-all",
+        isCollapsed ? "w-16 items-center px-0" : "w-60",
       )}
     >
       {/* HEADER */}
       <View>
-        <View className={cn("flex-row items-center justify-between h-10 mb-4 px-2", isCollapsed && "px-0 justify-center gap-1")}>
+        <View
+          className={cn(
+            "flex-row items-center justify-between h-10 mb-4 px-2",
+            isCollapsed && "px-0 justify-center gap-1",
+          )}
+        >
           <View className="flex-row items-center">
             <Ionicons name="medical" size={20} className="text-primary" />
 
             {!isCollapsed && (
-              <Text className="ml-2 text-[15px] font-semibold text-foreground">MedLink</Text>
+              <Text className="ml-2 text-[15px] font-semibold text-foreground">
+                MedLink
+              </Text>
             )}
           </View>
 
@@ -86,7 +99,9 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
         {/* NAVIGATION */}
         <View className="mt-2">
           {!isCollapsed && (
-            <Text className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1.5 px-1.5">Overview</Text>
+            <Text className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1.5 px-1.5">
+              Overview
+            </Text>
           )}
 
           {visibleTabs.map((tab) => {
@@ -100,7 +115,7 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
                 onHoverOut={() => setHovered(null)}
                 onPress={() => {
                   router.push(
-                    `/(tabs)/${tab.name === "index" ? "" : tab.name}` as any
+                    `/(tabs)/${tab.name === "index" ? "" : tab.name}` as any,
                   );
                   onNavigate?.();
                 }}
@@ -108,24 +123,31 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
                   "flex-row items-center h-10 rounded-lg px-3 mb-1 relative",
                   isCollapsed && "px-0 justify-center w-10",
                   isActive && "bg-transparent",
-                  !isActive && isHovered && "bg-muted"
+                  !isActive && isHovered && "bg-muted",
                 )}
               >
                 {isActive && (
-                  <View className={cn("absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-primary", isCollapsed && "left-1")} />
+                  <View
+                    className={cn(
+                      "absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-primary",
+                      isCollapsed && "left-1",
+                    )}
+                  />
                 )}
 
                 <Ionicons
                   name={tab.icon as any}
                   size={20}
-                  className={isActive ? "text-primary" : "text-muted-foreground"}
+                  className={
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  }
                 />
 
                 {!isCollapsed && (
                   <Text
                     className={cn(
                       "ml-2.5 text-sm font-medium text-muted-foreground",
-                      isActive && "text-foreground font-semibold"
+                      isActive && "text-foreground font-semibold",
                     )}
                   >
                     {tab.title}
@@ -135,7 +157,9 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
                 {/* Tooltip (collapsed mode) */}
                 {isCollapsed && isHovered && (
                   <View className="absolute left-[50px] bg-popover py-1.5 px-2.5 rounded-md border border-border shadow-sm">
-                    <Text className="text-xs text-popover-foreground">{tab.title}</Text>
+                    <Text className="text-xs text-popover-foreground">
+                      {tab.title}
+                    </Text>
                   </View>
                 )}
               </Pressable>
@@ -146,18 +170,26 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
 
       {/* FOOTER */}
       <View className="mt-3 border-t border-border pt-3">
-        <Pressable className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted" onPress={onNotificationsPress}>
+        <Pressable
+          className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
+          onPress={onNotificationsPress}
+        >
           <Ionicons
             name="notifications-outline"
             size={20}
             className="text-muted-foreground"
           />
           {!isCollapsed && (
-            <Text className="ml-2.5 text-sm font-medium text-muted-foreground">Notifications</Text>
+            <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
+              Notifications
+            </Text>
           )}
         </Pressable>
 
-        <Pressable className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted" onPress={toggleTheme}>
+        <Pressable
+          className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
+          onPress={toggleTheme}
+        >
           <Ionicons
             name={isDark ? "sunny" : "moon"}
             size={20}
@@ -170,7 +202,10 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
           )}
         </Pressable>
 
-        <Pressable className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10" onPress={handleLogout}>
+        <Pressable
+          className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10"
+          onPress={handleLogout}
+        >
           <Ionicons
             name="log-out-outline"
             size={20}

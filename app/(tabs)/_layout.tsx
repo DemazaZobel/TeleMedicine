@@ -66,6 +66,14 @@ export default function TabsLayout() {
           />
         );
       })}
+
+      <Tabs.Screen
+        name="doctor-profile/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 

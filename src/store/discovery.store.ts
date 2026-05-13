@@ -13,9 +13,11 @@ interface DiscoveryState {
   // Search & Filter State
   searchQuery: string;
   selectedSpecialization: string | null;
-  minPrice: number | null;
-  maxPrice: number | null;
+  minFee: number | null;
+  maxFee: number | null;
   minRating: number | null;
+  location: string | null;
+  hospital: string | null;
   availability: 'any' | 'today' | 'this-week';
 
   // Actions
@@ -36,9 +38,11 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
   nextPageUrl: null,
   searchQuery: '',
   selectedSpecialization: null,
-  minPrice: null,
-  maxPrice: null,
+  minFee: null,
+  maxFee: null,
   minRating: null,
+  location: null,
+  hospital: null,
   availability: 'any',
 
   setSearchQuery: (searchQuery) => {
@@ -60,9 +64,11 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
     set({ 
       searchQuery: '', 
       selectedSpecialization: null,
-      minPrice: null,
-      maxPrice: null,
+      minFee: null,
+      maxFee: null,
       minRating: null,
+      location: null,
+      hospital: null,
       availability: 'any'
     });
     get().fetchDoctors();
@@ -74,22 +80,45 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       const { 
         searchQuery, 
         selectedSpecialization, 
-        minPrice, 
-        maxPrice, 
+        minFee, 
+        maxFee, 
         minRating, 
+        location,
+        hospital,
         availability 
       } = get();
 
       const params: ProviderSearchParams = {};
-      if (searchQuery.trim()) {
-        params.search = searchQuery;
-        (params as any).q = searchQuery;
-        (params as any).query = searchQuery;
+      const trimmedQuery = searchQuery.trim().toLowerCase();
+      
+      if (trimmedQuery) {
+        // General search parameter
+        params.search = trimmedQuery;
+        
+        // Auto-detect specialization from search query
+        const specializations = ['general', 'cardiology', 'pediatrics', 'dentistry', 'neurology', 'orthopedics', 'dermatology'];
+        const matchedSpec = specializations.find(s => trimmedQuery.includes(s));
+        
+        if (matchedSpec) {
+          params.specialization = matchedSpec.charAt(0).toUpperCase() + matchedSpec.slice(1);
+        }
+
+        // If it looks like a hospital search
+        if (trimmedQuery.includes('hospital') || trimmedQuery.includes('clinic')) {
+          params.hospital = trimmedQuery;
+        }
+
+        // Broad query for backend matching
+        params.query = trimmedQuery;
       }
+
+      // Explicit filters override auto-detection if set
       if (selectedSpecialization) params.specialization = selectedSpecialization;
-      if (minPrice !== null) params.min_price = minPrice;
-      if (maxPrice !== null) params.max_price = maxPrice;
+      if (minFee !== null) params.min_fee = minFee;
+      if (maxFee !== null) params.max_fee = maxFee;
       if (minRating !== null) params.min_rating = minRating;
+      if (location) params.location = location;
+      if (hospital) params.hospital = hospital;
       if (availability !== 'any') params.availability = availability;
 
       console.log('[DiscoveryStore] Fetching with params:', params);

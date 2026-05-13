@@ -16,19 +16,20 @@ export function StarRating({ rating, maxStars = 5, size = 16, showEmpty = true }
   const stars = [];
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
+  const starColor = "#FBBF24"; // Premium Gold
 
   for (let i = 1; i <= maxStars; i++) {
     if (i <= fullStars) {
       stars.push(
-        <Ionicons key={i} name="star" size={size} color="#F59E0B" />
+        <Ionicons key={i} name="star" size={size} color={starColor} />
       );
     } else if (i === fullStars + 1 && hasHalfStar) {
       stars.push(
-        <Ionicons key={i} name="star-half" size={size} color="#F59E0B" />
+        <Ionicons key={i} name="star-half" size={size} color={starColor} />
       );
     } else if (showEmpty) {
       stars.push(
-        <Ionicons key={i} name="star-outline" size={size} color={theme.colors.border} />
+        <Ionicons key={i} name="star-outline" size={size} color={starColor} />
       );
     }
   }

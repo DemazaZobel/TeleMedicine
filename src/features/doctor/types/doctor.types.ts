@@ -14,15 +14,26 @@ export interface DoctorProfile {
   id: string;
   specialization: string;
   years_of_experience: number;
-  consultation_fee: string; // Django decimals often return as strings
+  location: string;
+  current_working_hospital: string;
+  biography: string;
+  experience: string;
+  education: string;
+  profile_image: string;
+  consultation_fee: string;
   is_verified: boolean;
-  average_rating: string | number; // Decimal
+  average_rating: string;
   review_count: number;
 }
 
 export interface DoctorProfileUpdate {
   specialization?: string;
   years_of_experience?: number;
+  location?: string;
+  current_working_hospital?: string;
+  biography?: string;
+  experience?: string;
+  education?: string;
   consultation_fee?: string | number;
 }
 
@@ -40,11 +51,14 @@ export interface ProviderSearchParams {
   query?: string;
   search?: string;
   specialization?: string;
-  min_price?: number;
-  max_price?: number;
+  min_fee?: number;
+  max_fee?: number;
   min_rating?: number;
+  location?: string;
+  hospital?: string;
+  min_experience?: number;
   availability?: 'any' | 'today' | 'this-week';
-  sort_by?: 'fee' | 'rating' | 'experience';
+  sort_by?: 'fee' | 'fee_asc' | 'fee_desc' | 'rating' | 'rating_desc' | 'experience' | 'distance';
 }
 
 export interface ProviderSearchResult {
@@ -57,6 +71,12 @@ export interface ProviderSearchResult {
   years_of_experience: number;
   consultation_fee: string;
   is_verified: boolean;
-  average_rating: string | number;
+  average_rating: string;
   review_count: number;
+  biography?: string;
+  location?: string;
+  current_working_hospital?: string;
+  education?: string;
+  experience?: string;
+  profile_image?: string;
 }

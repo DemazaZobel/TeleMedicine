@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ModalBase, Button, StarRating } from '../../../components/ui';
-import { useTheme, Theme } from '../../../theme';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Input, ModalBase, StarRating } from '../../../components/ui';
+import { Theme, useTheme } from '../../../theme';
 
 interface AdvancedFilterModalProps {
   visible: boolean;
@@ -12,9 +12,11 @@ interface AdvancedFilterModalProps {
 }
 
 export interface FilterState {
-  minPrice: number | null;
-  maxPrice: number | null;
+  minFee: number | null;
+  maxFee: number | null;
   minRating: number | null;
+  location: string | null;
+  hospital: string | null;
   availability: 'any' | 'today' | 'this-week';
 }
 
@@ -37,9 +39,11 @@ export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters 
 
   const handleReset = () => {
     setFilters({
-      minPrice: null,
-      maxPrice: null,
+      minFee: null,
+      maxFee: null,
       minRating: null,
+      location: null,
+      hospital: null,
       availability: 'any',
     });
   };
@@ -47,17 +51,35 @@ export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters 
   return (
     <ModalBase visible={visible} onClose={onClose} title="Advanced Filters" maxWidth={500}>
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Location & Hospital */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Location & Facility</Text>
+          <Input
+            placeholder="City or Region (e.g. Addis Ababa)"
+            value={filters.location || ''}
+            onChangeText={(val) => setFilters({ ...filters, location: val || null })}
+            leftIcon={<Ionicons name="location-outline" size={20} color={theme.colors.textTertiary} />}
+            containerStyle={{ marginBottom: theme.spacing.md }}
+          />
+          <Input
+            placeholder="Hospital or Clinic Name"
+            value={filters.hospital || ''}
+            onChangeText={(val) => setFilters({ ...filters, hospital: val || null })}
+            leftIcon={<Ionicons name="business-outline" size={20} color={theme.colors.textTertiary} />}
+          />
+        </View>
+
         {/* Price Range */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Consultation Fee</Text>
           <View style={styles.chipRow}>
             {PRICE_RANGES.map((range) => {
-              const isSelected = filters.minPrice === range.min && filters.maxPrice === range.max;
+              const isSelected = filters.minFee === range.min && filters.maxFee === range.max;
               return (
                 <TouchableOpacity
                   key={range.label}
                   style={[styles.chip, isSelected && styles.chipActive]}
-                  onPress={() => setFilters({ ...filters, minPrice: range.min, maxPrice: range.max })}
+                  onPress={() => setFilters({ ...filters, minFee: range.min, maxFee: range.max })}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{range.label}</Text>
                 </TouchableOpacity>

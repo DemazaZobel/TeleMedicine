@@ -63,6 +63,13 @@ export const doctorApi = {
     return response.data;
   },
 
+  getProviderDetail: async (id: string) => {
+    const response = await apiClient.get<ProviderSearchResult>(
+      `${DOCTOR_BASE}/provider/${id}/`
+    );
+    return response.data;
+  },
+
   fetchNextPage: async (url: string) => {
     const response = await apiClient.get<PaginatedResponse<ProviderSearchResult>>(url);
     return response.data;

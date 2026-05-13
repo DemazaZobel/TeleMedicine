@@ -21,6 +21,7 @@ interface BookingModalProps {
   doctorId: string | number;
   onClose: () => void;
   onSuccess: () => void;
+  initialSlotIndex?: number;
 }
 
 export function BookingModal({
@@ -28,6 +29,7 @@ export function BookingModal({
   doctorId,
   onClose,
   onSuccess,
+  initialSlotIndex = 0,
 }: BookingModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -43,7 +45,7 @@ export function BookingModal({
 
   const [mode, setMode] = useState<AppointmentMode>("ONLINE");
   const [reason, setReason] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(initialSlotIndex);
 
   const { doctors } = useDiscoveryStore();
 
@@ -111,10 +113,10 @@ export function BookingModal({
     if (visible) {
       setReason("");
       setMode("ONLINE");
-      setSelectedIndex(0);
+      setSelectedIndex(initialSlotIndex);
       fetchMyAppointments(); // Fetch latest to ensure accurate double-booking check
     }
-  }, [visible, fetchMyAppointments]);
+  }, [visible, fetchMyAppointments, initialSlotIndex]);
 
   const handleBook = async () => {
     if (hasActiveAppointment) {

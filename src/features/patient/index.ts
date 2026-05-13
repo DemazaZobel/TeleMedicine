@@ -7,3 +7,4 @@ export { FilterChips } from './components/FilterChips';
 export { SearchBar } from './components/SearchBar';
 export { AdvancedFilterModal, FilterState } from './components/AdvancedFilterModal';
 export { DoctorDetailsModal } from './components/DoctorDetailsModal';
+export { DiscoverySidebar } from './components/DiscoverySidebar';

@@ -12,6 +12,11 @@ export interface User {
   avatar?: string;
   is_verified: boolean;
   is_doctor_approved: boolean;
+  biography?: string;
+  location?: string;
+  current_working_hospital?: string;
+  education?: string;
+  experience?: string;
   createdAt?: string; // We can leave these standard if not returned by login payload
   updatedAt?: string;
 }

@@ -95,9 +95,9 @@ export function DoctorProfileForm() {
         {profile && (
           <Card style={{ marginBottom: 24 }}>
             <Text style={{ ...theme.typography.h4, color: theme.colors.text, marginBottom: 16, fontWeight: '600' }}>Platform Stats</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
               <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Average Rating</Text>
-              <Text style={{ ...theme.typography.body, fontWeight: 'bold' }}>★ {profile.average_rating}</Text>
+              <StarRating rating={Number(profile.average_rating) || 0} size={16} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Total Consultations Reviews</Text>

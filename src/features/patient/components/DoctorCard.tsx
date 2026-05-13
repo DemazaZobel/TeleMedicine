@@ -45,8 +45,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <StarRating rating={Number(doctor.average_rating)} size={12} />
-              <Text style={styles.statValue}>{doctor.average_rating}</Text>
+              <StarRating rating={Number(doctor.average_rating)} size={14} />
             </View>
             <View style={styles.dot} />
             <View style={styles.statItem}>

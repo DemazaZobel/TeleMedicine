@@ -402,16 +402,12 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   verifyPayment: async (id: string | number) => {
     try {
       set({ isLoading: true, error: null });
-      const updatedApp = await bookingService.completePayment(id);
-      set((state) => ({
-        appointments: state.appointments.map(app =>
-          app.id === id ? updatedApp : app
-        ),
-        isLoading: false,
-      }));
+      // Since there is no dedicated verify-only endpoint yet, we refresh the entire list
+      // to get the latest payment_status from the backend.
+      const appointments = await bookingService.getMyList();
+      set({ appointments, isLoading: false });
     } catch (error: any) {
       set({ isLoading: false });
-      // Don't throw here, just stop loading
     }
   },
 

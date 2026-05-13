@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, Platform, ScrollView } from 'react-native';
-import { Button, ModalBase } from '../../../components/ui';
+import { Button, ModalBase, StarRating } from '../../../components/ui';
 import { BookingModal } from '../../booking/components/BookingModal';
 import { Theme, useTheme } from '../../../theme';
 import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
@@ -59,8 +59,7 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
 
         <View style={styles.statsCard}>
           <View style={styles.statBox}>
-            <Ionicons name="star" size={20} color="#FBBF24" />
-            <Text style={styles.statValue}>{doctor.average_rating}</Text>
+            <StarRating rating={Number(doctor.average_rating) || 0} size={20} />
             <Text style={styles.statLabel}>Rating ({doctor.review_count})</Text>
           </View>
           <View style={styles.statDivider} />

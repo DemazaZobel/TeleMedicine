@@ -82,6 +82,11 @@ export interface UpdateProfileRequest {
   first_name?: string;
   last_name?: string;
   phone_number?: string;
+  biography?: string;
+  location?: string;
+  current_working_hospital?: string;
+  education?: string;
+  experience?: string;
 }
 
 export interface ChangePasswordRequest {

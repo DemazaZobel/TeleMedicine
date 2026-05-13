@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Card, EmptyState, PageHeader, ScreenContainer } from '../../src/components/ui';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
-import { DoctorCard, DoctorDetailsModal, FilterChips, SearchBar } from '../../src/features/patient';
+import { AdvancedFilterModal, DiscoverySidebar, DoctorCard, FilterChips, SearchBar } from '../../src/features/patient';
 import { useAuthStore } from '../../src/store/authStore';
 import { useBookingStore } from '../../src/store/booking.store';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
@@ -17,57 +17,107 @@ export default function HomeScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
-  const isVerified = useDoctorStore((s) => s.isDoctorVerified());
-  const styles = useMemo(() => createStyles(theme), [theme]);
-
-  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
-
-  // Booking Store
-  const {
-    notifications,
-    fetchNotifications,
-    appointments,
-    fetchMyAppointments,
-    setIsNotificationsDrawerOpen
-  } = useBookingStore();
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-
-  // Discovery Store (Patient)
-  const {
-    doctors,
-    isLoading,
-    isLoadingMore,
-    hasMore,
-    searchQuery,
+  
+  // Discovery Store
+  const { 
+    doctors, 
+    isLoading, 
+    searchQuery, 
     selectedSpecialization,
+    minFee,
+    maxFee,
+    minRating,
+    location: locationFilter,
+    availability,
+    hospital,
     setSearchQuery,
     setSelectedSpecialization,
+    setAdvancedFilters,
     fetchDoctors,
-    fetchMoreDoctors
+    fetchMoreDoctors,
+    isLoadingMore,
   } = useDiscoveryStore();
 
   // Doctor Store
   const { profile, isLoadingProfile, fetchProfile } = useDoctorStore();
-  const [selectedDoctor, setSelectedDoctor] = React.useState<any>(null);
+  
+  // Booking & Notifications
+  const { 
+    appointments, 
+    notifications, 
+    setIsNotificationsDrawerOpen, 
+    fetchMyAppointments,
+    fetchNotifications
+  } = useBookingStore();
+
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const isDesktop = width > 992;
+  const numColumns = isDesktop ? (isSidebarCollapsed ? 3 : 2) : 1;
 
   useEffect(() => {
     if (user?.role === 'PATIENT') {
       fetchDoctors();
-      fetchMyAppointments();
     } else if (user?.role === 'DOCTOR') {
-      fetchMyAppointments();
       fetchProfile();
+      fetchMyAppointments();
     }
     fetchNotifications();
-  }, [user?.role, fetchDoctors, fetchMyAppointments, fetchNotifications, fetchProfile]);
+  }, [user?.role, fetchDoctors, fetchProfile, fetchMyAppointments, fetchNotifications]);
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
   }, [setSearchQuery]);
 
   const handleFilter = useCallback((spec: string | null) => {
     setSelectedSpecialization(spec);
   }, [setSelectedSpecialization]);
+
+  const styles = useMemo(() => createStyles(theme, isDesktop), [theme, isDesktop]);
+
+  // Active filter chips logic
+  const activeFilters = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (selectedSpecialization) {
+      chips.push({ 
+        key: 'spec', 
+        label: selectedSpecialization, 
+        onClear: () => setSelectedSpecialization(null) 
+      });
+    }
+    if (minFee !== null || maxFee !== null) {
+      const label = minFee === null ? `Under Br ${maxFee}` : maxFee === null ? `Above Br ${minFee}` : `Br ${minFee}-${maxFee}`;
+      chips.push({ 
+        key: 'price', 
+        label, 
+        onClear: () => setAdvancedFilters({ minFee: null, maxFee: null }) 
+      });
+    }
+    if (minRating) {
+      chips.push({ 
+        key: 'rating', 
+        label: `${minRating}+ Stars`, 
+        onClear: () => setAdvancedFilters({ minRating: null }) 
+      });
+    }
+    if (locationFilter) {
+      chips.push({ 
+        key: 'location', 
+        label: locationFilter, 
+        onClear: () => setAdvancedFilters({ location: null }) 
+      });
+    }
+    if (availability !== 'any') {
+      chips.push({ 
+        key: 'availability', 
+        label: availability === 'today' ? 'Today' : 'This Week', 
+        onClear: () => setAdvancedFilters({ availability: 'any' }) 
+      });
+    }
+    return chips;
+  }, [selectedSpecialization, minFee, maxFee, minRating, location, availability, setSelectedSpecialization, setAdvancedFilters]);
 
   // Guard for doctor loading and verification
   if (user?.role === 'DOCTOR') {
@@ -140,9 +190,63 @@ export default function HomeScreen() {
         rightElement={renderBellIcon()}
       />
       <View style={{ paddingHorizontal: theme.spacing.xl, marginTop: -theme.spacing.lg }}>
-        <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
-        <FilterChips selected={selectedSpecialization} onSelect={handleFilter} />
+        <View style={styles.searchRow}>
+          <View style={{ flex: 1 }}>
+            <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
+          </View>
+          {!isDesktop && (
+            <TouchableOpacity 
+              style={[
+                styles.filterBtn, 
+                activeFilters.length > 0 && styles.filterBtnActive
+              ]} 
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <Ionicons 
+                name="options-outline" 
+                size={24} 
+                color={activeFilters.length > 0 ? theme.colors.primary : theme.colors.textSecondary} 
+              />
+              {activeFilters.length > 0 && (
+                <View style={styles.filterDot} />
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {activeFilters.length > 0 && (
+          <View style={styles.activeFilterRow}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {activeFilters.map(chip => (
+                <TouchableOpacity key={chip.key} style={styles.activeChip} onPress={chip.onClear}>
+                  <Text style={styles.activeChipText}>{chip.label}</Text>
+                  <Ionicons name="close-circle" size={14} color={theme.colors.primary} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {!isDesktop && <FilterChips selected={selectedSpecialization} onSelect={handleFilter} />}
       </View>
+
+      {!isDesktop && (
+        <AdvancedFilterModal
+          visible={filterModalVisible}
+          onClose={() => setFilterModalVisible(false)}
+          initialFilters={{
+            minFee,
+            maxFee,
+            minRating,
+            location: locationFilter,
+            hospital,
+            availability
+          }}
+          onApply={(filters) => {
+            setAdvancedFilters(filters);
+          }}
+        />
+      )}
 
       {isLoading && (
         <View style={styles.loader}>
@@ -174,38 +278,42 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      <FlatList
-        key={`grid-${numColumns}`}
-        data={doctors}
-        numColumns={numColumns}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={[styles.cardWrapper, { flex: 1, maxWidth: `${100 / numColumns}%` }]}>
-            <DoctorCard
-              doctor={item}
-              onPress={() => setSelectedDoctor(item)}
-            />
-          </View>
+      {renderHeader()}
+      <View style={styles.mainLayout}>
+        <View style={{ flex: 1 }}>
+          <FlatList
+            key={`grid-${numColumns}`}
+            data={doctors}
+            numColumns={numColumns}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={[styles.cardWrapper, { flex: 1, maxWidth: `${100 / numColumns}%` }]}>
+                <DoctorCard
+                  doctor={item}
+                  onPress={() => router.push(`/doctor-profile/${item.id}` as any)}
+                />
+              </View>
+            )}
+            ListEmptyComponent={renderEmpty}
+            ListFooterComponent={renderFooter}
+            onEndReached={() => fetchMoreDoctors()}
+            onEndReachedThreshold={0.5}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+        {isDesktop && (
+          <DiscoverySidebar 
+            isCollapsed={isSidebarCollapsed} 
+            onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          />
         )}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmpty}
-        ListFooterComponent={renderFooter}
-        onEndReached={() => fetchMoreDoctors()}
-        onEndReachedThreshold={0.5}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <DoctorDetailsModal
-        visible={!!selectedDoctor}
-        onClose={() => setSelectedDoctor(null)}
-        doctor={selectedDoctor}
-      />
+      </View>
     </ScreenContainer>
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, isDesktop: boolean) =>
   StyleSheet.create({
     patientHeaderContainer: {
       backgroundColor: theme.colors.background,
@@ -251,6 +359,38 @@ const createStyles = (theme: Theme) =>
       marginTop: theme.spacing.xl,
       alignItems: 'center',
     },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+    },
+    filterBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    filterBtnActive: {
+      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.primaryLight + '10',
+    },
+    filterDot: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.primary,
+      borderWidth: 1.5,
+      borderColor: theme.colors.surface,
+    },
     listContent: {
       flexGrow: 1,
       paddingBottom: 100, // accommodate bottom tab bar
@@ -289,6 +429,32 @@ const createStyles = (theme: Theme) =>
       width: 1,
       height: 40,
       backgroundColor: theme.colors.divider,
+    },
+    mainLayout: {
+      flex: 1,
+      flexDirection: 'row',
+    },
+    activeFilterRow: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.xl,
+      marginBottom: theme.spacing.md,
+      marginTop: theme.spacing.sm,
+    },
+    activeChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.primary + '10',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: theme.radius.full,
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '30',
+      gap: 6,
+    },
+    activeChipText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.colors.primary,
     },
     footerLoader: {
       paddingVertical: theme.spacing.xl,
