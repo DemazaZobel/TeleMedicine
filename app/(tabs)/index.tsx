@@ -35,6 +35,7 @@ export default function HomeScreen() {
     setAdvancedFilters,
     fetchDoctors,
     fetchMoreDoctors,
+    fetchSpecializations,
     isLoadingMore,
   } = useDiscoveryStore();
 
@@ -65,7 +66,8 @@ export default function HomeScreen() {
       fetchMyAppointments();
     }
     fetchNotifications();
-  }, [user?.role, fetchDoctors, fetchProfile, fetchMyAppointments, fetchNotifications]);
+    fetchSpecializations();
+  }, [user?.role, fetchDoctors, fetchProfile, fetchMyAppointments, fetchNotifications, fetchSpecializations]);
 
   const handleSearch = useCallback((q: string) => {
     setSearchQuery(q);

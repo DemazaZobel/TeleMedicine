@@ -74,5 +74,11 @@ export const doctorApi = {
     const response = await apiClient.get<PaginatedResponse<ProviderSearchResult>>(url);
     return response.data;
   },
+
+  getSpecializations: async () => {
+    // This will be GET /providers/specializations/ in the future
+    // For now, returning a static list but through the API service layer
+    return ['General', 'Cardiology', 'Pediatrics', 'Dentistry', 'Neurology', 'Orthopedics', 'Dermatology'];
+  },
 };
 

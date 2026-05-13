@@ -9,6 +9,7 @@ interface DiscoveryState {
   error: string | null;
   hasMore: boolean;
   nextPageUrl: string | null;
+  specializations: string[];
 
   // Search & Filter State
   searchQuery: string;
@@ -26,6 +27,7 @@ interface DiscoveryState {
   setAdvancedFilters: (filters: Partial<DiscoveryState>) => void;
   fetchDoctors: () => Promise<void>;
   fetchMoreDoctors: () => Promise<void>;
+  fetchSpecializations: () => Promise<void>;
   clearFilters: () => void;
 }
 
@@ -44,6 +46,7 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
   location: null,
   hospital: null,
   availability: 'any',
+  specializations: [],
 
   setSearchQuery: (searchQuery) => {
     set({ searchQuery });
@@ -72,6 +75,15 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       availability: 'any'
     });
     get().fetchDoctors();
+  },
+
+  fetchSpecializations: async () => {
+    try {
+      const specs = await doctorApi.getSpecializations();
+      set({ specializations: specs });
+    } catch (error) {
+      console.error('[DiscoveryStore] Error fetching specializations:', error);
+    }
   },
 
   fetchDoctors: async () => {

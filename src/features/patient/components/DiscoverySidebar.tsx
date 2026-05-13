@@ -26,7 +26,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
   const styles = useMemo(() => createStyles(theme, isDark, isCollapsed), [theme, isDark, isCollapsed]);
   
   const { 
-    minFee, maxFee, minRating, location, hospital, availability, selectedSpecialization,
+    minFee, maxFee, minRating, location, hospital, availability, selectedSpecialization, specializations,
     setAdvancedFilters, setSelectedSpecialization, clearFilters
   } = useDiscoveryStore();
 
@@ -112,7 +112,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
               >
                 <Text style={styles.dropdownItemText}>All Specialties</Text>
               </TouchableOpacity>
-              {SPECIALIZATIONS.map((spec) => (
+              {specializations.map((spec) => (
                 <TouchableOpacity 
                   key={spec}
                   style={styles.dropdownItem}
