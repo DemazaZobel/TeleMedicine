@@ -8,10 +8,11 @@ import { useTheme } from '../../theme';
 interface AccountSwitcherProps {
   isCollapsed?: boolean;
   onCreatePatient?: () => void;
+  onLinkExisting?: () => void;
   variant?: 'sidebar' | 'profile';
 }
 
-export function AccountSwitcher({ isCollapsed, onCreatePatient, variant = 'sidebar' }: AccountSwitcherProps) {
+export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, variant = 'sidebar' }: AccountSwitcherProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -30,77 +31,112 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, variant = 'sideb
   if (!isDoctor && !hasLinkedAccount) return null;
 
   const roleColor = isDoctor ? theme.colors.primary : '#13C2C2';
-  const iconName = isDoctor ? 'medkit-outline' : 'person-outline';
 
-  const handlePress = () => {
+  const handleSwitch = () => {
     if (hasLinkedAccount && linkedAccount) {
       switchAccount(linkedAccount.id);
-    } else if (isDoctor && onCreatePatient) {
-      onCreatePatient();
     }
   };
 
-  const actionText = hasLinkedAccount
-    ? `Switch to ${isDoctor ? 'Patient' : 'Doctor'}`
-    : 'Create Patient Profile';
-  
-  const actionIcon = hasLinkedAccount ? 'swap-horizontal-outline' : 'person-add-outline';
+  const actionText = `Switch to ${isDoctor ? 'Patient' : 'Doctor'}`;
+  const actionIcon = 'swap-horizontal-outline' as const;
 
+  // ─── Profile Variant ──────────────────────────────────────
   if (variant === 'profile') {
-    if (!hasLinkedAccount) {
+    // Doctor without linked account → show combined CTA card
+    if (!hasLinkedAccount && isDoctor) {
       return (
-        <Pressable
-          style={({ pressed }) => [
-            styles.profileCard, 
-            styles.createCard,
-            { backgroundColor: theme.colors.primary },
-            pressed && { opacity: 0.9 }
-          ]}
-          onPress={handlePress}
-          disabled={isSwitchingAccount}
-        >
-          <View style={styles.createContent}>
-            <View style={styles.createIconBg}>
-              <Ionicons name="person-add" size={22} color={theme.colors.primary} />
+        <View style={[styles.profileCard, styles.ctaCard]}>
+          {/* Green header */}
+          <View style={styles.ctaHeader}>
+            <View style={styles.ctaIconBg}>
+              <Ionicons name="people" size={22} color={theme.colors.primary} />
             </View>
-            <View style={styles.createTextContainer}>
-              <Text style={styles.createTitle}>Patient Account</Text>
-              <Text style={styles.createSub}>Create a profile to book your own appointments.</Text>
+            <View style={styles.ctaTextContainer}>
+              <Text style={styles.ctaTitle}>Patient Account</Text>
+              <Text style={styles.ctaSub}>Book appointments as a patient too.</Text>
             </View>
-            <Ionicons name="arrow-forward" size={20} color="#fff" style={{ opacity: 0.8 }} />
           </View>
-        </Pressable>
+
+          {/* Two options */}
+          <View style={styles.ctaOptions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.ctaOption,
+                pressed && { backgroundColor: theme.colors.primary + '08' },
+              ]}
+              onPress={onCreatePatient}
+            >
+              <View style={[styles.ctaOptionIcon, { backgroundColor: theme.colors.primary + '12' }]}>
+                <Ionicons name="person-add-outline" size={18} color={theme.colors.primary} />
+              </View>
+              <View style={styles.ctaOptionText}>
+                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>Create New Account</Text>
+                <Text style={[styles.ctaOptionSub, { color: theme.colors.textTertiary }]}>
+                  Set up a fresh patient profile
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.textTertiary} />
+            </Pressable>
+
+            <View style={styles.ctaDivider} />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.ctaOption,
+                pressed && { backgroundColor: theme.colors.primary + '08' },
+              ]}
+              onPress={onLinkExisting}
+            >
+              <View style={[styles.ctaOptionIcon, { backgroundColor: '#13C2C2' + '12' }]}>
+                <Ionicons name="link-outline" size={18} color="#13C2C2" />
+              </View>
+              <View style={styles.ctaOptionText}>
+                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>Link Existing Account</Text>
+                <Text style={[styles.ctaOptionSub, { color: theme.colors.textTertiary }]}>
+                  Connect an account you already have
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.textTertiary} />
+            </Pressable>
+          </View>
+        </View>
       );
     }
 
-    return (
-      <View style={styles.profileCard}>
-        <Pressable
-          style={styles.profileItem}
-          onPress={handlePress}
-          disabled={isSwitchingAccount}
-        >
-          <View style={[styles.profileIconBg, { backgroundColor: roleColor + '15' }]}>
-            <Ionicons name={actionIcon} size={20} color={roleColor} />
-          </View>
-          <Text style={[styles.profileText, { color: theme.colors.text }]}>
-            {isSwitchingAccount ? 'Switching...' : actionText}
-          </Text>
-          {isSwitchingAccount ? (
-            <ActivityIndicator size="small" color={roleColor} />
-          ) : (
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
-          )}
-        </Pressable>
-      </View>
-    );
+    // Has linked account → show switch button
+    if (hasLinkedAccount) {
+      return (
+        <View style={styles.profileCard}>
+          <Pressable
+            style={styles.profileItem}
+            onPress={handleSwitch}
+            disabled={isSwitchingAccount}
+          >
+            <View style={[styles.profileIconBg, { backgroundColor: roleColor + '15' }]}>
+              <Ionicons name={actionIcon} size={20} color={roleColor} />
+            </View>
+            <Text style={[styles.profileText, { color: theme.colors.text }]}>
+              {isSwitchingAccount ? 'Switching...' : actionText}
+            </Text>
+            {isSwitchingAccount ? (
+              <ActivityIndicator size="small" color={roleColor} />
+            ) : (
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
+            )}
+          </Pressable>
+        </View>
+      );
+    }
+
+    return null;
   }
 
-  // Sidebar Variant
+  // ─── Sidebar Variant ──────────────────────────────────────
   if (!hasLinkedAccount) {
     return (
       <Pressable
-        onPress={handlePress}
+        onPress={onCreatePatient}
         disabled={isSwitchingAccount}
         style={({ hovered }) => [
           styles.sidebarItem,
@@ -121,7 +157,7 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, variant = 'sideb
 
   return (
     <Pressable
-      onPress={handlePress}
+      onPress={handleSwitch}
       disabled={isSwitchingAccount}
       style={({ hovered }) => [
         styles.sidebarItem,
@@ -146,6 +182,7 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, variant = 'sideb
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
+    // ─── Sidebar ─────────────────────────────────────────
     sidebarItem: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -164,6 +201,14 @@ const createStyles = (theme: Theme) =>
       fontSize: 14,
       fontWeight: '500',
     },
+    sidebarCreateItem: {
+      backgroundColor: theme.colors.primary + '10',
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '20',
+      borderStyle: 'dashed',
+    },
+
+    // ─── Profile: Switch ─────────────────────────────────
     profileCard: {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
@@ -193,20 +238,22 @@ const createStyles = (theme: Theme) =>
       fontSize: 16,
       fontWeight: '500',
     },
-    createCard: {
-      marginBottom: 0,
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
+
+    // ─── Profile: Combined CTA Card ─────────────────────
+    ctaCard: {
+      shadowOpacity: 0.08,
+      shadowRadius: 16,
       shadowOffset: { width: 0, height: 4 },
       elevation: 4,
     },
-    createContent: {
+    ctaHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 16,
+      backgroundColor: theme.colors.primary,
+      paddingVertical: 18,
       paddingHorizontal: 20,
     },
-    createIconBg: {
+    ctaIconBg: {
       width: 44,
       height: 44,
       borderRadius: 22,
@@ -215,24 +262,53 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       marginRight: 14,
     },
-    createTextContainer: {
+    ctaTextContainer: {
       flex: 1,
     },
-    createTitle: {
+    ctaTitle: {
       fontSize: 16,
       fontWeight: '700',
       color: '#fff',
       marginBottom: 2,
     },
-    createSub: {
+    ctaSub: {
       fontSize: 13,
       color: 'rgba(255,255,255,0.85)',
       lineHeight: 18,
     },
-    sidebarCreateItem: {
-      backgroundColor: theme.colors.primary + '10',
-      borderWidth: 1,
-      borderColor: theme.colors.primary + '20',
-      borderStyle: 'dashed',
+    ctaOptions: {
+      paddingVertical: 4,
+    },
+    ctaOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+    },
+    ctaOptionIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    ctaOptionText: {
+      flex: 1,
+    },
+    ctaOptionTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      marginBottom: 1,
+    },
+    ctaOptionSub: {
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    ctaDivider: {
+      height: 1,
+      backgroundColor: theme.colors.border,
+      opacity: 0.5,
+      marginLeft: 68,
     },
   });

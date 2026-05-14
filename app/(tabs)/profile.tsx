@@ -149,7 +149,11 @@ export default function ProfileScreen() {
 
         {/* ── Account Switcher ── */}
         <View style={{ marginBottom: theme.spacing.lg }}>
-          <AccountSwitcher variant="profile" onCreatePatient={() => setIsCreatePatientVisible(true)} />
+          <AccountSwitcher 
+            variant="profile" 
+            onCreatePatient={() => setIsCreatePatientVisible(true)}
+            onLinkExisting={() => setLinkAccountVisible(true)}
+          />
         </View>
 
         {/* ── Menu Items ── */}
@@ -189,17 +193,6 @@ export default function ProfileScreen() {
             onPress={() => setChangePasswordVisible(true)}
             theme={theme}
           />
-          {user?.role === 'DOCTOR' && !hasLinkedAccount && (
-            <>
-              <View style={styles.divider} />
-              <MenuItem
-                icon="link-outline"
-                label="Link Existing Account"
-                onPress={() => setLinkAccountVisible(true)}
-                theme={theme}
-              />
-            </>
-          )}
         </View>
 
         <Text style={styles.sectionTitle}>Preferences</Text>
