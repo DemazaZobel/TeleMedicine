@@ -55,6 +55,9 @@ export default function AppointmentsScreen() {
     }
   };
 
+  const { width } = useWindowDimensions();
+  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+
   if (isDoctor && !isVerified) {
     return <PendingApproval />;
   }
@@ -69,9 +72,6 @@ export default function AppointmentsScreen() {
       />
     );
   };
-
-  const { width } = useWindowDimensions();
-  const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
 
   return (
     <ScreenContainer scrollable={false} padded={false}>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import type { Theme } from '../../theme';
 import { useTheme } from '../../theme';
@@ -87,12 +88,13 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
       {created ? (
         <View style={styles.successContainer}>
           <View style={styles.successIcon}>
-            <Text style={{ fontSize: 48 }}>✅</Text>
+            <Ionicons name="checkmark-circle" size={72} color={theme.colors.primary} />
           </View>
           <Text style={styles.successTitle}>
-            Patient account for {firstName} {lastName} has been created.
+            Account Created Successfully
           </Text>
           <Text style={styles.successSubtitle}>
+            Patient account for {firstName} {lastName} has been created.{'\n'}
             You can now switch between your Doctor and Patient profiles at any time using the sidebar.
           </Text>
 
@@ -199,21 +201,26 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 8,
     },
     successIcon: {
-      marginBottom: 16,
+      marginBottom: 20,
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 5,
     },
     successTitle: {
-      fontSize: 16,
+      fontSize: 20,
       fontWeight: '700',
       color: theme.colors.text,
       textAlign: 'center',
       marginBottom: 8,
     },
     successSubtitle: {
-      fontSize: 14,
+      fontSize: 15,
       color: theme.colors.textSecondary,
       textAlign: 'center',
-      lineHeight: 20,
-      marginBottom: 24,
+      lineHeight: 22,
+      marginBottom: 32,
     },
     successActions: {
       width: '100%',

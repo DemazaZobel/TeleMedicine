@@ -123,7 +123,7 @@ export default function ProfileScreen() {
 
         {/* ── Account Switcher ── */}
         <View style={{ marginBottom: theme.spacing.lg }}>
-          <AccountSwitcher onCreatePatient={() => setIsCreatePatientVisible(true)} />
+          <AccountSwitcher variant="profile" onCreatePatient={() => setIsCreatePatientVisible(true)} />
         </View>
 
         {/* ── Menu Items ── */}
