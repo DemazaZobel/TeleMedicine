@@ -115,10 +115,12 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
 
-          <Text style={styles.name}>
+          <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
             {user?.first_name ?? 'User'} {user?.last_name ?? ''}
           </Text>
-          <Text style={styles.email}>{user?.email ?? ''}</Text>
+          <Text style={styles.email} numberOfLines={1} ellipsizeMode="tail">
+            {user?.email ?? ''}
+          </Text>
         </View>
 
         {/* ── Account Switcher ── */}
@@ -313,10 +315,14 @@ const createStyles = (theme: Theme) =>
       fontWeight: '700',
       color: theme.colors.text,
       marginBottom: 2,
+      textAlign: 'center',
+      maxWidth: '100%',
     },
     email: {
       ...theme.typography.body,
       color: theme.colors.textSecondary,
+      textAlign: 'center',
+      maxWidth: '100%',
     },
     sectionTitle: {
       ...theme.typography.label,
