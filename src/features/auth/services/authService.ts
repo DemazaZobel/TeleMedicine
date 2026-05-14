@@ -11,6 +11,10 @@ import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
   ApiResponse,
+  LinkedAccount,
+  CreateLinkedPatientRequest,
+  CreateLinkedPatientResponse,
+  SwitchAccountResponse,
 } from '../../../types';
 import type { User } from '../../../types/models';
 
@@ -109,6 +113,34 @@ export const authService = {
     const { data } = await apiClient.put<{ message: string }>(
       `${AUTH_BASE}/password/change/`,
       payload
+    );
+    return data;
+  },
+
+  // ─── Linked Accounts ────────────────────────────────────
+
+  /** POST /api/auth/linked-accounts/create-patient/ — Create a linked patient account (Doctor only) */
+  async createLinkedPatient(payload: CreateLinkedPatientRequest): Promise<CreateLinkedPatientResponse> {
+    const { data } = await apiClient.post<CreateLinkedPatientResponse>(
+      `${AUTH_BASE}/linked-accounts/create-patient/`,
+      payload
+    );
+    return data;
+  },
+
+  /** GET /api/auth/linked-accounts/ — List linked accounts for the current user */
+  async getLinkedAccounts(): Promise<LinkedAccount[]> {
+    const { data } = await apiClient.get<LinkedAccount[]>(
+      `${AUTH_BASE}/linked-accounts/`
+    );
+    return data;
+  },
+
+  /** POST /api/auth/linked-accounts/switch/ — Switch to a linked account */
+  async switchAccount(linkedUserId: string): Promise<SwitchAccountResponse> {
+    const { data } = await apiClient.post<SwitchAccountResponse>(
+      `${AUTH_BASE}/linked-accounts/switch/`,
+      { linked_user_id: linkedUserId }
     );
     return data;
   },

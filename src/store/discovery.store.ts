@@ -29,6 +29,7 @@ interface DiscoveryState {
   fetchMoreDoctors: () => Promise<void>;
   fetchSpecializations: () => Promise<void>;
   clearFilters: () => void;
+  reset: () => void;
 }
 
 export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
@@ -184,4 +185,22 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       });
     }
   },
+
+  reset: () => set({
+    doctors: [],
+    nextPageUrl: null,
+    hasMore: false,
+    searchQuery: '',
+    selectedSpecialization: null,
+    minFee: null,
+    maxFee: null,
+    minRating: null,
+    location: null,
+    hospital: null,
+    availability: 'any',
+    isLoading: false,
+    isLoadingMore: false,
+    error: null,
+    specializations: [],
+  }),
 }));

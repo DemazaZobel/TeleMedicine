@@ -57,6 +57,7 @@ interface BookingActions {
 
   setIsNotificationsDrawerOpen: (open: boolean) => void;
   clearError: () => void;
+  reset: () => void;
 }
 
 type BookingStore = BookingState & BookingActions;
@@ -432,4 +433,6 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   },
 
   setIsNotificationsDrawerOpen: (isNotificationsDrawerOpen) => set({ isNotificationsDrawerOpen }),
+
+  reset: () => set(initialState),
 }));

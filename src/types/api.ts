@@ -93,3 +93,36 @@ export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;
 }
+
+// ─── Linked Accounts ────────────────────────────────────
+export interface LinkedAccount {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: import('./models').UserRole;
+}
+
+export interface CreateLinkedPatientRequest {
+  email: string;
+  first_name: string;
+  last_name: string;
+  password: string;
+  phone_number?: string;
+}
+
+export interface CreateLinkedPatientResponse {
+  access: string;
+  refresh: string;
+  user: import('./models').User;
+}
+
+export interface SwitchAccountRequest {
+  linked_user_id: string;
+}
+
+export interface SwitchAccountResponse {
+  access: string;
+  refresh: string;
+  user: import('./models').User;
+}

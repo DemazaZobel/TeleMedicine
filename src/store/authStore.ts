@@ -7,9 +7,12 @@ import type {
   RegisterRequest,
   UpdateProfileRequest,
   ChangePasswordRequest,
+  LinkedAccount,
+  CreateLinkedPatientRequest,
 } from '../types';
 import { authService } from '../features/auth/services/authService';
 import { STORAGE_KEYS } from '../services/api';
+import { resetAllStores } from './resetAllStores';
 
 // ─── State Shape ─────────────────────────────────────────
 interface AuthState {
@@ -19,9 +22,12 @@ interface AuthState {
   isLoading: boolean;
   isBootstrapping: boolean;
   error: string | null;
+  // Linked Accounts
+  linkedAccount: LinkedAccount | null;
+  hasLinkedAccount: boolean;
+  isSwitchingAccount: boolean;
 }
 
-// ─── Actions ─────────────────────────────────────────────
 interface AuthActions {
   bootstrap: () => Promise<void>;
   login: (credentials: LoginRequest) => Promise<void>;
@@ -33,6 +39,10 @@ interface AuthActions {
   changePassword: (payload: ChangePasswordRequest) => Promise<void>;
   setUser: (user: User) => void;
   clearError: () => void;
+  // Linked Accounts
+  fetchLinkedAccounts: () => Promise<void>;
+  createLinkedPatient: (payload: CreateLinkedPatientRequest) => Promise<void>;
+  switchAccount: (linkedUserId: string) => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -45,6 +55,9 @@ const initialState: AuthState = {
   isLoading: false,
   isBootstrapping: true,
   error: null,
+  linkedAccount: null,
+  hasLinkedAccount: false,
+  isSwitchingAccount: false,
 };
 
 // ─── Store ───────────────────────────────────────────────
@@ -321,5 +334,90 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
-}));
 
+  // ─── Linked Accounts ────────────────────────────────────
+
+  /**
+   * Fetch the linked account for the current user.
+   * Since it's 1:1 Doctor→Patient, we expect 0 or 1 result.
+   */
+  fetchLinkedAccounts: async () => {
+    try {
+      const accounts = await authService.getLinkedAccounts();
+      const linked = accounts.length > 0 ? accounts[0] : null;
+      set({ linkedAccount: linked, hasLinkedAccount: !!linked });
+    } catch (error) {
+      console.error('[AuthStore] Failed to fetch linked accounts:', error);
+      // Non-critical — don't set error state, just log
+    }
+  },
+
+  /**
+   * Create a linked patient account (Doctor only).
+   * After creation, fetches the updated linked accounts list.
+   * Does NOT auto-switch — the UI should prompt the user.
+   */
+  createLinkedPatient: async (payload: CreateLinkedPatientRequest) => {
+    try {
+      set({ isLoading: true, error: null });
+      await authService.createLinkedPatient(payload);
+      // Refresh linked accounts to pick up the new patient
+      await get().fetchLinkedAccounts();
+      set({ isLoading: false });
+    } catch (error: any) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) ||
+        (axiosError?.response?.data?.email as string) ||
+        'Failed to create linked patient account.';
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  /**
+   * Switch to a linked account.
+   * 
+   * This is the core of the feature:
+   * 1. Call the switch endpoint → get new tokens + user
+   * 2. Replace all stored tokens with the new ones
+   * 3. Update user state (role changes!)
+   * 4. Clear all role-specific stores to prevent stale data
+   * 5. Fetch linked accounts for the new session
+   */
+  switchAccount: async (linkedUserId: string) => {
+    try {
+      set({ isSwitchingAccount: true, error: null });
+
+      const response = await authService.switchAccount(linkedUserId);
+
+      // 1. Replace tokens in SecureStore
+      await Promise.all([
+        Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, response.access),
+        Storage.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, response.refresh),
+        Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(response.user)),
+      ]);
+
+      // 2. Clear all role-specific stores to prevent stale data
+      resetAllStores();
+
+      // 3. Update auth state with new user + tokens
+      set({
+        user: response.user,
+        tokens: { access: response.access, refresh: response.refresh },
+        isAuthenticated: true,
+        isSwitchingAccount: false,
+      });
+
+      // 4. Fetch linked accounts for the new session (so the switcher UI updates)
+      await get().fetchLinkedAccounts();
+    } catch (error: any) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) ||
+        'Failed to switch account. Please try again.';
+      set({ isSwitchingAccount: false, error: message });
+      throw error;
+    }
+  },
+}));
