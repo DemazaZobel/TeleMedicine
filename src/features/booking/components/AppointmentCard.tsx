@@ -378,58 +378,60 @@ export function AppointmentCard({
 
       {!isFinalized && (
         <View style={styles.cardActions}>
-          <View style={styles.secondaryActions}>
-            {["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
-              <TouchableOpacity onPress={() => setCancelVisible(true)} style={styles.actionLink}>
-                <Text style={styles.cancelLinkText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          {["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
+            <Button
+              title="Cancel"
+              variant="danger"
+              size="sm"
+              onPress={() => setCancelVisible(true)}
+              style={styles.actionBtn}
+            />
+          )}
 
-          <View style={styles.primaryActions}>
-            {["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
-              <TouchableOpacity 
-                onPress={() => setRescheduleVisible(true)} 
-                style={styles.rescheduleBtn}
-              >
-                <Text style={styles.rescheduleBtnText}>Reschedule</Text>
-              </TouchableOpacity>
-            )}
+          {["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
+            <Button
+              title="Reschedule"
+              variant="outline"
+              size="sm"
+              onPress={() => setRescheduleVisible(true)}
+              style={styles.actionBtn}
+            />
+          )}
 
-            {appointment.status?.toUpperCase() === "CONFIRMED" && (
-              appointment.payment_status === "paid" ? (
-                <Button title="Join" onPress={handleJoin} style={styles.mainBtn} />
-              ) : (
-                !isDoctor && (
-                  appointment.payment_status === "charge_pending" ? (
-                    <Button title="Verifying..." onPress={handleRefresh} style={styles.mainBtn} loading={localLoading} />
-                  ) : (
-                    <Button title="Pay Now" onPress={handlePay} style={styles.payBtn} loading={localLoading} />
-                  )
+          {appointment.status?.toUpperCase() === "CONFIRMED" && (
+            appointment.payment_status === "paid" ? (
+              <Button title="Join" size="sm" onPress={handleJoin} style={styles.mainBtn} />
+            ) : (
+              !isDoctor && (
+                appointment.payment_status === "charge_pending" ? (
+                  <Button title="Verifying..." size="sm" onPress={handleRefresh} loading={localLoading} style={styles.mainBtn} />
+                ) : (
+                  <Button title="Pay Now" size="sm" variant="secondary" onPress={handlePay} loading={localLoading} style={styles.payBtn} />
                 )
               )
-            )}
+            )
+          )}
 
-            {isDoctor && appointment.status?.toUpperCase() === "CONFIRMED" && appointment.payment_status === "paid" && (
-              <Button title="Complete" onPress={handleComplete} style={styles.mainBtn} loading={localLoading} />
-            )}
+          {isDoctor && appointment.status?.toUpperCase() === "CONFIRMED" && appointment.payment_status === "paid" && (
+            <Button title="Complete" size="sm" onPress={handleComplete} loading={localLoading} style={styles.mainBtn} />
+          )}
 
-            {isDoctor && appointment.status?.toUpperCase() === "REQUESTED" && (
-              <Button 
-                title="Accept" 
-                onPress={async () => {
-                  try {
-                    setLocalLoading(true);
-                    await onAccept?.(appointment.id);
-                  } finally {
-                    setLocalLoading(false);
-                  }
-                }} 
-                style={styles.mainBtn} 
-                loading={localLoading} 
-              />
-            )}
-          </View>
+          {isDoctor && appointment.status?.toUpperCase() === "REQUESTED" && (
+            <Button 
+              title="Accept" 
+              size="sm"
+              onPress={async () => {
+                try {
+                  setLocalLoading(true);
+                  await onAccept?.(appointment.id);
+                } finally {
+                  setLocalLoading(false);
+                }
+              }} 
+              loading={localLoading} 
+              style={styles.mainBtn} 
+            />
+          )}
         </View>
       )}
 
@@ -612,33 +614,16 @@ const createStyles = (theme: Theme) =>
     },
     cardActions: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
       alignItems: 'center',
       borderTopWidth: 1,
       borderTopColor: 'rgba(0,0,0,0.04)',
       paddingTop: 16,
       flexWrap: 'wrap',
-      gap: 12,
+      gap: 10,
     },
-    secondaryActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    actionLink: {
-      paddingVertical: 8,
-      paddingRight: 16,
-    },
-    cancelLinkText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.colors.error,
-    },
-    primaryActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      flex: 1,
-      justifyContent: 'flex-end',
+    actionBtn: {
+      paddingHorizontal: 16,
     },
     rescheduleBtn: {
       paddingVertical: 8,
@@ -650,16 +635,9 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.primary,
     },
     mainBtn: {
-      height: 36,
-      paddingHorizontal: 18,
-      borderRadius: 18,
       minWidth: 80,
     },
     payBtn: {
-      height: 36,
-      paddingHorizontal: 18,
-      borderRadius: 18,
-      backgroundColor: theme.colors.warning,
       minWidth: 90,
     },
     acceptBtn: {

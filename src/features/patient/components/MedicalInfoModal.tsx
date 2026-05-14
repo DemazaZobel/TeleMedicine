@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
 import { Input, Button, Banner, Card } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { usePatientStore } from '../../../store/patient.store';
@@ -39,6 +41,31 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
   const [saved, setSaved] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [documents, setDocuments] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
+
+  const onChangeDate = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS until confirmed
+    if (selectedDate) {
+      setDateOfBirth(selectedDate.toISOString().split('T')[0]);
+      setSaved(false);
+      clearError();
+    }
+  };
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        multiple: true,
+      });
+      if (!result.canceled) {
+        setDocuments(prev => [...prev, ...result.assets]);
+      }
+    } catch (err) {
+      console.log('Error picking document', err);
+    }
+  };
 
   useEffect(() => {
     if (visible) {
@@ -121,13 +148,48 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
             <Text style={styles.sectionTitle}>Basic Information</Text>
           </View>
 
-          <Input
-            label="Date of Birth"
-            placeholder="YYYY-MM-DD"
-            value={dateOfBirth}
-            onChangeText={(t) => { setDateOfBirth(t); clearError(); setSaved(false); }}
-            containerStyle={{ marginBottom: 16 }}
-          />
+          {Platform.OS === 'web' ? (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Date of Birth</Text>
+              <input 
+                type="date" 
+                value={dateOfBirth} 
+                onChange={(e) => { setDateOfBirth(e.target.value); clearError(); setSaved(false); }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  border: '1px solid ' + theme.colors.border,
+                  backgroundColor: theme.colors.background,
+                  color: theme.colors.text,
+                  fontSize: 16,
+                  fontFamily: 'inherit'
+                }}
+              />
+            </View>
+          ) : (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={styles.label}>Date of Birth</Text>
+              <Pressable 
+                style={[styles.dateInput]} 
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={{ color: dateOfBirth ? theme.colors.text : theme.colors.placeholder }}>
+                  {dateOfBirth || "YYYY-MM-DD"}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color={theme.colors.textTertiary} />
+              </Pressable>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dateOfBirth ? new Date(dateOfBirth) : new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={onChangeDate}
+                  maximumDate={new Date()}
+                />
+              )}
+            </View>
+          )}
 
           <Text style={styles.label}>Gender</Text>
           <View style={styles.chipsRow}>
@@ -196,7 +258,29 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
             onChangeText={(t) => { setMedicalHistory(t); clearError(); setSaved(false); }}
             multiline
             numberOfLines={4}
+            containerStyle={{ marginBottom: 16 }}
           />
+
+          {/* Documents Upload UI */}
+          <Text style={styles.label}>Attachments & Files</Text>
+          <View style={styles.documentsContainer}>
+            {documents.map((doc, index) => (
+              <View key={index} style={styles.documentChip}>
+                <Ionicons name="document-text-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.documentName} numberOfLines={1}>{doc.name}</Text>
+                <Pressable onPress={() => setDocuments(docs => docs.filter((_, i) => i !== index))}>
+                  <Ionicons name="close-circle" size={18} color={theme.colors.error} />
+                </Pressable>
+              </View>
+            ))}
+            <Button 
+              title="Upload File" 
+              variant="outline" 
+              icon={<Ionicons name="cloud-upload-outline" size={18} color={theme.colors.primary} style={{ marginRight: 8 }} />}
+              onPress={pickDocument} 
+              style={{ alignSelf: 'flex-start', marginTop: 8 }}
+            />
+          </View>
         </Card>
 
         {/* ── Location Section ── */}
@@ -297,5 +381,34 @@ const createStyles = (theme: Theme) =>
     },
     saveButton: {
       marginTop: theme.spacing.lg,
+    },
+    dateInput: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.radius.md,
+      paddingHorizontal: 16,
+      paddingVertical: Platform.OS === 'web' ? 12 : 14,
+      backgroundColor: theme.colors.background,
+    },
+    documentsContainer: {
+      gap: 8,
+    },
+    documentChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      padding: 10,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      gap: 8,
+    },
+    documentName: {
+      flex: 1,
+      fontSize: 13,
+      color: theme.colors.text,
     },
   });

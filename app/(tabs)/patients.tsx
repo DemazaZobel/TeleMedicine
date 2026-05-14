@@ -27,8 +27,16 @@ export default function PatientsScreen() {
   const uniquePatients = useMemo(() => {
     const map = new Map();
     appointments.forEach(app => {
-      if (app.patient && !map.has(app.patient.id)) {
-        map.set(app.patient.id, app.patient);
+      // Safely access patient details from flat fields or legacy nested objects
+      const patientId = app.patient?.id || app.patient_user_id;
+      if (patientId && !map.has(patientId)) {
+        const patientData = {
+          id: patientId,
+          first_name: app.patient?.user?.first_name || app.patient_first_name || 'Unknown',
+          last_name: app.patient?.user?.last_name || app.patient_last_name || 'Patient',
+          email: app.patient?.user?.email || 'No email provided',
+        };
+        map.set(patientId, patientData);
       }
     });
     return Array.from(map.values());
@@ -39,15 +47,15 @@ export default function PatientsScreen() {
   }
 
   const renderPatient = ({ item }: { item: any }) => {
-    const initials = `${item.user.first_name?.[0] || ''}${item.user.last_name?.[0] || ''}`;
+    const initials = `${item.first_name?.[0] || ''}${item.last_name?.[0] || ''}`.toUpperCase();
     return (
       <Card style={styles.patientCard}>
         <View style={styles.avatar}>
           <Text style={styles.avatarInitials}>{initials}</Text>
         </View>
         <View style={styles.infoContainer}>
-          <Text style={styles.name}>{item.user.first_name} {item.user.last_name}</Text>
-          <Text style={styles.email}>{item.user.email}</Text>
+          <Text style={styles.name}>{item.first_name} {item.last_name}</Text>
+          <Text style={styles.email}>{item.email}</Text>
         </View>
       </Card>
     );
