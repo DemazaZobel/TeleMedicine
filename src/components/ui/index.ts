@@ -16,3 +16,4 @@ export { NotificationsDrawer } from './NotificationsDrawer';
 export { PageHeader } from './PageHeader';
 export { AccountSwitcher } from './AccountSwitcher';
 export { CreateLinkedPatientModal } from './CreateLinkedPatientModal';
+export { LinkExistingAccountModal } from './LinkExistingAccountModal';

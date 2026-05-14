@@ -9,6 +9,8 @@ import type {
   ChangePasswordRequest,
   LinkedAccount,
   CreateLinkedPatientRequest,
+  LinkAccountRequest,
+  LinkAccountConfirmRequest,
 } from '../types';
 import { authService } from '../features/auth/services/authService';
 import { STORAGE_KEYS } from '../services/api';
@@ -42,6 +44,8 @@ interface AuthActions {
   // Linked Accounts
   fetchLinkedAccounts: () => Promise<void>;
   createLinkedPatient: (payload: CreateLinkedPatientRequest) => Promise<void>;
+  linkAccountRequest: (payload: LinkAccountRequest) => Promise<string>; // returns request_id
+  linkAccountConfirm: (payload: LinkAccountConfirmRequest) => Promise<void>;
   switchAccount: (linkedUserId: string) => Promise<void>;
 }
 
@@ -376,6 +380,46 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         (axiosError?.response?.data?.detail as string) ||
         (axiosError?.response?.data?.email as string) ||
         'Failed to create linked patient account.';
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  /**
+   * Link Existing Account: Step 1 — Send OTP to both emails.
+   */
+  linkAccountRequest: async (payload: LinkAccountRequest) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authService.linkAccountRequest(payload);
+      set({ isLoading: false });
+      return response.request_id;
+    } catch (error: any) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) ||
+        (axiosError?.response?.data?.target_email as string) ||
+        'Failed to send link request. Please check the email and try again.';
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  /**
+   * Link Existing Account: Step 2 — Confirm with both OTP codes.
+   */
+  linkAccountConfirm: async (payload: LinkAccountConfirmRequest) => {
+    try {
+      set({ isLoading: true, error: null });
+      await authService.linkAccountConfirm(payload);
+      // Refresh linked accounts to pick up the new link
+      await get().fetchLinkedAccounts();
+      set({ isLoading: false });
+    } catch (error: any) {
+      const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const message =
+        (axiosError?.response?.data?.detail as string) ||
+        'Invalid or expired codes. Please try again.';
       set({ isLoading: false, error: message });
       throw error;
     }

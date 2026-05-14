@@ -6,6 +6,7 @@ import { AccountSwitcher, ScreenContainer } from '../../src/components/ui';
 import { useTheme, Theme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
 import { CreateLinkedPatientModal } from '../../src/components/ui/CreateLinkedPatientModal';
+import { LinkExistingAccountModal } from '../../src/components/ui/LinkExistingAccountModal';
 import { useBookingStore } from '../../src/store/booking.store';
 import { EditProfileModal } from '../../src/features/profile/components/EditProfileModal';
 import { ChangePasswordModal } from '../../src/features/profile/components/ChangePasswordModal';
@@ -74,6 +75,8 @@ export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const fetchProfile = useAuthStore((s) => s.fetchProfile);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const hasLinkedAccount = useAuthStore((s) => s.hasLinkedAccount);
   const { preferences, isLoading, fetchPreferences, updatePreferences } = useBookingStore();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -81,6 +84,7 @@ export default function ProfileScreen() {
   const [isMedicalInfoVisible, setMedicalInfoVisible] = useState(false);
   const [isChangePasswordVisible, setChangePasswordVisible] = useState(false);
   const [isCreatePatientVisible, setIsCreatePatientVisible] = useState(false);
+  const [isLinkAccountVisible, setLinkAccountVisible] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -94,6 +98,26 @@ export default function ProfileScreen() {
       await updatePreferences({ [key]: value });
     } catch (error) {
       // Error handled by store
+    }
+  };
+
+  const LANGUAGES = [
+    { value: 'en' as const, label: 'English' },
+    { value: 'am' as const, label: 'Amharic' },
+    { value: 'fr' as const, label: 'French' },
+  ];
+
+  const currentLang = user?.preferred_language || 'en';
+  const currentLangLabel = LANGUAGES.find(l => l.value === currentLang)?.label || 'English';
+
+  const handleLanguageChange = async () => {
+    // Cycle through languages: en -> am -> fr -> en
+    const currentIndex = LANGUAGES.findIndex(l => l.value === currentLang);
+    const nextLang = LANGUAGES[(currentIndex + 1) % LANGUAGES.length];
+    try {
+      await updateProfile({ preferred_language: nextLang.value });
+    } catch {
+      // Error handled in store
     }
   };
 
@@ -165,6 +189,17 @@ export default function ProfileScreen() {
             onPress={() => setChangePasswordVisible(true)}
             theme={theme}
           />
+          {user?.role === 'DOCTOR' && !hasLinkedAccount && (
+            <>
+              <View style={styles.divider} />
+              <MenuItem
+                icon="link-outline"
+                label="Link Existing Account"
+                onPress={() => setLinkAccountVisible(true)}
+                theme={theme}
+              />
+            </>
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Preferences</Text>
@@ -220,6 +255,19 @@ export default function ProfileScreen() {
           />
           <View style={styles.divider} />
           <MenuItem
+            icon="language-outline"
+            label="Language"
+            theme={theme}
+            onPress={handleLanguageChange}
+            rightElement={
+              <View style={styles.langBadge}>
+                <Text style={[styles.langText, { color: theme.colors.primary }]}>{currentLangLabel}</Text>
+                <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
+              </View>
+            }
+          />
+          <View style={styles.divider} />
+          <MenuItem
             icon="help-circle-outline"
             label="Help Center"
             theme={theme}
@@ -254,6 +302,10 @@ export default function ProfileScreen() {
       <CreateLinkedPatientModal
         visible={isCreatePatientVisible}
         onClose={() => setIsCreatePatientVisible(false)}
+      />
+      <LinkExistingAccountModal
+        visible={isLinkAccountVisible}
+        onClose={() => setLinkAccountVisible(false)}
       />
     </ScreenContainer>
   );
@@ -348,5 +400,18 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.border,
       opacity: 0.5,
       marginLeft: 68, // Aligns with the text, skipping the icon
+    },
+    langBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.colors.primary + '10',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+    },
+    langText: {
+      fontSize: 13,
+      fontWeight: '600',
     },
   });

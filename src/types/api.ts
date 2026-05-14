@@ -87,6 +87,7 @@ export interface UpdateProfileRequest {
   current_working_hospital?: string;
   education?: string;
   experience?: string;
+  preferred_language?: 'en' | 'am' | 'fr';
 }
 
 export interface ChangePasswordRequest {
@@ -125,4 +126,20 @@ export interface SwitchAccountResponse {
   access: string;
   refresh: string;
   user: import('./models').User;
+}
+
+// ─── Link Existing Account (OTP Flow) ───────────────────
+export interface LinkAccountRequest {
+  target_email: string;
+}
+
+export interface LinkAccountRequestResponse {
+  message: string;
+  request_id: string;
+}
+
+export interface LinkAccountConfirmRequest {
+  request_id: string;
+  initiator_code: string;
+  target_code: string;
 }

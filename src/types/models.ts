@@ -12,6 +12,7 @@ export interface User {
   avatar?: string;
   is_verified: boolean;
   is_doctor_approved: boolean;
+  preferred_language?: 'en' | 'am' | 'fr';
   biography?: string;
   location?: string;
   current_working_hospital?: string;

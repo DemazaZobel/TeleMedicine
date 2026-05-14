@@ -15,6 +15,9 @@ import type {
   CreateLinkedPatientRequest,
   CreateLinkedPatientResponse,
   SwitchAccountResponse,
+  LinkAccountRequest,
+  LinkAccountRequestResponse,
+  LinkAccountConfirmRequest,
 } from '../../../types';
 import type { User } from '../../../types/models';
 
@@ -141,6 +144,24 @@ export const authService = {
     const { data } = await apiClient.post<SwitchAccountResponse>(
       `${AUTH_BASE}/linked-accounts/switch/`,
       { linked_user_id: linkedUserId }
+    );
+    return data;
+  },
+
+  /** POST /api/auth/linked-accounts/link-request/ — Start account link verification (sends OTP to both) */
+  async linkAccountRequest(payload: LinkAccountRequest): Promise<LinkAccountRequestResponse> {
+    const { data } = await apiClient.post<LinkAccountRequestResponse>(
+      `${AUTH_BASE}/linked-accounts/link-request/`,
+      payload
+    );
+    return data;
+  },
+
+  /** POST /api/auth/linked-accounts/link-confirm/ — Confirm account link with both OTP codes */
+  async linkAccountConfirm(payload: LinkAccountConfirmRequest): Promise<{ message: string }> {
+    const { data } = await apiClient.post<{ message: string }>(
+      `${AUTH_BASE}/linked-accounts/link-confirm/`,
+      payload
     );
     return data;
   },
