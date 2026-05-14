@@ -18,6 +18,9 @@ export default function PatientsScreen() {
 
   const { appointments, isLoading, fetchMyAppointments } = useBookingStore();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
   useEffect(() => {
     if (isDoctor && isVerified) {
       fetchMyAppointments();
@@ -39,8 +42,29 @@ export default function PatientsScreen() {
         map.set(patientId, patientData);
       }
     });
-    return Array.from(map.values());
-  }, [appointments]);
+    const uniqueArray = Array.from(map.values());
+
+    // Filter
+    let filtered = uniqueArray;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.first_name.toLowerCase().includes(q) || 
+        p.last_name.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+      const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+      if (sortOrder === 'asc') return nameA.localeCompare(nameB);
+      return nameB.localeCompare(nameA);
+    });
+
+    return filtered;
+  }, [appointments, searchQuery, sortOrder]);
 
   if (isDoctor && !isVerified) {
     return <PendingApproval />;
@@ -48,16 +72,38 @@ export default function PatientsScreen() {
 
   const renderPatient = ({ item }: { item: any }) => {
     const initials = `${item.first_name?.[0] || ''}${item.last_name?.[0] || ''}`.toUpperCase();
+    
+    // Fallbacks since backend doesn't send this yet
+    const allergies = item.allergies || 'No known allergies reported.';
+    const history = item.medical_history || 'No medical history provided.';
+
     return (
-      <Card style={styles.patientCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarInitials}>{initials}</Text>
-        </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.name}>{item.first_name} {item.last_name}</Text>
-          <Text style={styles.email}>{item.email}</Text>
-        </View>
-      </Card>
+      <View style={styles.patientCardWrapper}>
+        <Card style={styles.patientCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarInitials}>{initials}</Text>
+            </View>
+            <View style={styles.infoContainer}>
+              <Text style={styles.name} numberOfLines={1}>{item.first_name} {item.last_name}</Text>
+              <Text style={styles.email} numberOfLines={1}>{item.email}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.divider} />
+          
+          <View style={styles.medicalInfoRow}>
+            <View style={styles.medicalInfoBlock}>
+              <Text style={styles.medicalLabel}>ALLERGIES</Text>
+              <Text style={styles.medicalValue} numberOfLines={2}>{allergies}</Text>
+            </View>
+            <View style={styles.medicalInfoBlock}>
+              <Text style={styles.medicalLabel}>MEDICAL HISTORY</Text>
+              <Text style={styles.medicalValue} numberOfLines={2}>{history}</Text>
+            </View>
+          </View>
+        </Card>
+      </View>
     );
   };
 
@@ -68,6 +114,26 @@ export default function PatientsScreen() {
           title="Your Patients"
           subtitle="View and manage patients you have consulted with"
         />
+
+        {/* ── Search & Filter Bar ── */}
+        <View style={styles.toolbar}>
+          <View style={styles.searchContainer}>
+            <Input
+              placeholder="Search patients by name or email..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              containerStyle={{ marginBottom: 0, flex: 1 }}
+              leftIcon={<Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />}
+            />
+          </View>
+          <Button
+            title={sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
+            variant="outline"
+            icon={<Ionicons name="filter" size={16} color={theme.colors.primary} style={{ marginRight: 6 }} />}
+            onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            style={styles.sortBtn}
+          />
+        </View>
 
         {isLoading && uniquePatients.length === 0 ? (
           <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
@@ -99,34 +165,54 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     maxWidth: 1100,
     alignSelf: 'center',
   },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+  },
+  searchContainer: {
+    flex: 1,
+  },
+  sortBtn: {
+    height: 48, // Match input height
+  },
   listContent: {
     flexGrow: 1,
     paddingBottom: 40,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  patientCardWrapper: {
+    marginBottom: theme.spacing.lg,
   },
   patientCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
     borderRadius: theme.radius.xl,
     backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.04)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: theme.colors.primaryLight + '40',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: theme.spacing.lg,
+    marginRight: theme.spacing.md,
   },
   avatarInitials: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.primary,
   },
@@ -135,13 +221,37 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
   name: {
     ...theme.typography.h4,
-    fontSize: 18,
+    fontSize: 17,
     color: theme.colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   email: {
     ...theme.typography.bodySm,
     color: theme.colors.textSecondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: 14,
+  },
+  medicalInfoRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  medicalInfoBlock: {
+    flex: 1,
+  },
+  medicalLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: theme.colors.textTertiary,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  medicalValue: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
   },
 });
 
