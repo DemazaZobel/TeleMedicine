@@ -127,6 +127,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           isAuthenticated: true,
           isBootstrapping: false,
         });
+
+        // 5. Fetch linked accounts for the restored session
+        await get().fetchLinkedAccounts();
       } catch {
         // Token refresh failed → session expired → clean up
         await Promise.all([
@@ -169,6 +172,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       });
+
+      // Fetch linked accounts for the new session
+      await get().fetchLinkedAccounts();
     } catch (error: any) {
       let message = 'Login failed. Please try again.';
       

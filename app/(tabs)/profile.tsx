@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer } from '../../src/components/ui';
+import { AccountSwitcher, ScreenContainer } from '../../src/components/ui';
 import { useTheme, Theme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
+import { CreateLinkedPatientModal } from '../../src/components/ui/CreateLinkedPatientModal';
 import { useBookingStore } from '../../src/store/booking.store';
 import { EditProfileModal } from '../../src/features/profile/components/EditProfileModal';
 import { ChangePasswordModal } from '../../src/features/profile/components/ChangePasswordModal';
@@ -79,6 +80,7 @@ export default function ProfileScreen() {
   const [isEditProfileVisible, setEditProfileVisible] = useState(false);
   const [isMedicalInfoVisible, setMedicalInfoVisible] = useState(false);
   const [isChangePasswordVisible, setChangePasswordVisible] = useState(false);
+  const [isCreatePatientVisible, setIsCreatePatientVisible] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -117,6 +119,11 @@ export default function ProfileScreen() {
             {user?.first_name ?? 'User'} {user?.last_name ?? ''}
           </Text>
           <Text style={styles.email}>{user?.email ?? ''}</Text>
+        </View>
+
+        {/* ── Account Switcher ── */}
+        <View style={{ marginBottom: theme.spacing.lg }}>
+          <AccountSwitcher onCreatePatient={() => setIsCreatePatientVisible(true)} />
         </View>
 
         {/* ── Menu Items ── */}
@@ -241,6 +248,10 @@ export default function ProfileScreen() {
       <ChangePasswordModal 
         visible={isChangePasswordVisible} 
         onClose={() => setChangePasswordVisible(false)} 
+      />
+      <CreateLinkedPatientModal
+        visible={isCreatePatientVisible}
+        onClose={() => setIsCreatePatientVisible(false)}
       />
     </ScreenContainer>
   );

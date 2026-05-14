@@ -9,6 +9,8 @@ import { useAuthStore } from "../../store/authStore";
 import { useDoctorStore } from "../../store/doctor.store";
 import { useTheme } from "../../theme";
 import { TAB_CONFIGS } from "../../types/navigation";
+import { AccountSwitcher } from "./AccountSwitcher";
+import { CreateLinkedPatientModal } from "./CreateLinkedPatientModal";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -31,6 +33,7 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
 
   const [hovered, setHovered] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCreatePatientVisible, setIsCreatePatientVisible] = useState(false);
 
   const visibleTabs = TAB_CONFIGS.filter((tab) => {
     let isVisible = tab.roles.includes(userRole);
@@ -169,55 +172,71 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
       </View>
 
       {/* FOOTER */}
-      <View className="mt-3 border-t border-border pt-3">
-        <Pressable
-          className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
-          onPress={onNotificationsPress}
-        >
-          <Ionicons
-            name="notifications-outline"
-            size={20}
-            className="text-muted-foreground"
+      <View>
+        {/* Account Switcher */}
+        <View className="mb-2">
+          <AccountSwitcher 
+            isCollapsed={isCollapsed} 
+            onCreatePatient={() => setIsCreatePatientVisible(true)} 
           />
-          {!isCollapsed && (
-            <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
-              Notifications
-            </Text>
-          )}
-        </Pressable>
+        </View>
 
-        <Pressable
-          className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
-          onPress={toggleTheme}
-        >
-          <Ionicons
-            name={isDark ? "sunny" : "moon"}
-            size={20}
-            className="text-muted-foreground"
-          />
-          {!isCollapsed && (
-            <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
-              {isDark ? "Light Mode" : "Dark Mode"}
-            </Text>
-          )}
-        </Pressable>
+        <View className="border-t border-border pt-3">
+          <Pressable
+            className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
+            onPress={onNotificationsPress}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={20}
+              className="text-muted-foreground"
+            />
+            {!isCollapsed && (
+              <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
+                Notifications
+              </Text>
+            )}
+          </Pressable>
 
-        <Pressable
-          className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10"
-          onPress={handleLogout}
-        >
-          <Ionicons
-            name="log-out-outline"
-            size={20}
-            className="text-destructive"
-          />
-          {!isCollapsed && (
-            <Text className="ml-2.5 text-sm font-medium text-destructive">
-              Logout
-            </Text>
-          )}
-        </Pressable>
+          <Pressable
+            className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
+            onPress={toggleTheme}
+          >
+            <Ionicons
+              name={isDark ? "sunny" : "moon"}
+              size={20}
+              className="text-muted-foreground"
+            />
+            {!isCollapsed && (
+              <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
+                {isDark ? "Light Mode" : "Dark Mode"}
+              </Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10"
+            onPress={handleLogout}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              className="text-destructive"
+            />
+            {!isCollapsed && (
+              <Text className="ml-2.5 text-sm font-medium text-destructive">
+                Logout
+              </Text>
+            )}
+          </Pressable>
+        </View>
       </View>
+
+      {/* Create Patient Modal */}
+      <CreateLinkedPatientModal
+        visible={isCreatePatientVisible}
+        onClose={() => setIsCreatePatientVisible(false)}
+      />
     </View>
   );
 }

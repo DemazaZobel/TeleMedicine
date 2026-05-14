@@ -14,3 +14,5 @@ export { RightDrawer } from './RightDrawer';
 export { StarRating } from './StarRating';
 export { NotificationsDrawer } from './NotificationsDrawer';
 export { PageHeader } from './PageHeader';
+export { AccountSwitcher } from './AccountSwitcher';
+export { CreateLinkedPatientModal } from './CreateLinkedPatientModal';
