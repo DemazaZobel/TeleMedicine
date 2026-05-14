@@ -378,7 +378,7 @@ export function AppointmentCard({
 
       {!isFinalized && (
         <View style={styles.cardActions}>
-          {["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
+          {!isDoctor && ["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
             <Button
               title="Cancel"
               variant="danger"
