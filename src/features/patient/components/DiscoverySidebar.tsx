@@ -16,6 +16,14 @@ const SPECIALIZATIONS = [
   'General', 'Cardiology', 'Pediatrics', 'Dentistry', 'Neurology', 'Orthopedics', 'Dermatology'
 ];
 
+const SORT_OPTIONS: Array<{ label: string; value: 'fee' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | null }> = [
+  { label: 'Highest Rated', value: 'rating_desc' },
+  { label: 'Lowest Rated', value: 'rating' },
+  { label: 'Lowest Fee', value: 'fee' },
+  { label: 'Highest Fee', value: 'fee_desc' },
+  { label: 'Nearest to Me', value: 'distance' },
+];
+
 interface DiscoverySidebarProps {
   isCollapsed?: boolean;
   onToggle?: () => void;
@@ -26,7 +34,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
   const styles = useMemo(() => createStyles(theme, isDark, isCollapsed), [theme, isDark, isCollapsed]);
   
   const { 
-    minFee, maxFee, minRating, location, hospital, availability, selectedSpecialization, specializations,
+    minFee, maxFee, minRating, location, hospital, availability, selectedSpecialization, specializations, sortBy,
     setAdvancedFilters, setSelectedSpecialization, clearFilters
   } = useDiscoveryStore();
 
@@ -42,6 +50,11 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
     return range?.label || 'Any Price';
   };
 
+  const getSortLabel = () => {
+    const sort = SORT_OPTIONS.find(s => s.value === sortBy);
+    return sort?.label || 'Recommended (Rating)';
+  };
+
   if (isCollapsed) {
     return (
       <View style={styles.collapsedContainer}>
@@ -49,6 +62,9 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
           <Ionicons name="chevron-back" size={20} color={theme.colors.primary} />
         </TouchableOpacity>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', gap: 24, paddingTop: 20 }}>
+          <TouchableOpacity onPress={() => { onToggle?.(); setExpandedSection('sort'); }}>
+            <Ionicons name="swap-vertical" size={22} color={sortBy ? theme.colors.primary : theme.colors.textSecondary} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => { onToggle?.(); setExpandedSection('spec'); }}>
             <Ionicons name="medkit-outline" size={22} color={selectedSpecialization ? theme.colors.primary : theme.colors.textSecondary} />
           </TouchableOpacity>
@@ -84,6 +100,50 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Sort By Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sort By</Text>
+          <TouchableOpacity 
+            style={styles.dropdownTrigger} 
+            onPress={() => toggleSection('sort')}
+          >
+            <Text style={[styles.dropdownValue, !sortBy && { color: theme.colors.textTertiary }]}>
+              {getSortLabel()}
+            </Text>
+            <Ionicons 
+              name={expandedSection === 'sort' ? "chevron-up" : "chevron-down"} 
+              size={16} 
+              color={theme.colors.textSecondary} 
+            />
+          </TouchableOpacity>
+
+          {expandedSection === 'sort' && (
+            <View style={styles.dropdownContent}>
+              <TouchableOpacity 
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setAdvancedFilters({ sortBy: null });
+                  setExpandedSection(null);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>Recommended (Rating)</Text>
+              </TouchableOpacity>
+              {SORT_OPTIONS.map((sort) => (
+                <TouchableOpacity 
+                  key={sort.value}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setAdvancedFilters({ sortBy: sort.value });
+                    setExpandedSection(null);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>{sort.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
         {/* Specialization Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Specialization</Text>

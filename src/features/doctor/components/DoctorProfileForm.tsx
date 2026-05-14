@@ -25,6 +25,8 @@ export function DoctorProfileForm() {
   const [specialization, setSpecialization] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [consultationFee, setConsultationFee] = useState('');
+  const [youtubeLink, setYoutubeLink] = useState('');
+  const [linkedinLink, setLinkedinLink] = useState('');
   const [saved, setSaved] = useState(false);
 
   // Populate form when profile loads
@@ -41,6 +43,8 @@ export function DoctorProfileForm() {
       setConsultationFee(
         profile.consultation_fee ? String(profile.consultation_fee) : ''
       );
+      setYoutubeLink(profile.youtube_link ?? '');
+      setLinkedinLink(profile.linkedin_link ?? '');
     }
   }, [profile]);
 
@@ -50,6 +54,8 @@ export function DoctorProfileForm() {
       specialization: specialization.trim(),
       years_of_experience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
       consultation_fee: consultationFee ? Number(consultationFee) : undefined,
+      youtube_link: youtubeLink.trim() || undefined,
+      linkedin_link: linkedinLink.trim() || undefined,
     };
     try {
       await updateProfile(payload);
@@ -57,7 +63,7 @@ export function DoctorProfileForm() {
     } catch {
       // Error is set in the store
     }
-  }, [specialization, yearsOfExperience, consultationFee, updateProfile]);
+  }, [specialization, yearsOfExperience, consultationFee, youtubeLink, linkedinLink, updateProfile]);
 
   return (
     <ScreenContainer scrollable>
@@ -134,6 +140,26 @@ export function DoctorProfileForm() {
               containerStyle={styles.halfField}
             />
           </View>
+
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Social Links</Text>
+
+          <Input
+            label="YouTube Channel"
+            placeholder="https://youtube.com/..."
+            value={youtubeLink}
+            onChangeText={(t) => { setYoutubeLink(t); clearError(); setSaved(false); }}
+            autoCapitalize="none"
+            keyboardType="url"
+          />
+
+          <Input
+            label="LinkedIn Profile"
+            placeholder="https://linkedin.com/in/..."
+            value={linkedinLink}
+            onChangeText={(t) => { setLinkedinLink(t); clearError(); setSaved(false); }}
+            autoCapitalize="none"
+            keyboardType="url"
+          />
         </Card>
 
         <Button

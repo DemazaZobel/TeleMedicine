@@ -24,6 +24,8 @@ export interface DoctorProfile {
   is_verified: boolean;
   average_rating: string;
   review_count: number;
+  youtube_link?: string;
+  linkedin_link?: string;
 }
 
 export interface DoctorProfileUpdate {
@@ -35,6 +37,8 @@ export interface DoctorProfileUpdate {
   experience?: string;
   education?: string;
   consultation_fee?: string | number;
+  youtube_link?: string;
+  linkedin_link?: string;
 }
 
 export interface DoctorDocument {
@@ -48,17 +52,22 @@ export interface DoctorDocument {
 
 // ─── Provider Search (Patient-side) ─────────────────────
 export interface ProviderSearchParams {
-  query?: string;
-  search?: string;
+  q?: string;
   specialization?: string;
+  location?: string;
+  current_working_hospital?: string;
   min_fee?: number;
   max_fee?: number;
   min_rating?: number;
-  location?: string;
+  sort_by?: 'fee' | 'fee_asc' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance';
+  lat?: number;
+  lng?: number;
+  // Legacy/Frontend fields that can map to backend fields
+  query?: string;
+  search?: string;
   hospital?: string;
   min_experience?: number;
   availability?: 'any' | 'today' | 'this-week';
-  sort_by?: 'fee' | 'fee_asc' | 'fee_desc' | 'rating' | 'rating_desc' | 'experience' | 'distance';
 }
 
 export interface ProviderSearchResult {
@@ -79,4 +88,6 @@ export interface ProviderSearchResult {
   education?: string;
   experience?: string;
   profile_image?: string;
+  youtube_link?: string;
+  linkedin_link?: string;
 }

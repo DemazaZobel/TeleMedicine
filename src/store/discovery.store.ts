@@ -20,6 +20,7 @@ interface DiscoveryState {
   location: string | null;
   hospital: string | null;
   availability: 'any' | 'today' | 'this-week';
+  sortBy: 'fee' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | null;
 
   // Actions
   setSearchQuery: (query: string) => void;
@@ -47,6 +48,7 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
   location: null,
   hospital: null,
   availability: 'any',
+  sortBy: null,
   specializations: [],
 
   setSearchQuery: (searchQuery) => {
@@ -73,7 +75,8 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       minRating: null,
       location: null,
       hospital: null,
-      availability: 'any'
+      availability: 'any',
+      sortBy: null
     });
     get().fetchDoctors();
   },
@@ -98,7 +101,8 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
         minRating, 
         location,
         hospital,
-        availability 
+        availability,
+        sortBy
       } = get();
 
       const params: ProviderSearchParams = {};
@@ -106,7 +110,7 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       
       if (trimmedQuery) {
         // General search parameter
-        params.search = trimmedQuery;
+        params.q = trimmedQuery;
         
         // Auto-detect specialization from search query
         const specializations = ['general', 'cardiology', 'pediatrics', 'dentistry', 'neurology', 'orthopedics', 'dermatology'];
@@ -118,11 +122,8 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
 
         // If it looks like a hospital search
         if (trimmedQuery.includes('hospital') || trimmedQuery.includes('clinic')) {
-          params.hospital = trimmedQuery;
+          params.current_working_hospital = trimmedQuery;
         }
-
-        // Broad query for backend matching
-        params.query = trimmedQuery;
       }
 
       // Explicit filters override auto-detection if set
@@ -131,8 +132,9 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
       if (maxFee !== null) params.max_fee = maxFee;
       if (minRating !== null) params.min_rating = minRating;
       if (location) params.location = location;
-      if (hospital) params.hospital = hospital;
+      if (hospital) params.current_working_hospital = hospital;
       if (availability !== 'any') params.availability = availability;
+      if (sortBy) params.sort_by = sortBy;
 
       console.log('[DiscoveryStore] Fetching with params:', params);
       const response = await doctorApi.searchProviders(params);
@@ -198,6 +200,7 @@ export const useDiscoveryStore = create<DiscoveryState>((set, get) => ({
     location: null,
     hospital: null,
     availability: 'any',
+    sortBy: null,
     isLoading: false,
     isLoadingMore: false,
     error: null,

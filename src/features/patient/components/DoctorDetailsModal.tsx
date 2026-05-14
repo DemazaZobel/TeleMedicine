@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Platform, ScrollView, Linking } from 'react-native';
 import { Button, ModalBase, StarRating } from '../../../components/ui';
 import { BookingModal } from '../../booking/components/BookingModal';
 import { Theme, useTheme } from '../../../theme';
@@ -55,6 +55,33 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
             )}
           </View>
           <Text style={styles.specialization}>{doctor.specialization}</Text>
+
+          {(doctor.youtube_link || doctor.linkedin_link) && (
+            <View style={styles.socialRow}>
+              {doctor.youtube_link && (
+                <Button
+                  title="YouTube"
+                  variant="outline"
+                  size="sm"
+                  icon={<Ionicons name="logo-youtube" size={16} color="#FF0000" style={{ marginRight: 6 }} />}
+                  onPress={() => Linking.openURL(doctor.youtube_link!)}
+                  style={[styles.socialBtn, { borderColor: '#FF0000' }]}
+                  textStyle={{ color: '#FF0000' }}
+                />
+              )}
+              {doctor.linkedin_link && (
+                <Button
+                  title="LinkedIn"
+                  variant="outline"
+                  size="sm"
+                  icon={<Ionicons name="logo-linkedin" size={16} color="#0077B5" style={{ marginRight: 6 }} />}
+                  onPress={() => Linking.openURL(doctor.linkedin_link!)}
+                  style={[styles.socialBtn, { borderColor: '#0077B5' }]}
+                  textStyle={{ color: '#0077B5' }}
+                />
+              )}
+            </View>
+          )}
         </View>
 
         <View style={styles.statsCard}>
@@ -166,6 +193,16 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontSize: 16,
       fontWeight: '600',
       color: theme.colors.primary,
+      marginBottom: 16,
+    },
+    socialRow: {
+      flexDirection: 'row',
+      gap: 12,
+      justifyContent: 'center',
+    },
+    socialBtn: {
+      backgroundColor: 'transparent',
+      borderRadius: 100,
     },
     statsCard: {
       flexDirection: 'row',
