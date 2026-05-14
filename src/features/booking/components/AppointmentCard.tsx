@@ -455,6 +455,7 @@ export function AppointmentCard({
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
+      flex: 1,
       backgroundColor: theme.colors.surface,
       borderRadius: 20,
       padding: 16,
@@ -522,6 +523,7 @@ const createStyles = (theme: Theme) =>
       fontWeight: '700',
     },
     cardContent: {
+      flex: 1,
       marginBottom: 20,
     },
     dateTimeContainer: {
