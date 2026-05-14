@@ -48,6 +48,7 @@ export function AppointmentCard({
 
   const start = new Date(appointment.scheduled_start);
   const end = new Date(appointment.scheduled_end);
+  const isPast = end < new Date();
 
   const dateStr = start.toLocaleDateString(undefined, {
     weekday: "short",
@@ -412,7 +413,7 @@ export function AppointmentCard({
             )
           )}
 
-          {isDoctor && appointment.status?.toUpperCase() === "CONFIRMED" && appointment.payment_status === "paid" && (
+          {isDoctor && appointment.status?.toUpperCase() === "CONFIRMED" && appointment.payment_status === "paid" && isPast && (
             <Button title="Complete" size="sm" onPress={handleComplete} loading={localLoading} style={styles.mainBtn} />
           )}
 
