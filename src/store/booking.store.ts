@@ -31,8 +31,9 @@ interface BookingState {
 interface BookingActions {
   fetchMyAppointments: () => Promise<void>;
   bookAppointment: (payload: AppointmentBookingPayload) => Promise<AppointmentDetail>;
-  cancelAppointment: (id: string | number, payload?: AppointmentCancelPayload) => Promise<void>;
+  cancelAppointment: (id: string | number, payload?: AppointmentCancelPayload) => Promise<{ message: string, late_cancellation: boolean }>;
   requestReschedule: (id: string | number, payload: AppointmentChangeRequestCreatePayload) => Promise<void>;
+  getJoinLink: (id: string | number) => Promise<string>;
   fetchAvailabilityRules: () => Promise<void>;
   fetchDoctorAvailability: (doctorId: string | number) => Promise<void>;
   createAvailabilityRule: (payload: ProviderAvailabilityRuleCreatePayload) => Promise<void>;
@@ -119,10 +120,26 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
         ),
         isLoading: false,
       }));
+      return { message: response.message, late_cancellation: response.late_cancellation };
     } catch (error: any) {
       set({
         isLoading: false,
         error: error.response?.data?.detail || error.message || 'Failed to cancel appointment.'
+      });
+      throw error;
+    }
+  },
+
+  getJoinLink: async (id: string | number) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await bookingService.getJoinLink(id);
+      set({ isLoading: false });
+      return response.meeting_link;
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || 'Failed to get join link.'
       });
       throw error;
     }

@@ -97,10 +97,18 @@ export function AppointmentCard({
   const displayName = isDoctor ? patientName : formattedDoctorName;
 
   const handleJoin = async () => {
-    if (appointment.meeting_link) {
-      await WebBrowser.openBrowserAsync(appointment.meeting_link);
-    } else {
-      Alert.alert("Not Available", "Meeting link is not available yet.");
+    try {
+      setLocalLoading(true);
+      const { getJoinLink } = useBookingStore.getState();
+      const link = await getJoinLink(appointment.id);
+      await WebBrowser.openBrowserAsync(link);
+    } catch (error: any) {
+      Alert.alert(
+        "Cannot Join Yet",
+        error.response?.data?.detail || error.message || "Consultation is not open yet."
+      );
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -266,9 +274,14 @@ export function AppointmentCard({
   const handleConfirmCancel = async (reason: string) => {
     try {
       setLocalLoading(true);
-      await cancelAppointment(appointment.id, { confirm: true });
+      const result = await cancelAppointment(appointment.id, { confirm: true });
       setCancelVisible(false);
-      Alert.alert("Success", "Appointment cancelled.");
+      
+      if (result.late_cancellation) {
+        Alert.alert("Late Cancellation", result.message);
+      } else {
+        Alert.alert("Success", result.message || "Appointment cancelled.");
+      }
     } catch (err: any) {
       Alert.alert(
         "Cancel Error",
@@ -401,7 +414,7 @@ export function AppointmentCard({
 
           {appointment.status?.toUpperCase() === "CONFIRMED" && (
             appointment.payment_status === "paid" ? (
-              <Button title="Join" size="sm" onPress={handleJoin} style={styles.mainBtn} />
+              <Button title="Join" size="sm" onPress={handleJoin} loading={localLoading} style={styles.mainBtn} />
             ) : (
               !isDoctor && (
                 appointment.payment_status === "charge_pending" ? (
