@@ -11,6 +11,7 @@ import { useTheme } from "../../theme";
 import { TAB_CONFIGS } from "../../types/navigation";
 import { AccountSwitcher } from "./AccountSwitcher";
 import { CreateLinkedPatientModal } from "./CreateLinkedPatientModal";
+import { LinkExistingAccountModal } from "./LinkExistingAccountModal";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -34,6 +35,7 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCreatePatientVisible, setIsCreatePatientVisible] = useState(false);
+  const [isLinkAccountVisible, setIsLinkAccountVisible] = useState(false);
 
   const visibleTabs = TAB_CONFIGS.filter((tab) => {
     let isVisible = tab.roles.includes(userRole);
@@ -177,7 +179,8 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
         <View className="mb-2">
           <AccountSwitcher 
             isCollapsed={isCollapsed} 
-            onCreatePatient={() => setIsCreatePatientVisible(true)} 
+            onCreatePatient={() => setIsCreatePatientVisible(true)}
+            onLinkExisting={() => setIsLinkAccountVisible(true)}
           />
         </View>
 
@@ -236,6 +239,11 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
       <CreateLinkedPatientModal
         visible={isCreatePatientVisible}
         onClose={() => setIsCreatePatientVisible(false)}
+      />
+      {/* Link Existing Account Modal */}
+      <LinkExistingAccountModal
+        visible={isLinkAccountVisible}
+        onClose={() => setIsLinkAccountVisible(false)}
       />
     </View>
   );

@@ -133,25 +133,56 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
   }
 
   // ─── Sidebar Variant ──────────────────────────────────────
-  if (!hasLinkedAccount) {
+  if (!hasLinkedAccount && isDoctor) {
+    if (isCollapsed) {
+      return (
+        <Pressable
+          onPress={onCreatePatient}
+          disabled={isSwitchingAccount}
+          style={({ hovered }) => [
+            styles.sidebarItem,
+            styles.sidebarCreateItem,
+            styles.sidebarItemCollapsed,
+            hovered && Platform.OS === 'web' && { backgroundColor: theme.colors.primary + '15' }
+          ]}
+        >
+          <Ionicons name="people-outline" size={20} color={theme.colors.primary} />
+        </Pressable>
+      );
+    }
+
     return (
-      <Pressable
-        onPress={onCreatePatient}
-        disabled={isSwitchingAccount}
-        style={({ hovered }) => [
-          styles.sidebarItem,
-          styles.sidebarCreateItem,
-          isCollapsed && styles.sidebarItemCollapsed,
-          hovered && Platform.OS === 'web' && { backgroundColor: theme.colors.primary + '15' }
-        ]}
-      >
-        <Ionicons name="add-circle" size={20} color={theme.colors.primary} />
-        {!isCollapsed && (
+      <View style={styles.sidebarDualContainer}>
+        <Pressable
+          onPress={onCreatePatient}
+          disabled={isSwitchingAccount}
+          style={({ hovered }) => [
+            styles.sidebarItem,
+            styles.sidebarCreateItem,
+            hovered && Platform.OS === 'web' && { backgroundColor: theme.colors.primary + '15' }
+          ]}
+        >
+          <Ionicons name="person-add-outline" size={18} color={theme.colors.primary} />
           <Text style={[styles.sidebarText, { color: theme.colors.primary, fontWeight: '600' }]}>
-            Create Patient Profile
+            Create Patient
           </Text>
-        )}
-      </Pressable>
+        </Pressable>
+
+        <Pressable
+          onPress={onLinkExisting}
+          disabled={isSwitchingAccount}
+          style={({ hovered }) => [
+            styles.sidebarItem,
+            styles.sidebarLinkItem,
+            hovered && Platform.OS === 'web' && { backgroundColor: '#13C2C2' + '15' }
+          ]}
+        >
+          <Ionicons name="link-outline" size={18} color="#13C2C2" />
+          <Text style={[styles.sidebarText, { color: '#13C2C2', fontWeight: '600' }]}>
+            Link Existing
+          </Text>
+        </Pressable>
+      </View>
     );
   }
 
@@ -206,6 +237,15 @@ const createStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.colors.primary + '20',
       borderStyle: 'dashed',
+    },
+    sidebarLinkItem: {
+      backgroundColor: '#13C2C2' + '10',
+      borderWidth: 1,
+      borderColor: '#13C2C2' + '20',
+      borderStyle: 'dashed',
+    },
+    sidebarDualContainer: {
+      gap: 4,
     },
 
     // ─── Profile: Switch ─────────────────────────────────
