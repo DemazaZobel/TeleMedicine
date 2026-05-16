@@ -392,25 +392,32 @@ export function AppointmentCard({
 
       {!isFinalized && (
         <View style={styles.cardActions}>
-          {!isDoctor && ["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
-            <Button
-              title="Cancel"
-              variant="danger"
-              size="sm"
-              onPress={() => setCancelVisible(true)}
-              style={styles.actionBtn}
-            />
-          )}
+          {!isDoctor &&
+            ["REQUESTED", "CONFIRMED"].includes(
+              appointment.status?.toUpperCase() || "",
+            ) &&
+            !isPast && (
+              <Button
+                title="Cancel"
+                variant="danger"
+                size="sm"
+                onPress={() => setCancelVisible(true)}
+                style={styles.actionBtn}
+              />
+            )}
 
-          {["REQUESTED", "CONFIRMED"].includes(appointment.status?.toUpperCase() || "") && (
-            <Button
-              title="Reschedule"
-              variant="outline"
-              size="sm"
-              onPress={() => setRescheduleVisible(true)}
-              style={styles.actionBtn}
-            />
-          )}
+          {["REQUESTED", "CONFIRMED"].includes(
+            appointment.status?.toUpperCase() || "",
+          ) &&
+            !isPast && (
+              <Button
+                title="Reschedule"
+                variant="outline"
+                size="sm"
+                onPress={() => setRescheduleVisible(true)}
+                style={styles.actionBtn}
+              />
+            )}
 
           {appointment.status?.toUpperCase() === "CONFIRMED" && (
             appointment.payment_status === "paid" ? (

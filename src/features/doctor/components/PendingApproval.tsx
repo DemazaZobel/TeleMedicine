@@ -1,13 +1,18 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Text, View, StyleSheet, Platform, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Button } from '../../../components/ui';
-import { useDoctorStore } from '../../../store/doctor.store';
-import { useAuthStore } from '../../../store/authStore';
-import { useTheme, Theme } from '../../../theme';
-import { DoctorProfileModal } from './DoctorProfileModal';
-import { DoctorDocumentsModal } from './DoctorDocumentsModal';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { Button } from "../../../components/ui";
+import { useAuthStore } from "../../../store/authStore";
+import { useDoctorStore } from "../../../store/doctor.store";
+import { Theme, useTheme } from "../../../theme";
+import { DoctorDocumentsModal } from "./DoctorDocumentsModal";
+import { DoctorProfileModal } from "./DoctorProfileModal";
 
 export function PendingApproval() {
   const { theme } = useTheme();
@@ -27,12 +32,13 @@ export function PendingApproval() {
 
   const content = useMemo(() => {
     switch (stage) {
-      case 'NEW_DOCTOR':
+      case "NEW_DOCTOR":
         return {
-          icon: 'person-circle-outline' as const,
+          icon: "person-circle-outline" as const,
           iconColor: theme.colors.primary,
-          title: 'Provider Onboarding',
-          subtitle: 'Welcome to MedLink. Please configure your professional profile to begin accepting patient appointments.',
+          title: "Provider Onboarding",
+          subtitle:
+            "Welcome to MedLink. Please configure your professional profile to begin accepting patient appointments.",
           actionComponent: (
             <Button
               title="Configure Profile"
@@ -42,14 +48,15 @@ export function PendingApproval() {
             />
           ),
         };
-      case 'PROFILE_FILLED':
+      case "PROFILE_FILLED":
         return {
-          icon: 'shield-checkmark-outline' as const,
-          iconColor: '#13C2C2',
-          title: 'Identity Verification',
-          subtitle: 'Your profile details are securely saved. For regulatory compliance, please upload your medical credentials.',
+          icon: "shield-checkmark-outline" as const,
+          iconColor: "#13C2C2",
+          title: "Identity Verification",
+          subtitle:
+            "Your profile details are securely saved. For regulatory compliance, please upload your medical credentials.",
           actionComponent: (
-            <View style={{ width: '100%', gap: 12 }}>
+            <View style={{ width: "100%", gap: 12 }}>
               <Button
                 title="Upload Secure Documents"
                 onPress={() => setDocsModalVisible(true)}
@@ -65,31 +72,40 @@ export function PendingApproval() {
             </View>
           ),
         };
-      case 'DOCUMENT_UPLOADED':
-      case 'PENDING_REVIEW':
+      case "DOCUMENT_UPLOADED":
+      case "PENDING_REVIEW":
       default:
         return {
-          icon: 'hourglass-outline' as const,
-          iconColor: '#FAAD14',
-          title: 'Verification Pending',
-          subtitle: 'Your credentials have been safely transmitted and are currently undergoing review. We will notify you once your account is active.',
+          icon: "hourglass-outline" as const,
+          iconColor: "#FAAD14",
+          title: "Verification Pending",
+          subtitle:
+            "Your credentials have been safely transmitted and are currently undergoing review. We will notify you once your account is active.",
           actionComponent: (
             <View style={styles.actionRow}>
               <TouchableOpacity
                 onPress={() => setDocsModalVisible(true)}
                 style={styles.secondaryActionBtn}
               >
-                <Ionicons name="documents-outline" size={18} color={theme.colors.primary} />
+                <Ionicons
+                  name="documents-outline"
+                  size={18}
+                  color={theme.colors.primary}
+                />
                 <Text style={styles.secondaryActionText}>Manage Docs</Text>
               </TouchableOpacity>
-              
+
               <View style={styles.verticalDivider} />
 
               <TouchableOpacity
                 onPress={() => setProfileModalVisible(true)}
                 style={styles.secondaryActionBtn}
               >
-                <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={theme.colors.primary}
+                />
                 <Text style={styles.secondaryActionText}>Review Profile</Text>
               </TouchableOpacity>
             </View>
@@ -106,33 +122,36 @@ export function PendingApproval() {
       </View>
 
       <View style={styles.card}>
-        <View style={[styles.iconWrapper, { backgroundColor: content.iconColor + '15' }]}>
+        <View
+          style={[
+            styles.iconWrapper,
+            { backgroundColor: content.iconColor + "15" },
+          ]}
+        >
           <Ionicons name={content.icon} size={48} color={content.iconColor} />
         </View>
-        
+
         <Text style={styles.title}>{content.title}</Text>
         <Text style={styles.subtitle}>{content.subtitle}</Text>
-        
-        <View style={styles.actions}>
-          {content.actionComponent}
-        </View>
+
+        <View style={styles.actions}>{content.actionComponent}</View>
 
         <Button
           title="Log Out Securely"
           variant="ghost"
           onPress={logout}
           style={styles.logoutBtn}
-          textStyle={{ color: theme.colors.textTertiary, fontWeight: '500' }}
+          textStyle={{ color: theme.colors.textTertiary, fontWeight: "500" }}
         />
       </View>
 
-      <DoctorProfileModal 
-        visible={isProfileModalVisible} 
-        onClose={() => setProfileModalVisible(false)} 
+      <DoctorProfileModal
+        visible={isProfileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
       />
-      <DoctorDocumentsModal 
-        visible={isDocsModalVisible} 
-        onClose={() => setDocsModalVisible(false)} 
+      <DoctorDocumentsModal
+        visible={isDocsModalVisible}
+        onClose={() => setDocsModalVisible(false)}
       />
     </View>
   );
@@ -143,105 +162,105 @@ const createStyles = (theme: Theme) =>
     outerContainer: {
       flex: 1,
       backgroundColor: theme.colors.background,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       padding: theme.spacing.xl,
     },
     logoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginBottom: 32,
       gap: 8,
     },
     logoText: {
       fontSize: 24,
-      fontWeight: '800',
+      fontWeight: "800",
       color: theme.colors.text,
       letterSpacing: -0.5,
     },
     card: {
-      width: '100%',
+      width: "100%",
       maxWidth: 440,
       backgroundColor: theme.colors.surface,
       borderRadius: 28,
       padding: 32,
-      alignItems: 'center',
+      alignItems: "center",
       borderWidth: 1,
-      borderColor: theme.colors.border + '50',
+      borderColor: theme.colors.border + "50",
       ...Platform.select({
         web: {
-          boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
+          boxShadow: "0 20px 40px rgba(0,0,0,0.06)",
         },
         default: {
           elevation: 8,
-          shadowColor: '#000',
+          shadowColor: "#000",
           shadowOffset: { width: 0, height: 12 },
           shadowOpacity: 0.06,
           shadowRadius: 24,
-        }
-      })
+        },
+      }),
     },
     iconWrapper: {
       width: 88,
       height: 88,
       borderRadius: 44,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       marginBottom: 24,
     },
     title: {
       fontSize: 22,
       color: theme.colors.text,
-      textAlign: 'center',
+      textAlign: "center",
       marginBottom: 12,
-      fontWeight: '700',
+      fontWeight: "700",
       letterSpacing: -0.5,
     },
     subtitle: {
       fontSize: 15,
       color: theme.colors.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: 22,
       marginBottom: 24,
       paddingHorizontal: 8,
     },
     divider: {
-      width: '100%',
+      width: "100%",
       height: 1,
       backgroundColor: theme.colors.border,
       opacity: 0.5,
       marginBottom: 24,
     },
     actions: {
-      width: '100%',
+      width: "100%",
       marginBottom: 32,
     },
     actionRow: {
-      flexDirection: 'row',
+      flexDirection: "row",
       backgroundColor: theme.colors.background,
       borderRadius: 16,
       padding: 4,
       borderWidth: 1,
-      borderColor: theme.colors.border + '50',
+      borderColor: theme.colors.border + "50",
     },
     secondaryActionBtn: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       paddingVertical: 12,
       gap: 8,
     },
     secondaryActionText: {
       ...theme.typography.bodySm,
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     verticalDivider: {
       width: 1,
-      height: '60%',
+      height: "60%",
       backgroundColor: theme.colors.border,
-      alignSelf: 'center',
+      alignSelf: "center",
       opacity: 0.5,
     },
     primaryActionBtn: {
@@ -256,5 +275,5 @@ const createStyles = (theme: Theme) =>
     },
     logoutBtn: {
       marginTop: 0,
-    }
+    },
   });
