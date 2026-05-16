@@ -184,7 +184,14 @@ export function BookingModal({
         )}
 
         {/* DATE STRIP */}
-        <Text style={styles.label}>1. Select Date</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.label}>1. Select Date</Text>
+          {selectedDate && (
+            <Text style={styles.monthHeader}>
+              {new Date(selectedDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+            </Text>
+          )}
+        </View>
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false} 
@@ -205,11 +212,14 @@ export function BookingModal({
                   setSelectedSlotIndex(null);
                 }}
               >
-                <Text style={[styles.dateWeekday, isActive && styles.activeText]}>
-                  {date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}
+                <Text style={[styles.dateMonth, isActive && styles.activeText]}>
+                  {date.toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}
                 </Text>
                 <Text style={[styles.dateDay, isActive && styles.activeText]}>
                   {date.getDate()}
+                </Text>
+                <Text style={[styles.dateWeekday, isActive && styles.activeText]}>
+                  {date.toLocaleDateString(undefined, { weekday: 'short' })}
                 </Text>
                 {isToday && <View style={[styles.todayDot, isActive && { backgroundColor: '#FFF' }]} />}
               </TouchableOpacity>
@@ -311,13 +321,23 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.warning,
       flex: 1,
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      marginBottom: 12,
+    },
+    monthHeader: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.colors.primary,
+    },
     label: {
       fontSize: 12,
       fontWeight: '800',
       color: theme.colors.textTertiary,
       textTransform: 'uppercase',
       letterSpacing: 1,
-      marginBottom: 12,
     },
     dateStrip: {
       marginBottom: 24,
@@ -326,8 +346,8 @@ const createStyles = (theme: Theme) =>
       paddingRight: 20,
     },
     dateCard: {
-      width: 60,
-      height: 80,
+      width: 70,
+      height: 90,
       backgroundColor: theme.colors.background,
       borderRadius: 16,
       justifyContent: 'center',
@@ -335,20 +355,27 @@ const createStyles = (theme: Theme) =>
       marginRight: 10,
       borderWidth: 1,
       borderColor: theme.colors.border,
+      paddingVertical: 8,
     },
     dateCardActive: {
       backgroundColor: theme.colors.primary,
       borderColor: theme.colors.primary,
       ...theme.shadows.md,
     },
-    dateWeekday: {
+    dateMonth: {
       fontSize: 10,
       fontWeight: '800',
       color: theme.colors.textTertiary,
-      marginBottom: 4,
+      marginBottom: 2,
+    },
+    dateWeekday: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.colors.textTertiary,
+      marginTop: 2,
     },
     dateDay: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: '800',
       color: theme.colors.text,
     },
