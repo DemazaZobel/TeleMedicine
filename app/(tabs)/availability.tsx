@@ -10,10 +10,10 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
+  Platform,
 } from "react-native";
 import {
   Button,
-  Card,
   EmptyState,
   ScreenContainer,
 } from "../../src/components/ui";
@@ -31,8 +31,6 @@ const DAYS = [
   "Saturday",
 ];
 
-const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 export default function AvailabilityScreen() {
   const router = useRouter();
   const { theme } = useTheme();
@@ -46,174 +44,134 @@ export default function AvailabilityScreen() {
   } = useBookingStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [activeDayFilter, setActiveDayFilter] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAvailabilityRules();
   }, []);
 
-  const sortedRules = useMemo(() => {
-    let rules = [...availabilityRules].sort((a, b) => {
-      if (a.weekday !== b.weekday) return a.weekday - b.weekday;
-      return a.start_time.localeCompare(b.start_time);
-    });
+  // Group rules by day for a more professional "Schedule" view
+  const groupedRules = useMemo(() => {
+    const groups: Record<number, any[]> = {};
     
-    if (activeDayFilter !== null) {
-      rules = rules.filter(r => r.weekday === activeDayFilter);
-    }
-    return rules;
-  }, [availabilityRules, activeDayFilter]);
+    // Initialize all days
+    for (let i = 0; i < 7; i++) groups[i] = [];
 
-  const coverageByDay = useMemo(() => {
-    const coverage: Record<number, boolean> = {};
-    availabilityRules.forEach(r => {
-      coverage[r.weekday] = true;
+    availabilityRules.forEach(rule => {
+      // If it's a specific date, we'll handle it separately or group it by its weekday
+      const day = rule.specific_date ? new Date(rule.specific_date).getDay() : rule.weekday;
+      groups[day].push(rule);
     });
-    return coverage;
+
+    // Sort rules within each day
+    Object.keys(groups).forEach(key => {
+      groups[Number(key)].sort((a, b) => a.start_time.localeCompare(b.start_time));
+    });
+
+    return groups;
   }, [availabilityRules]);
 
   const handleDelete = (id: string | number) => {
+    if (Platform.OS === 'web') {
+        if (confirm("Remove these hours? Patients won't be able to book this slot anymore.")) {
+            deleteAvailabilityRule(id);
+        }
+        return;
+    }
     Alert.alert(
       "Remove Hours",
       "Patients won't be able to book this specific slot anymore. Continue?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: () => deleteAvailabilityRule(id)
-        },
+        { text: "Delete", style: "destructive", onPress: () => deleteAvailabilityRule(id) },
       ]
     );
   };
 
-  const renderRule = ({ item }: { item: any }) => {
-    const isSpecific = !!item.specific_date;
-    const dateLabel = isSpecific 
-      ? new Date(item.specific_date).toLocaleDateString(undefined, { dateStyle: 'medium' })
-      : DAYS[item.weekday];
+  const renderDayGroup = (dayIndex: number) => {
+    const rules = groupedRules[dayIndex];
+    if (rules.length === 0) return null;
 
     return (
-      <View style={styles.ruleCard}>
-        <View style={styles.ruleMain}>
-          <View style={styles.dayIndicator}>
-             <Text style={styles.dayText}>{dateLabel}</Text>
-             <View style={[styles.recurringBadge, isSpecific && styles.specificBadge]}>
-               <Ionicons 
-                name={isSpecific ? "calendar-outline" : "repeat"} 
-                size={10} 
-                color={isSpecific ? theme.colors.primary : theme.colors.success} 
-              />
-               <Text style={[styles.recurringText, isSpecific && styles.specificText]}>
-                 {isSpecific ? "One-time" : "Weekly"}
-               </Text>
-             </View>
-          </View>
-          <View style={styles.timeSection}>
-            <Ionicons name="time-outline" size={16} color={theme.colors.textTertiary} />
-            <Text style={styles.timeText}>
-              {item.start_time.slice(0, 5)} — {item.end_time.slice(0, 5)}
-            </Text>
-          </View>
+      <View key={dayIndex} style={styles.dayGroup}>
+        <View style={styles.dayHeader}>
+            <Text style={styles.dayName}>{DAYS[dayIndex]}</Text>
+            <View style={styles.dayDot} />
         </View>
-        <TouchableOpacity 
-          onPress={() => handleDelete(item.id)}
-          style={styles.deleteBtn}
-        >
-          <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-        </TouchableOpacity>
+        <View style={styles.slotsContainer}>
+            {rules.map((rule) => {
+                const isSpecific = !!rule.specific_date;
+                return (
+                    <View key={rule.id} style={styles.slotRow}>
+                        <View style={styles.slotMain}>
+                            <View style={styles.timeBlock}>
+                                <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
+                                <Text style={styles.timeRange}>
+                                    {rule.start_time.slice(0, 5)} — {rule.end_time.slice(0, 5)}
+                                </Text>
+                            </View>
+                            {isSpecific && (
+                                <View style={styles.specificBadge}>
+                                    <Text style={styles.specificText}>
+                                        {new Date(rule.specific_date!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                        <TouchableOpacity 
+                            onPress={() => handleDelete(rule.id)}
+                            style={styles.deleteAction}
+                        >
+                            <Ionicons name="close-circle-outline" size={20} color={theme.colors.textTertiary} />
+                        </TouchableOpacity>
+                    </View>
+                );
+            })}
+        </View>
       </View>
     );
   };
 
   return (
-    <ScreenContainer padded={false} style={{ backgroundColor: theme.colors.background }}>
-      <View style={styles.header}>
-        <View style={styles.headerInfo}>
-          <Text style={styles.title}>My Schedule</Text>
-          <Text style={styles.subtitle}>Manage your recurring availability</Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.addIconBtn}
-          onPress={() => setShowAddModal(true)}
-        >
-          <Ionicons name="add" size={28} color={theme.colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* WEEKLY VISUALIZER */}
-      <View style={styles.visualizerContainer}>
-        <Text style={styles.sectionLabel}>Weekly Overview</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.daysScroll}>
-          {SHORT_DAYS.map((day, index) => {
-            const hasCoverage = coverageByDay[index];
-            const isActive = activeDayFilter === index;
-            return (
-              <TouchableOpacity 
-                key={day} 
-                style={[
-                  styles.visualDay, 
-                  hasCoverage && styles.visualDayHasCoverage,
-                  isActive && styles.visualDayActive
-                ]}
-                onPress={() => setActiveDayFilter(isActive ? null : index)}
-              >
-                <Text style={[
-                  styles.visualDayText, 
-                  hasCoverage && styles.visualDayTextHasCoverage,
-                  isActive && styles.activeText
-                ]}>
-                  {day}
-                </Text>
-                {hasCoverage && !isActive && <View style={styles.coverageDot} />}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.listHeader}>
-          <Text style={styles.sectionLabel}>
-            {activeDayFilter !== null ? `${DAYS[activeDayFilter]} Slots` : 'All Working Hours'}
-          </Text>
-          {activeDayFilter !== null && (
-            <TouchableOpacity onPress={() => setActiveDayFilter(null)}>
-              <Text style={styles.clearFilter}>Clear Filter</Text>
-            </TouchableOpacity>
-          )}
+    <ScreenContainer padded={false} style={styles.screen}>
+      <View style={styles.contentWrapper}>
+        <View style={styles.header}>
+            <View>
+                <Text style={styles.title}>Working Hours</Text>
+                <Text style={styles.subtitle}>Set your weekly recurring and one-time availability.</Text>
+            </View>
+            <Button
+                title="Add Hours"
+                variant="primary"
+                onPress={() => setShowAddModal(true)}
+                icon={<Ionicons name="add" size={18} color="#FFF" />}
+                style={styles.headerAddBtn}
+            />
         </View>
 
         {isLoading && availabilityRules.length === 0 ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color={theme.colors.primary} />
           </View>
-        ) : (
-          <FlatList
-            data={sortedRules}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderRule}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={
-              <EmptyState
-                icon="calendar-outline"
-                title={activeDayFilter !== null ? "No slots for this day" : "No Schedule Set"}
-                description={activeDayFilter !== null 
-                  ? `You haven't set any working hours for ${DAYS[activeDayFilter]} yet.`
-                  : "Set your weekly working hours so patients can start booking appointments."}
-              />
-            }
+        ) : availabilityRules.length === 0 ? (
+          <EmptyState
+            icon="calendar-outline"
+            title="Your schedule is empty"
+            description="Add your first working hour block to start accepting appointments."
+            action={{
+              label: "Add Hours",
+              onPress: () => setShowAddModal(true)
+            }}
           />
+        ) : (
+          <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={styles.grid}>
+                {[1, 2, 3, 4, 5, 6, 0].map(dayIndex => renderDayGroup(dayIndex))}
+            </View>
+          </ScrollView>
         )}
-      </View>
-
-      <View style={styles.fabContainer}>
-         <Button
-            title="Add Working Hours"
-            onPress={() => setShowAddModal(true)}
-            style={styles.fab}
-            icon={<Ionicons name="add" size={20} color="#FFF" />}
-         />
       </View>
 
       <AddAvailabilityModal
@@ -228,189 +186,121 @@ export default function AvailabilityScreen() {
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: theme.spacing.lg,
-      paddingTop: 40,
-      paddingBottom: 20,
-      backgroundColor: theme.colors.surface,
-    },
-    headerInfo: {
-      flex: 1,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: '800',
-      color: theme.colors.text,
-    },
-    subtitle: {
-      fontSize: 13,
-      color: theme.colors.textSecondary,
-      marginTop: 2,
-    },
-    addIconBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.colors.primary + '10',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    visualizerContainer: {
-      paddingVertical: 20,
-      backgroundColor: theme.colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    sectionLabel: {
-      fontSize: 12,
-      fontWeight: '800',
-      color: theme.colors.textTertiary,
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      paddingHorizontal: theme.spacing.xl,
-      marginBottom: 12,
-    },
-    daysScroll: {
-      paddingHorizontal: theme.spacing.xl,
-      gap: 12,
-    },
-    visualDay: {
-      width: 50,
-      height: 60,
-      borderRadius: 16,
+    screen: {
       backgroundColor: theme.colors.background,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    visualDayHasCoverage: {
-      borderColor: theme.colors.primary + '40',
-      backgroundColor: theme.colors.primary + '05',
-    },
-    visualDayActive: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
-      ...theme.shadows.md,
-    },
-    visualDayText: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: theme.colors.textTertiary,
-    },
-    visualDayTextHasCoverage: {
-      color: theme.colors.primary,
-    },
-    activeText: {
-      color: '#FFF',
-    },
-    coverageDot: {
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: theme.colors.primary,
-      marginTop: 4,
-    },
-    content: {
       flex: 1,
     },
-    listHeader: {
+    contentWrapper: {
+      flex: 1,
+      maxWidth: 900,
+      width: '100%',
+      alignSelf: 'center',
+      paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
+      paddingTop: Platform.OS === 'web' ? 60 : 40,
+    },
+    header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingTop: 24,
-      paddingBottom: 8,
+      alignItems: 'flex-end',
+      marginBottom: 48,
     },
-    clearFilter: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: theme.colors.primary,
-      paddingHorizontal: theme.spacing.xl,
-    },
-    listContainer: {
-      padding: theme.spacing.xl,
-      paddingBottom: 100,
-    },
-    ruleCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.surface,
-      padding: 16,
-      borderRadius: 20,
-      marginBottom: 16,
-      ...theme.shadows.sm,
-      borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.03)',
-    },
-    ruleMain: {
-      flex: 1,
-    },
-    dayIndicator: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 6,
-    },
-    dayText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.colors.text,
-    },
-    recurringBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      backgroundColor: theme.colors.success + '10',
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 6,
-    },
-    recurringText: {
-      fontSize: 10,
+    title: {
+      fontSize: 32,
       fontWeight: '800',
-      color: theme.colors.success,
+      color: theme.colors.text,
+      letterSpacing: -1,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: theme.colors.textSecondary,
+      marginTop: 6,
+    },
+    headerAddBtn: {
+        height: 44,
+        borderRadius: 12,
+        paddingHorizontal: 20,
+        ...theme.shadows.sm,
+    },
+    scrollContent: {
+        paddingBottom: 100,
+    },
+    grid: {
+        gap: 24,
+    },
+    dayGroup: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: 24,
+        padding: 24,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        ...theme.shadows.sm,
+    },
+    dayHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 20,
+    },
+    dayName: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: theme.colors.text,
+    },
+    dayDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: theme.colors.primary,
+        opacity: 0.3,
+    },
+    slotsContainer: {
+        gap: 12,
+    },
+    slotRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+        padding: 14,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: theme.colors.border + '40',
+    },
+    slotMain: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    timeBlock: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    timeRange: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: theme.colors.text,
     },
     specificBadge: {
-      backgroundColor: theme.colors.primary + '10',
+        backgroundColor: theme.colors.primary + '10',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
     },
     specificText: {
-      color: theme.colors.primary,
+        fontSize: 11,
+        fontWeight: '800',
+        color: theme.colors.primary,
+        textTransform: 'uppercase',
     },
-    timeSection: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
+    deleteAction: {
+        padding: 6,
+        opacity: 0.5,
     },
-    timeText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.colors.textSecondary,
-    },
-    deleteBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: theme.colors.error + '08',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    center: {
+    loadingContainer: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       paddingTop: 100,
     },
-    fabContainer: {
-      position: 'absolute',
-      bottom: 30,
-      left: 20,
-      right: 20,
-    },
-    fab: {
-      height: 56,
-      borderRadius: 28,
-      ...theme.shadows.md,
-    }
   });
