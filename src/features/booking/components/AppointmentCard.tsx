@@ -78,6 +78,7 @@ export function AppointmentCard({
       COMPLETED: { label: "Completed", color: theme.colors.primary },
       CANCELLED: { label: "Cancelled", color: theme.colors.error },
       NO_SHOW: { label: "No Show", color: theme.colors.error },
+      EXPIRED: { label: "Expired", color: theme.colors.textTertiary },
     };
     return map[status] || { label: status, color: theme.colors.textSecondary };
   };
@@ -311,7 +312,8 @@ export function AppointmentCard({
   const isCancelled = appointment.status?.toUpperCase() === "CANCELLED";
   const isCompleted = appointment.status?.toUpperCase() === "COMPLETED";
   const isNoShow = appointment.status?.toUpperCase() === "NO_SHOW";
-  const isFinalized = isCancelled || isCompleted || isNoShow;
+  const isExpired = appointment.status?.toUpperCase() === "EXPIRED";
+  const isFinalized = isCancelled || isCompleted || isNoShow || isExpired;
 
   return (
     <View style={[styles.card, isCancelled && { opacity: 0.7 }]}>

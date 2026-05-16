@@ -6,7 +6,9 @@ export type AppointmentStatus =
   | "REQUESTED"
   | "CONFIRMED"
   | "CANCELLED"
-  | "COMPLETED";
+  | "COMPLETED"
+  | "EXPIRED"
+  | "NO_SHOW";
 
 export type ChangeRequestStatus =
   | "PENDING"

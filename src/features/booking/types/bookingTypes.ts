@@ -1,6 +1,6 @@
 import type { User, DoctorProfile } from '../../../types/models';
 
-export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'EXPIRED';
 export type AppointmentMode = 'ONLINE' | 'IN_PERSON';
 
 // Simplified nested objects from backend
