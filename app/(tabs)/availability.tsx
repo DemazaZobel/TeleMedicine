@@ -115,7 +115,8 @@ export default function AvailabilityScreen() {
   const getItemsForDate = (day: number, month: number, year: number): CalendarItem[] => {
     const targetDate = new Date(year, month, day);
     const targetWeekday = targetDate.getDay();
-    const dateISO = targetDate.toISOString().split('T')[0];
+    // Use local date string for comparison to avoid timezone shifts
+    const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     let filteredRules = availabilityRules.filter(rule => {
       if (rule.specific_date) {
@@ -143,14 +144,23 @@ export default function AvailabilityScreen() {
   };
 
   const appointmentsToday = useMemo(() => {
-    const todayISO = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     return appointments.filter(app => app.scheduled_start.startsWith(todayISO) && app.status !== 'CANCELLED').length;
   }, [appointments]);
 
   const listItems = useMemo(() => {
-    // For List view, we show items for the CURRENTLY SELECTED day
     return getItemsForDate(currentDate.getDate(), currentDate.getMonth(), currentDate.getFullYear());
   }, [currentDate, availabilityRules, appointments, filterType, showBooked]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return theme.colors.success;
+      case 'CANCELLED': return theme.colors.error;
+      case 'CONFIRMED': return theme.colors.primary;
+      default: return theme.colors.warning;
+    }
+  };
 
   const renderListView = () => (
     <View style={styles.listViewContainer}>
@@ -170,42 +180,57 @@ export default function AvailabilityScreen() {
             />
         ) : (
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listScroll}>
-                {listItems.map((entry, idx) => (
-                    <View key={idx} style={styles.listItem}>
-                        <View style={[
-                            styles.listItemType, 
-                            { backgroundColor: entry.type === 'appointment' ? theme.colors.warning + '15' : theme.colors.primary + '15' }
-                        ]}>
-                            <Ionicons 
-                                name={entry.type === 'appointment' ? "person" : "time-outline"} 
-                                size={20} 
-                                color={entry.type === 'appointment' ? theme.colors.warning : theme.colors.primary} 
-                            />
-                        </View>
-                        <View style={styles.listItemContent}>
-                            <Text style={styles.listItemTitle}>
-                                {entry.type === 'appointment' 
-                                    ? `${entry.patient_first_name} ${entry.patient_last_name || ''}` 
-                                    : entry.specific_date ? 'One-time Availability' : 'Weekly Availability'}
-                            </Text>
-                            <Text style={styles.listItemSubtitle}>
-                                {entry.type === 'appointment' 
-                                    ? entry.scheduled_start.split('T')[1].slice(0, 5) + ' - ' + entry.scheduled_end?.split('T')[1].slice(0, 5)
-                                    : entry.start_time.slice(0, 5) + ' - ' + entry.end_time.slice(0, 5)}
-                            </Text>
-                        </View>
-                        {entry.type === 'rule' && (
-                            <View style={styles.listItemActions}>
-                                <TouchableOpacity onPress={() => handleEdit(entry)} style={styles.listActionBtn}>
-                                    <Ionicons name="create-outline" size={18} color={theme.colors.primary} />
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDelete(entry.id)} style={styles.listActionBtn}>
-                                    <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-                                </TouchableOpacity>
+                {listItems.map((entry, idx) => {
+                    const isApp = entry.type === 'appointment';
+                    const name = isApp ? (entry.patient_first_name ? `${entry.patient_first_name} ${entry.patient_last_name || ''}` : 'Patient') : '';
+                    
+                    return (
+                        <View key={idx} style={styles.listItem}>
+                            <View style={[
+                                styles.listItemType, 
+                                { backgroundColor: isApp ? getStatusColor(entry.status) + '15' : theme.colors.primary + '15' }
+                            ]}>
+                                <Ionicons 
+                                    name={isApp ? "person" : "time-outline"} 
+                                    size={20} 
+                                    color={isApp ? getStatusColor(entry.status) : theme.colors.primary} 
+                                />
                             </View>
-                        )}
-                    </View>
-                ))}
+                            <View style={styles.listItemContent}>
+                                <View style={styles.listTitleRow}>
+                                    <Text style={styles.listItemTitle}>
+                                        {isApp ? name : entry.specific_date ? 'One-time Availability' : 'Weekly Availability'}
+                                    </Text>
+                                    {isApp && (
+                                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(entry.status) + '20' }]}>
+                                            <Text style={[styles.statusText, { color: getStatusColor(entry.status) }]}>{entry.status}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                                {isApp && entry.reason && (
+                                    <Text style={styles.listDiagnosis} numberOfLines={1}>
+                                        {entry.reason}
+                                    </Text>
+                                )}
+                                <Text style={styles.listItemSubtitle}>
+                                    {isApp 
+                                        ? entry.scheduled_start.split('T')[1].slice(0, 5) + ' - ' + (entry.scheduled_end?.split('T')[1]?.slice(0, 5) || '...')
+                                        : entry.start_time.slice(0, 5) + ' - ' + entry.end_time.slice(0, 5)}
+                                </Text>
+                            </View>
+                            {entry.type === 'rule' && (
+                                <View style={styles.listItemActions}>
+                                    <TouchableOpacity onPress={() => handleEdit(entry)} style={styles.listActionBtn}>
+                                        <Ionicons name="create-outline" size={18} color={theme.colors.primary} />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => handleDelete(entry.id)} style={styles.listActionBtn}>
+                                        <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+                    );
+                })}
             </ScrollView>
         )}
     </View>
@@ -251,29 +276,43 @@ export default function AvailabilityScreen() {
                 <TouchableOpacity onPress={() => navigateMonth(-1)} style={styles.navArrow}>
                     <Ionicons name="chevron-back" size={16} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
-                <TouchableOpacity 
-                    onPress={() => {
-                        if (Platform.OS === 'web') {
-                            dateInputRef.current?.showPicker?.() || dateInputRef.current?.click();
-                        } else {
-                            setShowDatePicker(true);
-                        }
-                    }} 
-                    style={styles.dateDisplay}
-                >
-                    <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
-                    <Text style={styles.dateDisplayText}>
-                        {currentDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </Text>
-                    {Platform.OS === 'web' && (
+                
+                {/* IMPROVED WEB DATE PICKER: Overlay for better user gesture support */}
+                <View style={styles.dateDisplayWrapper}>
+                    <View style={styles.dateDisplay}>
+                        <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
+                        <Text style={styles.dateDisplayText}>
+                            {currentDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </Text>
+                    </View>
+                    {Platform.OS === 'web' ? (
                         <input
-                            ref={dateInputRef}
                             type="date"
-                            style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-                            onChange={(e) => e.target.value && setCurrentDate(new Date(e.target.value))}
+                            style={{ 
+                                position: 'absolute', 
+                                opacity: 0, 
+                                width: '100%', 
+                                height: '100%', 
+                                top: 0, 
+                                left: 0,
+                                cursor: 'pointer' 
+                            }}
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    // Handle timezone correctly for date only string
+                                    const parts = e.target.value.split('-');
+                                    setCurrentDate(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
+                                }
+                            }}
+                        />
+                    ) : (
+                        <TouchableOpacity 
+                            onPress={() => setShowDatePicker(true)} 
+                            style={StyleSheet.absoluteFill}
                         />
                     )}
-                </TouchableOpacity>
+                </View>
+
                 <TouchableOpacity onPress={() => navigateMonth(1)} style={styles.navArrow}>
                     <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
@@ -372,9 +411,10 @@ export default function AvailabilityScreen() {
                                 );
                             } else {
                                 return (
-                                <View key={`app-${entry.id}`} style={styles.appointmentPill}>
-                                    <Ionicons name="person" size={8} color={theme.colors.warning} />
-                                    <View style={styles.dot} />
+                                <View key={`app-${entry.id}`} style={[styles.appointmentPill, { borderLeftColor: getStatusColor(entry.status) }]}>
+                                    <Text style={[styles.appointmentText, { color: getStatusColor(entry.status) }]} numberOfLines={1}>
+                                        {entry.patient_first_name || 'Patient'}
+                                    </Text>
                                 </View>
                                 );
                             }
@@ -471,6 +511,11 @@ const createStyles = (theme: Theme, width: number) =>
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
+    dateDisplayWrapper: {
+        position: 'relative',
+        borderRadius: 10,
+        overflow: 'hidden',
+    },
     dateDisplay: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -480,7 +525,6 @@ const createStyles = (theme: Theme, width: number) =>
         borderRadius: 10,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        position: 'relative',
     },
     dateDisplayText: {
         fontSize: 14,
@@ -653,18 +697,17 @@ const createStyles = (theme: Theme, width: number) =>
       color: '#6366F1',
     },
     appointmentPill: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: theme.colors.warning + '20',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: theme.colors.warning + '10',
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 4,
+        borderLeftWidth: 2,
+        borderLeftColor: theme.colors.warning,
     },
-    dot: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: theme.colors.warning,
+    appointmentText: {
+        fontSize: 8,
+        fontWeight: '800',
+        color: theme.colors.warning,
     },
     moreText: {
         fontSize: 8,
@@ -713,15 +756,36 @@ const createStyles = (theme: Theme, width: number) =>
         flex: 1,
         marginLeft: 16,
     },
+    listTitleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
     listItemTitle: {
         fontSize: 15,
         fontWeight: '700',
         color: theme.colors.text,
     },
-    listItemSubtitle: {
+    listDiagnosis: {
         fontSize: 13,
         color: theme.colors.textSecondary,
-        marginTop: 2,
+        fontStyle: 'italic',
+        marginBottom: 4,
+    },
+    listItemSubtitle: {
+        fontSize: 13,
+        color: theme.colors.textTertiary,
+        fontWeight: '600',
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    statusText: {
+        fontSize: 10,
+        fontWeight: '800',
     },
     listItemActions: {
         flexDirection: 'row',
