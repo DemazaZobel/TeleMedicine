@@ -17,6 +17,7 @@ interface EducationItem {
   degree: string;
   institution: string;
   year: string;
+  isEditing?: boolean;
 }
 
 interface ExperienceItem {
@@ -24,6 +25,7 @@ interface ExperienceItem {
   role: string;
   hospital: string;
   duration: string;
+  isEditing?: boolean;
 }
 
 export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps) {
@@ -54,29 +56,44 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   const [formError, setFormError] = useState('');
 
   const handleAddEducation = () => {
-    setEducationList([...educationList, { id: Date.now().toString(), degree: '', institution: '', year: '' }]);
+    setEducationList([...educationList, { id: Date.now().toString(), degree: '', institution: '', year: '', isEditing: true }]);
   };
 
   const handleRemoveEducation = (id: string) => {
     setEducationList(educationList.filter(e => e.id !== id));
   };
 
-  const updateEducation = (id: string, field: keyof EducationItem, value: string) => {
+  const updateEducation = (id: string, field: keyof EducationItem, value: any) => {
     setEducationList(educationList.map(e => e.id === id ? { ...e, [field]: value } : e));
     clearError();
     setSaved(false);
   };
 
   const handleAddExperience = () => {
-    setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', duration: '' }]);
+    setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', duration: '', isEditing: true }]);
   };
 
   const handleRemoveExperience = (id: string) => {
     setExperienceList(experienceList.filter(e => e.id !== id));
   };
 
-  const updateExperience = (id: string, field: keyof ExperienceItem, value: string) => {
+  const updateExperience = (id: string, field: keyof ExperienceItem, value: any) => {
     setExperienceList(experienceList.map(e => e.id === id ? { ...e, [field]: value } : e));
+    clearError();
+    setSaved(false);
+  };
+
+  const handleYearsChange = (t: string) => {
+    setYearsOfExperience(t.replace(/[^0-9]/g, ''));
+    clearError();
+    setSaved(false);
+  };
+
+  const handleFeeChange = (t: string) => {
+    let val = t.replace(/[^0-9.]/g, '');
+    const parts = val.split('.');
+    if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+    setConsultationFee(val);
     clearError();
     setSaved(false);
   };
@@ -98,13 +115,13 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       
       // Parse backend arrays if available
       if (Array.isArray(profile.education)) {
-        setEducationList(profile.education.map((e, i) => ({ id: i.toString(), ...e })));
+        setEducationList(profile.education.map((e, i) => ({ id: i.toString(), isEditing: false, ...e })));
       } else {
         setEducationList([]);
       }
 
       if (Array.isArray(profile.experience)) {
-        setExperienceList(profile.experience.map((e, i) => ({ id: i.toString(), ...e })));
+        setExperienceList(profile.experience.map((e, i) => ({ id: i.toString(), isEditing: false, ...e })));
       } else {
         setExperienceList([]);
       }
@@ -142,8 +159,8 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       location: location.trim(),
       current_working_hospital: hospital.trim(),
       biography: biography.trim(),
-      education: educationList.map(({ id, ...rest }) => rest), // Remove internal ID
-      experience: experienceList.map(({ id, ...rest }) => rest),
+      education: educationList.map(({ id, isEditing, ...rest }) => rest), // Remove internal UI fields
+      experience: experienceList.map(({ id, isEditing, ...rest }) => rest),
       youtube_link: youtube.trim(),
       linkedin_link: linkedin.trim(),
       years_of_experience: parsedYears,
@@ -240,34 +257,57 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             <View key={edu.id} style={styles.dynamicItemCard}>
               <View style={styles.dynamicItemHeader}>
                 <Text style={styles.dynamicItemTitle}>Degree {index + 1}</Text>
-                <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                  <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-                </TouchableOpacity>
+                <View style={styles.dynamicItemActions}>
+                  {edu.isEditing ? (
+                    <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', false)} style={styles.actionBtn}>
+                      <Ionicons name="checkmark-circle-outline" size={22} color={theme.colors.success} />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', true)} style={styles.actionBtn}>
+                      <Ionicons name="pencil-outline" size={20} color={theme.colors.primary} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} style={styles.actionBtn}>
+                    <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Input
-                label="Degree/Major"
-                placeholder="e.g. MD, PhD"
-                value={edu.degree}
-                onChangeText={(t) => updateEducation(edu.id, 'degree', t)}
-                containerStyle={styles.dynamicInputMargin}
-              />
-              <View style={styles.inputStack}>
-                <Input
-                  label="Institution"
-                  placeholder="e.g. AAU"
-                  value={edu.institution}
-                  onChangeText={(t) => updateEducation(edu.id, 'institution', t)}
-                  containerStyle={styles.dynamicInputMargin}
-                />
-                <Input
-                  label="Year of Graduation"
-                  placeholder="e.g. 2018"
-                  value={edu.year}
-                  onChangeText={(t) => updateEducation(edu.id, 'year', t)}
-                  keyboardType="numeric"
-                  containerStyle={styles.dynamicInputMargin}
-                />
-              </View>
+              
+              {edu.isEditing ? (
+                <>
+                  <Input
+                    label="Degree/Major"
+                    placeholder="e.g. MD, PhD"
+                    value={edu.degree}
+                    onChangeText={(t) => updateEducation(edu.id, 'degree', t)}
+                    containerStyle={styles.dynamicInputMargin}
+                  />
+                  <View style={styles.inputStack}>
+                    <Input
+                      label="Institution"
+                      placeholder="e.g. AAU"
+                      value={edu.institution}
+                      onChangeText={(t) => updateEducation(edu.id, 'institution', t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+                    <Input
+                      label="Year of Graduation"
+                      placeholder="e.g. 2018"
+                      value={edu.year}
+                      onChangeText={(t) => updateEducation(edu.id, 'year', t.replace(/[^0-9]/g, ''))}
+                      keyboardType="numeric"
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.summaryContainer}>
+                  <Text style={styles.summaryTitle}>{edu.degree || 'Untitled Degree'}</Text>
+                  <Text style={styles.summarySubtitle}>
+                    {edu.institution}{edu.institution && edu.year ? ' • ' : ''}{edu.year}
+                  </Text>
+                </View>
+              )}
             </View>
           ))}
 
@@ -283,33 +323,56 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             <View key={exp.id} style={styles.dynamicItemCard}>
               <View style={styles.dynamicItemHeader}>
                 <Text style={styles.dynamicItemTitle}>Role {index + 1}</Text>
-                <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                  <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-                </TouchableOpacity>
+                <View style={styles.dynamicItemActions}>
+                  {exp.isEditing ? (
+                    <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', false)} style={styles.actionBtn}>
+                      <Ionicons name="checkmark-circle-outline" size={22} color={theme.colors.success} />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', true)} style={styles.actionBtn}>
+                      <Ionicons name="pencil-outline" size={20} color={theme.colors.primary} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} style={styles.actionBtn}>
+                    <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Input
-                label="Role/Title"
-                placeholder="e.g. Senior Surgeon"
-                value={exp.role}
-                onChangeText={(t) => updateExperience(exp.id, 'role', t)}
-                containerStyle={styles.dynamicInputMargin}
-              />
-              <View style={styles.inputStack}>
-                <Input
-                  label="Hospital/Clinic"
-                  placeholder="e.g. Tikur Anbessa"
-                  value={exp.hospital}
-                  onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
-                  containerStyle={styles.dynamicInputMargin}
-                />
-                <Input
-                  label="Duration"
-                  placeholder="e.g. 2020-Present"
-                  value={exp.duration}
-                  onChangeText={(t) => updateExperience(exp.id, 'duration', t)}
-                  containerStyle={styles.dynamicInputMargin}
-                />
-              </View>
+              
+              {exp.isEditing ? (
+                <>
+                  <Input
+                    label="Role/Title"
+                    placeholder="e.g. Senior Surgeon"
+                    value={exp.role}
+                    onChangeText={(t) => updateExperience(exp.id, 'role', t)}
+                    containerStyle={styles.dynamicInputMargin}
+                  />
+                  <View style={styles.inputStack}>
+                    <Input
+                      label="Hospital/Clinic"
+                      placeholder="e.g. Tikur Anbessa"
+                      value={exp.hospital}
+                      onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+                    <Input
+                      label="Duration"
+                      placeholder="e.g. 2020-Present"
+                      value={exp.duration}
+                      onChangeText={(t) => updateExperience(exp.id, 'duration', t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.summaryContainer}>
+                  <Text style={styles.summaryTitle}>{exp.role || 'Untitled Role'}</Text>
+                  <Text style={styles.summarySubtitle}>
+                    {exp.hospital}{exp.hospital && exp.duration ? ' • ' : ''}{exp.duration}
+                  </Text>
+                </View>
+              )}
             </View>
           ))}
 
@@ -341,7 +404,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               label="Experience (years)"
               placeholder="0"
               value={yearsOfExperience}
-              onChangeText={(t) => { setYearsOfExperience(t); clearError(); setSaved(false); }}
+              onChangeText={handleYearsChange}
               keyboardType="numeric"
               containerStyle={styles.halfField}
             />
@@ -349,7 +412,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               label="Consultation Fee (ETB)"
               placeholder="0.00"
               value={consultationFee}
-              onChangeText={(t) => { setConsultationFee(t); clearError(); setSaved(false); }}
+              onChangeText={handleFeeChange}
               keyboardType="decimal-pad"
               containerStyle={styles.halfField}
             />
@@ -477,6 +540,27 @@ const createStyles = (theme: Theme) =>
     dynamicItemTitle: {
       fontSize: 14,
       fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    dynamicItemActions: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+      alignItems: 'center',
+    },
+    actionBtn: {
+      padding: 4,
+    },
+    summaryContainer: {
+      paddingVertical: theme.spacing.xs,
+    },
+    summaryTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.text,
+      marginBottom: 4,
+    },
+    summarySubtitle: {
+      fontSize: 14,
       color: theme.colors.textSecondary,
     },
     divider: {
