@@ -182,16 +182,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error: any) {
       let message = 'Login failed. Please try again.';
       
-      // Override explicit backend error with generic security message on 401
-      if (axiosError?.response?.status === 401) {
+      // Extract error safely
+      if (error?.response?.status === 401) {
         message = 'Invalid email or password. Please try again.';
-      } else if (axiosError?.response?.data) {
-        const data = axiosError.response.data;
-        message =
-          (data.detail as string) ||
-          ((data.non_field_errors as string[])?.[0]) ||
-          (data.message as string) ||
-          JSON.stringify(data);
+      } else if (error?.response?.data) {
+        const data = error.response.data;
+        if (data.detail) message = data.detail as string;
+        else if (data.non_field_errors) message = (data.non_field_errors as string[])[0];
+        else if (data.message) message = data.message as string;
+        else if (typeof data === 'string') message = data;
       } else if (error instanceof Error) {
         message = error.message;
       }
@@ -211,13 +210,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       let message = 'Registration failed. Please try again.';
-      if (axiosError?.response?.data) {
-        const data = axiosError.response.data;
-        message =
-          (data.detail as string) ||
-          ((data.email as string[])?.[0]) ||
-          (data.message as string) ||
-          JSON.stringify(data);
+      if (error?.response?.data) {
+        const data = error.response.data;
+        if (data.email) message = Array.isArray(data.email) ? data.email[0] : data.email;
+        else if (data.phone_number) message = Array.isArray(data.phone_number) ? data.phone_number[0] : data.phone_number;
+        else if (data.password) message = Array.isArray(data.password) ? data.password[0] : data.password;
+        else if (data.detail) message = data.detail as string;
+        else if (data.non_field_errors) message = (data.non_field_errors as string[])[0];
+        else if (data.message) message = data.message as string;
+        else if (typeof data === 'string') message = data;
+        else message = 'Please check your inputs and try again.';
       } else if (error instanceof Error) {
         message = error.message;
       }

@@ -13,19 +13,31 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, RADII, SPACING } from "../../src/constants/theme";
-import { register } from "../../src/services/authService";
+import { useAuthStore } from "../../src/store/authStore";
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  const register = useAuthStore((s) => s.register);
+  const error = useAuthStore((s) => s.error);
+  const clearError = useAuthStore((s) => s.clearError);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"PATIENT" | "DOCTOR">("PATIENT");
   const [loading, setLoading] = useState(false);
 
+  const handleFirstNameChange = (val: string) => { setFirstName(val); clearError(); };
+  const handleLastNameChange = (val: string) => { setLastName(val); clearError(); };
+  const handleEmailChange = (val: string) => { setEmail(val); clearError(); };
+  const handlePasswordChange = (val: string) => { setPassword(val); clearError(); };
+  const handleRoleChange = (val: "PATIENT" | "DOCTOR") => { setRole(val); clearError(); };
+
   const submit = async () => {
-    if (!email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
@@ -33,6 +45,8 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await register({
+        first_name: firstName,
+        last_name: lastName,
         email,
         password,
         role,
@@ -43,7 +57,7 @@ export default function RegisterScreen() {
         params: { email },
       } as any);
     } catch (e: any) {
-       Alert.alert("Registration Failed", e?.response?.data?.detail || "An error occurred.");
+       // Error is caught and set by authStore, no need for alert
     } finally {
       setLoading(false);
     }
@@ -61,23 +75,51 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.form}>
+          {error && (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>I am a...</Text>
             <View style={styles.roleRow}>
               <TouchableOpacity
                 style={[styles.roleCard, role === "PATIENT" && styles.roleCardActive]}
-                onPress={() => setRole("PATIENT")}
+                onPress={() => handleRoleChange("PATIENT")}
               >
                 <Text style={[styles.roleText, role === "PATIENT" && styles.roleTextActive]}>Patient</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[styles.roleCard, role === "DOCTOR" && styles.roleCardActive]}
-                onPress={() => setRole("DOCTOR")}
+                onPress={() => handleRoleChange("DOCTOR")}
               >
                 <Text style={[styles.roleText, role === "DOCTOR" && styles.roleTextActive]}>Doctor</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.nameRow}>
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <Text style={styles.label}>First Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="First name"
+                placeholderTextColor={COLORS.textMuted}
+                value={firstName}
+                onChangeText={handleFirstNameChange}
+              />
+            </View>
+            <View style={[styles.inputGroup, { flex: 1 }]}>
+              <Text style={styles.label}>Last Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Last name"
+                placeholderTextColor={COLORS.textMuted}
+                value={lastName}
+                onChangeText={handleLastNameChange}
+              />
             </View>
           </View>
 
@@ -90,7 +132,7 @@ export default function RegisterScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
             />
           </View>
 
@@ -102,7 +144,7 @@ export default function RegisterScreen() {
               placeholderTextColor={COLORS.textMuted}
               secureTextEntry
               value={password}
-              onChangeText={setPassword}
+              onChangeText={handlePasswordChange}
             />
           </View>
 
@@ -156,6 +198,23 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
+  },
+  errorBanner: {
+    backgroundColor: COLORS.error + "15",
+    padding: SPACING.m,
+    borderRadius: RADII.m,
+    marginBottom: SPACING.m,
+    borderWidth: 1,
+    borderColor: COLORS.error + "30",
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  nameRow: {
+    flexDirection: "row",
+    gap: SPACING.m,
   },
   inputGroup: {
     marginBottom: SPACING.m,

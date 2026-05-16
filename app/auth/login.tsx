@@ -19,10 +19,16 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
+  const error = useAuthStore((s) => s.error);
+  const clearError = useAuthStore((s) => s.clearError);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Clear global error when typing
+  const handleEmailChange = (val: string) => { setEmail(val); clearError(); };
+  const handlePasswordChange = (val: string) => { setPassword(val); clearError(); };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,10 +38,10 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await login(email, password);
+      await login({ email, password });
       // Let root layout redirect based on user role auto magically
     } catch (e: any) {
-      Alert.alert("Login Failed", e?.response?.data?.detail || "Invalid credentials.");
+      // Error is caught and set by authStore, no need for alert
     } finally {
       setLoading(false);
     }
@@ -53,6 +59,12 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
+          {error && (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
             <TextInput
@@ -62,7 +74,7 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
             />
           </View>
 
@@ -74,7 +86,7 @@ export default function LoginScreen() {
               placeholderTextColor={COLORS.textMuted}
               secureTextEntry
               value={password}
-              onChangeText={setPassword}
+              onChangeText={handlePasswordChange}
             />
           </View>
           
@@ -135,6 +147,19 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
+  },
+  errorBanner: {
+    backgroundColor: COLORS.error + "15",
+    padding: SPACING.m,
+    borderRadius: RADII.m,
+    marginBottom: SPACING.m,
+    borderWidth: 1,
+    borderColor: COLORS.error + "30",
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 14,
+    fontWeight: "500",
   },
   inputGroup: {
     marginBottom: SPACING.m,
