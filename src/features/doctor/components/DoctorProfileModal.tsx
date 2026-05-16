@@ -24,12 +24,17 @@ interface EducationItem {
 interface ExperienceItem {
   id: string;
   role: string;
+  employmentType?: string;
   hospital: string;
+  location?: string;
   startYear: string;
   endYear: string;
   isCurrent: boolean;
+  description?: string;
   isEditing?: boolean;
 }
+
+const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
 
 export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps) {
   const { theme } = useTheme();
@@ -418,27 +423,53 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 </View>
               
               {exp.isEditing ? (
-                <>
-                  <Input
-                    label="Role/Title"
-                    placeholder="e.g. Senior Surgeon"
-                    value={exp.role}
-                    onChangeText={(t) => updateExperience(exp.id, 'role', t)}
-                    containerStyle={styles.dynamicInputMargin}
-                  />
                   <View style={styles.inputStack}>
                     <Input
-                      label="Hospital/Clinic"
-                      placeholder="e.g. Tikur Anbessa"
+                      label="Title*"
+                      placeholder="Ex: Senior Surgeon"
+                      value={exp.role}
+                      onChangeText={(t) => updateExperience(exp.id, 'role', t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+
+                    <Text style={styles.dateLabel}>Employment type</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, flexDirection: 'row' }}>
+                      {EMPLOYMENT_TYPES.map(type => (
+                        <Pressable
+                          key={type}
+                          onPress={() => updateExperience(exp.id, 'employmentType', type)}
+                          style={[
+                            styles.chip,
+                            exp.employmentType === type && styles.chipSelected
+                          ]}
+                        >
+                          <Text style={[styles.chipText, exp.employmentType === type && styles.chipTextSelected]}>
+                            {type}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+
+                    <Input
+                      label="Company or hospital*"
+                      placeholder="Ex: Tikur Anbessa"
                       value={exp.hospital}
                       onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+
+                    <Input
+                      label="Location"
+                      placeholder="Ex: Addis Ababa, Ethiopia"
+                      value={exp.location || ''}
+                      onChangeText={(t) => updateExperience(exp.id, 'location', t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
                     
                     <View style={styles.row}>
                       <Input
-                        label="Start Year"
-                        placeholder="e.g. 2018"
+                        label="Start Year*"
+                        placeholder="Ex: 2018"
                         value={exp.startYear || ''}
                         onChangeText={(t) => updateExperience(exp.id, 'startYear', t.replace(/[^0-9]/g, ''))}
                         keyboardType="numeric"
@@ -446,8 +477,8 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                       />
                       {!exp.isCurrent && (
                         <Input
-                          label="End Year"
-                          placeholder="e.g. 2023"
+                          label="End Year*"
+                          placeholder="Ex: 2023"
                           value={exp.endYear || ''}
                           onChangeText={(t) => updateExperience(exp.id, 'endYear', t.replace(/[^0-9]/g, ''))}
                           keyboardType="numeric"
@@ -462,17 +493,33 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                         onValueChange={(val) => updateExperience(exp.id, 'isCurrent', val)}
                         trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
                       />
-                      <Text style={styles.switchLabel}>I currently work here</Text>
+                      <Text style={styles.switchLabel}>I am currently working in this role</Text>
                     </View>
 
+                    <Input
+                      label="Description"
+                      placeholder="Describe your responsibilities, achievements, etc."
+                      value={exp.description || ''}
+                      onChangeText={(t) => updateExperience(exp.id, 'description', t)}
+                      multiline
+                      numberOfLines={3}
+                      containerStyle={styles.multilineContainer}
+                    />
                   </View>
                 </>
               ) : (
                 <View style={styles.summaryContainer}>
                   <Text style={styles.summaryTitle}>{exp.role || 'Untitled Role'}</Text>
                   <Text style={styles.summarySubtitle}>
-                    {exp.hospital} • {exp.startYear} - {exp.isCurrent ? 'Present' : exp.endYear}
+                    {exp.hospital}{exp.employmentType ? ` · ${exp.employmentType}` : ''}
                   </Text>
+                  <Text style={styles.summaryTertiary}>
+                    {exp.startYear} - {exp.isCurrent ? 'Present' : exp.endYear}
+                    {exp.location ? ` · ${exp.location}` : ''}
+                  </Text>
+                  {exp.description ? (
+                    <Text style={styles.summaryDescription}>{exp.description}</Text>
+                  ) : null}
                 </View>
               )}
             </View>
@@ -706,12 +753,44 @@ const createStyles = (theme: Theme) =>
     },
     summarySubtitle: {
       fontSize: 14,
+      color: theme.colors.text,
+      marginBottom: 2,
+    },
+    summaryTertiary: {
+      fontSize: 13,
       color: theme.colors.textSecondary,
+      marginBottom: 4,
+    },
+    summaryDescription: {
+      fontSize: 14,
+      color: theme.colors.textSecondary,
+      marginTop: 4,
+      lineHeight: 20,
     },
     divider: {
       height: 1,
       backgroundColor: theme.colors.border,
-      marginVertical: theme.spacing.xl,
-      opacity: 0.5,
-    }
+      marginVertical: theme.spacing.lg,
+    },
+    chip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginRight: 8,
+    },
+    chipSelected: {
+      backgroundColor: theme.colors.primary + '15',
+      borderColor: theme.colors.primary,
+    },
+    chipText: {
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
+    },
+    chipTextSelected: {
+      color: theme.colors.primary,
+    },
   });
