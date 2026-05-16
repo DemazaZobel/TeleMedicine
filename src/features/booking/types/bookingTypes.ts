@@ -99,13 +99,15 @@ export interface ProviderAvailabilityRuleDetail {
   id: string | number;
   doctor: string | number; // Or profile min
   weekday: number; // 0-6
+  specific_date?: string; // "YYYY-MM-DD" for one-time slots
   start_time: string; // time string "HH:MM:SS"
   end_time: string;
   is_active: boolean;
 }
 
 export interface ProviderAvailabilityRuleCreatePayload {
-  weekday: number;
+  weekday?: number;
+  specific_date?: string;
   start_time: string;
   end_time: string;
   is_active?: boolean;

@@ -70,6 +70,8 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
     }
   };
 
+  const dateInputRef = React.useRef<any>(null);
+
   return (
     <ModalBase
       visible={visible}
@@ -121,7 +123,11 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
             <TouchableOpacity 
               style={styles.datePickerBtn}
               onPress={() => {
-                if (Platform.OS !== 'web') setShowDatePicker(true);
+                if (Platform.OS === 'web') {
+                  dateInputRef.current?.showPicker?.() || dateInputRef.current?.click();
+                } else {
+                  setShowDatePicker(true);
+                }
               }}
             >
               <Ionicons name="calendar" size={20} color={theme.colors.primary} />
@@ -132,16 +138,15 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
               
               {Platform.OS === 'web' && (
                 <input
+                  ref={dateInputRef}
                   type="date"
                   style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
-                    right: 0,
-                    bottom: 0,
+                    width: 0,
+                    height: 0,
                     opacity: 0,
-                    cursor: 'pointer',
-                    width: '100%',
                   }}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => {
