@@ -1,17 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { Button, Card, Input } from "../../../components/ui";
 import { ModalBase } from "../../../components/ui/ModalBase";
@@ -626,7 +624,7 @@ export function DoctorProfileModal({
                 {exp.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
-                      label="Medical Role*"
+                      label="Medical Role"
                       placeholder="Ex: Senior Surgeon, General Practitioner"
                       value={exp.role}
                       onChangeText={(t) => updateExperience(exp.id, "role", t)}
@@ -665,7 +663,7 @@ export function DoctorProfileModal({
                     </ScrollView>
 
                     <Input
-                      label="Hospital/Clinic Name*"
+                      label="Hospital/Clinic Name"
                       placeholder="Ex: Tikur Anbessa Hospital"
                       value={exp.hospital}
                       onChangeText={(t) =>
@@ -686,7 +684,7 @@ export function DoctorProfileModal({
 
                     <View style={styles.row}>
                       <Input
-                        label="Start Year*"
+                        label="Start Year"
                         placeholder="Ex: 2018"
                         value={exp.startYear || ""}
                         onChangeText={(t) =>

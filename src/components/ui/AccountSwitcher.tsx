@@ -26,8 +26,9 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
 
   const isDoctor = user.role === 'DOCTOR';
 
-  // We now show prompts to link/create even if no account is linked yet
-  // (e.g., Doctor can create Patient, Patient can link Doctor)
+  // If the user is a patient and they don't have a linked doctor account,
+  // there is no account switching functionality to show.
+  if (!isDoctor && !hasLinkedAccount) return null;
 
   const roleColor = isDoctor ? theme.colors.primary : '#13C2C2';
 
@@ -42,54 +43,37 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
 
   // ─── Profile Variant ──────────────────────────────────────
   if (variant === 'profile') {
-    // 1. CTA Card (No linked account yet)
-    if (!hasLinkedAccount) {
-      const isDoc = user.role === 'DOCTOR';
-      const themeColor = isDoc ? theme.colors.primary : '#13C2C2';
-      const cardTitle = isDoc ? 'Patient Account' : 'Doctor Account';
-      const cardSub = isDoc 
-        ? 'Book appointments as a patient too.' 
-        : 'Manage your medical practice and patients.';
-      const createLabel = isDoc ? 'Create New Account' : 'Apply as Doctor';
-      const createSub = isDoc 
-        ? 'Set up a fresh patient profile' 
-        : 'Start your professional onboarding';
-
+    // Doctor without linked account → show combined CTA card
+    if (!hasLinkedAccount && isDoctor) {
       return (
         <View style={[styles.profileCard, styles.ctaCard]}>
-          <View style={[styles.ctaHeader, { backgroundColor: themeColor }]}>
+          {/* Green header */}
+          <View style={styles.ctaHeader}>
             <View style={styles.ctaIconBg}>
-              <Ionicons 
-                name={isDoc ? "people" : "medical"} 
-                size={22} 
-                color={themeColor} 
-              />
+              <Ionicons name="people" size={22} color={theme.colors.primary} />
             </View>
             <View style={styles.ctaTextContainer}>
-              <Text style={styles.ctaTitle}>{cardTitle}</Text>
-              <Text style={styles.ctaSub}>{cardSub}</Text>
+              <Text style={styles.ctaTitle}>Patient Account</Text>
+              <Text style={styles.ctaSub}>Book appointments as a patient too.</Text>
             </View>
           </View>
 
+          {/* Two options */}
           <View style={styles.ctaOptions}>
             <Pressable
               style={({ pressed }) => [
                 styles.ctaOption,
-                pressed && { backgroundColor: themeColor + '08' },
+                pressed && { backgroundColor: theme.colors.primary + '08' },
               ]}
               onPress={onCreatePatient}
             >
-              <View style={[styles.ctaOptionIcon, { backgroundColor: themeColor + '12' }]}>
-                <Ionicons 
-                  name={isDoc ? "person-add-outline" : "document-text-outline"} 
-                  size={18} 
-                  color={themeColor} 
-                />
+              <View style={[styles.ctaOptionIcon, { backgroundColor: theme.colors.primary + '12' }]}>
+                <Ionicons name="person-add-outline" size={18} color={theme.colors.primary} />
               </View>
               <View style={styles.ctaOptionText}>
-                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>{createLabel}</Text>
+                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>Create New Account</Text>
                 <Text style={[styles.ctaOptionSub, { color: theme.colors.textTertiary }]}>
-                  {createSub}
+                  Set up a fresh patient profile
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.colors.textTertiary} />
@@ -100,12 +84,12 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
             <Pressable
               style={({ pressed }) => [
                 styles.ctaOption,
-                pressed && { backgroundColor: themeColor + '08' },
+                pressed && { backgroundColor: theme.colors.primary + '08' },
               ]}
               onPress={onLinkExisting}
             >
-              <View style={[styles.ctaOptionIcon, { backgroundColor: themeColor + '12' }]}>
-                <Ionicons name="link-outline" size={18} color={themeColor} />
+              <View style={[styles.ctaOptionIcon, { backgroundColor: '#13C2C2' + '12' }]}>
+                <Ionicons name="link-outline" size={18} color="#13C2C2" />
               </View>
               <View style={styles.ctaOptionText}>
                 <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>Link Existing Account</Text>
@@ -120,51 +104,36 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
       );
     }
 
-    // 2. Switch Card (Already has linked account)
-    const targetRole = user.role === 'DOCTOR' ? 'Patient' : 'Doctor';
-    const targetColor = user.role === 'DOCTOR' ? '#13C2C2' : theme.colors.primary;
-
-    return (
-      <View style={[styles.profileCard, styles.ctaCard]}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.ctaHeader, 
-            { backgroundColor: targetColor },
-            pressed && { opacity: 0.9 }
-          ]}
-          onPress={handleSwitch}
-          disabled={isSwitchingAccount}
-        >
-          <View style={styles.ctaIconBg}>
+    // Has linked account → show switch button
+    if (hasLinkedAccount) {
+      return (
+        <View style={styles.profileCard}>
+          <Pressable
+            style={styles.profileItem}
+            onPress={handleSwitch}
+            disabled={isSwitchingAccount}
+          >
+            <View style={[styles.profileIconBg, { backgroundColor: roleColor + '15' }]}>
+              <Ionicons name={actionIcon} size={20} color={roleColor} />
+            </View>
+            <Text style={[styles.profileText, { color: theme.colors.text }]}>
+              {isSwitchingAccount ? 'Switching...' : actionText}
+            </Text>
             {isSwitchingAccount ? (
-              <ActivityIndicator size="small" color={targetColor} />
+              <ActivityIndicator size="small" color={roleColor} />
             ) : (
-              <Ionicons name="swap-horizontal" size={22} color={targetColor} />
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.textTertiary} />
             )}
-          </View>
-          <View style={styles.ctaTextContainer}>
-            <Text style={styles.ctaTitle}>
-              {isSwitchingAccount ? 'Switching Account...' : `Switch to ${targetRole}`}
-            </Text>
-            <Text style={styles.ctaSub}>
-              Currently using your {user.role.toLowerCase()} profile.
-            </Text>
-          </View>
-          {!isSwitchingAccount && (
-            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
-          )}
-        </Pressable>
-      </View>
-    );
+          </Pressable>
+        </View>
+      );
+    }
+
+    return null;
   }
 
   // ─── Sidebar Variant ──────────────────────────────────────
-  if (!hasLinkedAccount) {
-    const isDoc = user.role === 'DOCTOR';
-    const themeColor = isDoc ? theme.colors.primary : '#13C2C2';
-    const createIcon = isDoc ? "person-add-outline" : "document-text-outline";
-    const createLabel = isDoc ? 'Create Patient' : 'Apply as Doctor';
-
+  if (!hasLinkedAccount && isDoctor) {
     if (isCollapsed) {
       return (
         <Pressable
@@ -173,12 +142,11 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
           style={({ hovered }) => [
             styles.sidebarItem,
             styles.sidebarCreateItem,
-            { borderColor: themeColor + '40', backgroundColor: themeColor + '10' },
             styles.sidebarItemCollapsed,
-            hovered && Platform.OS === 'web' && { backgroundColor: themeColor + '20' }
+            hovered && Platform.OS === 'web' && { backgroundColor: theme.colors.primary + '15' }
           ]}
         >
-          <Ionicons name={isDoc ? "people-outline" : "medical-outline"} size={20} color={themeColor} />
+          <Ionicons name="people-outline" size={20} color={theme.colors.primary} />
         </Pressable>
       );
     }
@@ -191,13 +159,12 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
           style={({ hovered }) => [
             styles.sidebarItem,
             styles.sidebarCreateItem,
-            { borderColor: themeColor + '40', backgroundColor: themeColor + '10' },
-            hovered && Platform.OS === 'web' && { backgroundColor: themeColor + '20' }
+            hovered && Platform.OS === 'web' && { backgroundColor: theme.colors.primary + '15' }
           ]}
         >
-          <Ionicons name={createIcon} size={18} color={themeColor} />
-          <Text style={[styles.sidebarText, { color: themeColor, fontWeight: '600' }]}>
-            {createLabel}
+          <Ionicons name="person-add-outline" size={18} color={theme.colors.primary} />
+          <Text style={[styles.sidebarText, { color: theme.colors.primary, fontWeight: '600' }]}>
+            Create Patient
           </Text>
         </Pressable>
 
@@ -207,12 +174,11 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
           style={({ hovered }) => [
             styles.sidebarItem,
             styles.sidebarLinkItem,
-            { borderColor: themeColor + '40', backgroundColor: themeColor + '05' },
-            hovered && Platform.OS === 'web' && { backgroundColor: themeColor + '15' }
+            hovered && Platform.OS === 'web' && { backgroundColor: '#13C2C2' + '15' }
           ]}
         >
-          <Ionicons name="link-outline" size={18} color={themeColor} />
-          <Text style={[styles.sidebarText, { color: themeColor, fontWeight: '600' }]}>
+          <Ionicons name="link-outline" size={18} color="#13C2C2" />
+          <Text style={[styles.sidebarText, { color: '#13C2C2', fontWeight: '600' }]}>
             Link Existing
           </Text>
         </Pressable>
@@ -220,28 +186,24 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
     );
   }
 
-  // Has linked account → Switch box in sidebar
-  const targetColor = user.role === 'DOCTOR' ? '#13C2C2' : theme.colors.primary;
-
   return (
     <Pressable
       onPress={handleSwitch}
       disabled={isSwitchingAccount}
       style={({ hovered }) => [
         styles.sidebarItem,
-        { backgroundColor: targetColor + '10', borderColor: targetColor + '30', borderWidth: 1 },
         isCollapsed && styles.sidebarItemCollapsed,
-        hovered && Platform.OS === 'web' && { backgroundColor: targetColor + '20' }
+        hovered && Platform.OS === 'web' && { backgroundColor: theme.colors.border + '50' }
       ]}
     >
       {isSwitchingAccount ? (
-        <ActivityIndicator size={20} color={targetColor} />
+        <ActivityIndicator size={20} color={roleColor} />
       ) : (
-        <Ionicons name={actionIcon} size={20} color={targetColor} />
+        <Ionicons name={actionIcon} size={20} color={roleColor} />
       )}
       
       {!isCollapsed && (
-        <Text style={[styles.sidebarText, { color: targetColor, fontWeight: '600' }]}>
+        <Text style={[styles.sidebarText, { color: theme.colors.textSecondary }]}>
           {isSwitchingAccount ? 'Switching...' : actionText}
         </Text>
       )}

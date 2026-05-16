@@ -83,6 +83,15 @@ export function DoctorDocumentsModal({ visible, onClose }: DoctorDocumentsModalP
   const handleUpload = useCallback(async () => {
     if (!selectedFile || !documentType.trim() || !licenseNumber.trim()) return;
 
+    if (documentType.length > 100) {
+      Alert.alert('Validation Error', 'Credential type is too long (max 100 chars).');
+      return;
+    }
+    if (licenseNumber.length > 50) {
+      Alert.alert('Validation Error', 'License number is too long (max 50 chars).');
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('document_type', documentType.trim());
@@ -133,110 +142,114 @@ export function DoctorDocumentsModal({ visible, onClose }: DoctorDocumentsModalP
       title={isUploading ? "Upload Credentials" : "My Documents"}
       subtitle={isUploading ? "Provide medical documentation for review." : "Track your verification status."}
     >
-      <View style={styles.container}>
-        {isUploading ? (
-          <>
-            {error && (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
-            {success && (
-              <View style={styles.successBanner}>
-                <Text style={styles.successText}>Document uploaded successfully!</Text>
-              </View>
-            )}
-
-            <Card style={styles.card}>
-              <Input
-                label="Document Type"
-                placeholder="e.g. Medical License"
-                value={documentType}
-                onChangeText={(t) => { setDocumentType(t); clearError(); }}
-              />
-
-              <Input
-                label="License / Reference Number"
-                placeholder="e.g. LRN-123456"
-                value={licenseNumber}
-                onChangeText={(t) => { setLicenseNumber(t); clearError(); }}
-              />
-
-              <Pressable
-                onPress={handlePickFile}
-                style={[styles.uploadArea, selectedFile && styles.uploadAreaActive]}
-              >
-                <Ionicons 
-                  name="cloud-upload-outline" 
-                  size={40} 
-                  color={selectedFile ? theme.colors.primary : theme.colors.textTertiary} 
-                  style={{ marginBottom: 8 }} 
-                />
-                <Text style={[styles.uploadText, selectedFile && { color: theme.colors.primary, fontWeight: '600' }]}>
-                  {selectedFile ? 'Change Selected File' : 'Tap to Select File'}
-                </Text>
-              </Pressable>
-
-              {selectedFile && (
-                <View style={styles.fileInfo}>
-                  <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
-                  <Text style={styles.fileName} numberOfLines={1}>{selectedFile.name}</Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {isUploading ? (
+            <>
+              {error && (
+                <View style={styles.errorBanner}>
+                  <Text style={styles.errorText}>{error}</Text>
                 </View>
               )}
-            </Card>
 
-            <View style={{ gap: 12 }}>
-              <Button
-                title="Submit for Verification"
-                onPress={handleUpload}
-                loading={isUploadingDocument}
-                disabled={!selectedFile || !documentType.trim() || !licenseNumber.trim()}
-              />
-              <Button
-                title="Back to List"
-                variant="ghost"
-                onPress={() => { setIsUploading(false); clearError(); }}
-              />
-            </View>
-          </>
-        ) : (
-          <>
-            {documents.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="document-text-outline" size={64} color={theme.colors.textTertiary} />
-                <Text style={styles.emptyTitle}>No documents yet</Text>
-                <Text style={styles.emptySubtitle}>Upload your credentials to start verification.</Text>
-                <Button 
-                  title="Upload Now" 
-                  onPress={() => setIsUploading(true)} 
-                  style={{ marginTop: 24, paddingHorizontal: 32 }}
+              {success && (
+                <View style={styles.successBanner}>
+                  <Text style={styles.successText}>Credential uploaded successfully!</Text>
+                </View>
+              )}
+
+              <Card style={styles.card}>
+                <Input
+                  label="Credential Type*"
+                  placeholder="e.g. Medical License"
+                  value={documentType}
+                  onChangeText={(t) => { setDocumentType(t); clearError(); }}
+                  maxLength={100}
+                />
+
+                <Input
+                  label="License Number / ID*"
+                  placeholder="e.g. LRN-123456"
+                  value={licenseNumber}
+                  onChangeText={(t) => { setLicenseNumber(t); clearError(); }}
+                  maxLength={50}
+                />
+
+                <Pressable
+                  onPress={handlePickFile}
+                  style={[styles.uploadArea, selectedFile && styles.uploadAreaActive]}
+                >
+                  <Ionicons 
+                    name="cloud-upload-outline" 
+                    size={40} 
+                    color={selectedFile ? theme.colors.primary : theme.colors.textTertiary} 
+                    style={{ marginBottom: 8 }} 
+                  />
+                  <Text style={[styles.uploadText, selectedFile && { color: theme.colors.primary, fontWeight: '600' }]}>
+                    {selectedFile ? 'Change Selected File' : 'Tap to Select File'}
+                  </Text>
+                  <Text style={styles.uploadHint}>Accepted: PDF, JPEG, PNG (Max 5MB)</Text>
+                </Pressable>
+
+                {selectedFile && (
+                  <View style={styles.fileInfo}>
+                    <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
+                    <Text style={styles.fileName} numberOfLines={1}>{selectedFile.name}</Text>
+                  </View>
+                )}
+              </Card>
+
+              <View style={{ gap: 12, marginBottom: 24 }}>
+                <Button
+                  title="Submit for Verification"
+                  onPress={handleUpload}
+                  loading={isUploadingDocument}
+                  disabled={!selectedFile || !documentType.trim() || !licenseNumber.trim()}
+                />
+                <Button
+                  title="Cancel"
+                  variant="ghost"
+                  onPress={() => { setIsUploading(false); clearError(); }}
                 />
               </View>
-            ) : (
-              <View>
-                {documents.map((doc) => (
-                  <Card key={doc.id} style={styles.docItem}>
-                    <View style={styles.docHeader}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.docName}>{doc.document_type}</Text>
-                        <Text style={styles.docRef}>Ref: {doc.license_number}</Text>
-                      </View>
-                      {renderStatus(doc.status)}
-                    </View>
-                  </Card>
-                ))}
+            </>
+          ) : (
+            <>
+              <View style={styles.listHeader}>
+                <Text style={styles.sectionTitle}>My Credentials</Text>
                 <Button 
-                  title="Upload Another Document" 
+                  title="Add New" 
+                  size="small"
                   variant="outline"
                   onPress={() => setIsUploading(true)} 
-                  style={{ marginTop: 12 }}
+                  leftIcon={<Ionicons name="add" size={16} color={theme.colors.primary} />}
                 />
               </View>
-            )}
-          </>
-        )}
-      </View>
+
+              {documents.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Ionicons name="shield-checkmark-outline" size={64} color={theme.colors.textTertiary} />
+                  <Text style={styles.emptyTitle}>No credentials yet</Text>
+                  <Text style={styles.emptySubtitle}>Upload your medical license and certificates to get verified.</Text>
+                </View>
+              ) : (
+                <View>
+                  {documents.map((doc) => (
+                    <Card key={doc.id} style={styles.docItem}>
+                      <View style={styles.docHeader}>
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text style={styles.docName}>{doc.document_type}</Text>
+                          <Text style={styles.docRef}>ID: {doc.license_number}</Text>
+                          <Text style={styles.docDate}>Uploaded on {new Date(doc.created_at).toLocaleDateString()}</Text>
+                        </View>
+                        {renderStatus(doc.status)}
+                      </View>
+                    </Card>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
     </ModalBase>
   );
 }
@@ -343,12 +356,23 @@ const createStyles = (theme: Theme) =>
       fontWeight: '700',
       textTransform: 'uppercase',
     },
+    listHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.lg,
+    },
+    sectionTitle: {
+      ...theme.typography.h6,
+      color: theme.colors.text,
+      fontWeight: '700',
+    },
     emptyState: {
       alignItems: 'center',
       paddingVertical: 40,
     },
     emptyTitle: {
-      ...theme.typography.h4,
+      ...theme.typography.h6,
       color: theme.colors.text,
       marginTop: 16,
     },
@@ -357,5 +381,10 @@ const createStyles = (theme: Theme) =>
       color: theme.colors.textSecondary,
       textAlign: 'center',
       marginTop: 8,
+    },
+    docDate: {
+      ...theme.typography.caption,
+      color: theme.colors.textTertiary,
+      marginTop: 2,
     },
   });
