@@ -315,6 +315,9 @@ export function AppointmentCard({
     }
   };
 
+  const isCancelled = appointment.status?.toUpperCase() === "CANCELLED";
+  const isCompleted = appointment.status?.toUpperCase() === "COMPLETED";
+  const isNoShow = appointment.status?.toUpperCase() === "NO_SHOW";
   const isExpired = appointment.status?.toUpperCase() === "EXPIRED" || (isPast && !isCompleted && !isCancelled);
   const isFinalized = isCancelled || isCompleted || isNoShow || isExpired;
 
@@ -463,6 +466,7 @@ export function AppointmentCard({
 
       <RescheduleModal
         visible={rescheduleVisible}
+        doctorId={appointment.doctor?.id || (appointment as any).doctor_id || (appointment as any).doctor}
         onClose={() => setRescheduleVisible(false)}
         onConfirm={handleProposeConfirm}
         isLoading={localLoading}

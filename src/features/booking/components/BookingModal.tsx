@@ -78,16 +78,24 @@ export function BookingModal({
         const [h, m] = rule.start_time.split(":").map(Number);
         const [eh, em] = rule.end_time.split(":").map(Number);
 
-        const start = new Date(currentDay);
-        start.setHours(h, m, 0, 0);
+        const ruleEnd = new Date(currentDay);
+        ruleEnd.setHours(eh, em, 0, 0);
 
-        // If it's today, only show future slots
-        if (dayOffset === 0 && start.getTime() < today.getTime()) continue;
+        let currentSlotStart = new Date(currentDay);
+        currentSlotStart.setHours(h, m, 0, 0);
 
-        const end = new Date(currentDay);
-        end.setHours(eh, em, 0, 0);
-
-        generatedSlots.push({ start, end });
+        // Generate hourly slots within the rule's window
+        while (currentSlotStart.getTime() + 3600000 <= ruleEnd.getTime()) {
+          // If it's today, only show future slots
+          if (dayOffset > 0 || currentSlotStart.getTime() > today.getTime()) {
+            generatedSlots.push({
+              start: new Date(currentSlotStart),
+              end: new Date(currentSlotStart.getTime() + 3600000),
+            });
+          }
+          // Move to next hour
+          currentSlotStart.setTime(currentSlotStart.getTime() + 3600000);
+        }
       }
     }
 
