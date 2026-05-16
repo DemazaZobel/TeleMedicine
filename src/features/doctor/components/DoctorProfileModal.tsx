@@ -26,6 +26,13 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   } = useDoctorStore();
 
   const [specialization, setSpecialization] = useState('');
+  const [location, setLocation] = useState('');
+  const [hospital, setHospital] = useState('');
+  const [biography, setBiography] = useState('');
+  const [experience, setExperience] = useState('');
+  const [education, setEducation] = useState('');
+  const [youtube, setYoutube] = useState('');
+  const [linkedin, setLinkedin] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [consultationFee, setConsultationFee] = useState('');
   const [saved, setSaved] = useState(false);
@@ -41,6 +48,13 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   useEffect(() => {
     if (profile && visible) {
       setSpecialization(profile.specialization ?? '');
+      setLocation(profile.location ?? '');
+      setHospital(profile.current_working_hospital ?? '');
+      setBiography(profile.biography ?? '');
+      setExperience(profile.experience ?? '');
+      setEducation(profile.education ?? '');
+      setYoutube(profile.youtube_link ?? '');
+      setLinkedin(profile.linkedin_link ?? '');
       setYearsOfExperience(
         profile.years_of_experience ? String(profile.years_of_experience) : ''
       );
@@ -56,6 +70,13 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
     
     const payload: DoctorProfileUpdate = {
       specialization: specialization.trim(),
+      location: location.trim(),
+      current_working_hospital: hospital.trim(),
+      biography: biography.trim(),
+      experience: experience.trim(),
+      education: education.trim(),
+      youtube_link: youtube.trim(),
+      linkedin_link: linkedin.trim(),
       years_of_experience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
       consultation_fee: consultationFee ? Number(consultationFee) : undefined,
     };
@@ -69,7 +90,11 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
     } catch {
       // Error is set in the store
     }
-  }, [specialization, yearsOfExperience, consultationFee, updateProfile, clearError, onClose]);
+  }, [
+    specialization, location, hospital, biography, experience, education, 
+    youtube, linkedin, yearsOfExperience, consultationFee, 
+    updateProfile, clearError, onClose
+  ]);
 
   return (
     <ModalBase
@@ -106,6 +131,74 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             value={specialization}
             onChangeText={(t) => { setSpecialization(t); clearError(); setSaved(false); }}
           />
+
+          <View style={styles.row}>
+            <Input
+              label="Location"
+              placeholder="e.g. Addis Ababa"
+              value={location}
+              onChangeText={(t) => { setLocation(t); clearError(); setSaved(false); }}
+              containerStyle={styles.halfField}
+            />
+            <Input
+              label="Current Hospital/Clinic"
+              placeholder="e.g. Tikur Anbessa"
+              value={hospital}
+              onChangeText={(t) => { setHospital(t); clearError(); setSaved(false); }}
+              containerStyle={styles.halfField}
+            />
+          </View>
+
+          <Input
+            label="Biography"
+            placeholder="Tell patients about your medical background..."
+            value={biography}
+            onChangeText={(t) => { setBiography(t); clearError(); setSaved(false); }}
+            multiline
+            numberOfLines={3}
+            containerStyle={styles.multilineContainer}
+          />
+
+          <Input
+            label="Education"
+            placeholder="e.g. MD from Addis Ababa University"
+            value={education}
+            onChangeText={(t) => { setEducation(t); clearError(); setSaved(false); }}
+            multiline
+            numberOfLines={2}
+            containerStyle={styles.multilineContainer}
+          />
+
+          <Input
+            label="Experience"
+            placeholder="e.g. Senior Cardiologist at St. Paul's"
+            value={experience}
+            onChangeText={(t) => { setExperience(t); clearError(); setSaved(false); }}
+            multiline
+            numberOfLines={2}
+            containerStyle={styles.multilineContainer}
+          />
+
+          <View style={styles.row}>
+            <Input
+              label="YouTube Link (Optional)"
+              placeholder="https://youtube.com/..."
+              value={youtube}
+              onChangeText={(t) => { setYoutube(t); clearError(); setSaved(false); }}
+              containerStyle={styles.halfField}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+            <Input
+              label="LinkedIn (Optional)"
+              placeholder="https://linkedin.com/in/..."
+              value={linkedin}
+              onChangeText={(t) => { setLinkedin(t); clearError(); setSaved(false); }}
+              containerStyle={styles.halfField}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+          </View>
 
           <View style={styles.row}>
             <Input
@@ -170,6 +263,9 @@ const createStyles = (theme: Theme) =>
     },
     halfField: {
       flex: 1,
+    },
+    multilineContainer: {
+      marginTop: theme.spacing.md,
     },
     submitButton: {
       marginTop: theme.spacing.md,
