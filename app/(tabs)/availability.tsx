@@ -4,37 +4,29 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ScrollView,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import {
   Button,
-  EmptyState,
   ScreenContainer,
 } from "../../src/components/ui";
 import { useBookingStore } from "../../src/store/booking.store";
 import { Theme, useTheme } from "../../src/theme";
 import { AddAvailabilityModal } from "../../src/features/booking/components/AddAvailabilityModal";
 
-const DAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function AvailabilityScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const styles = createStyles(theme);
+  const { width } = useWindowDimensions();
+  const styles = createStyles(theme, width);
   const {
     availabilityRules,
     isLoading,
@@ -44,134 +36,178 @@ export default function AvailabilityScreen() {
   } = useBookingStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     fetchAvailabilityRules();
   }, []);
 
-  // Group rules by day for a more professional "Schedule" view
-  const groupedRules = useMemo(() => {
-    const groups: Record<number, any[]> = {};
+  // Calendar Logic
+  const monthData = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
     
-    // Initialize all days
-    for (let i = 0; i < 7; i++) groups[i] = [];
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const days = [];
+    
+    // Previous month padding
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+      days.push({
+        day: prevMonthLastDay - i,
+        month: month - 1,
+        year,
+        isCurrentMonth: false,
+      });
+    }
+    
+    // Current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push({
+        day: i,
+        month,
+        year,
+        isCurrentMonth: true,
+      });
+    }
+    
+    // Next month padding
+    const remainingSlots = 42 - days.length;
+    for (let i = 1; i <= remainingSlots; i++) {
+      days.push({
+        day: i,
+        month: month + 1,
+        year,
+        isCurrentMonth: false,
+      });
+    }
+    
+    return days;
+  }, [currentDate]);
 
-    availabilityRules.forEach(rule => {
-      // If it's a specific date, we'll handle it separately or group it by its weekday
-      const day = rule.specific_date ? new Date(rule.specific_date).getDay() : rule.weekday;
-      groups[day].push(rule);
-    });
-
-    // Sort rules within each day
-    Object.keys(groups).forEach(key => {
-      groups[Number(key)].sort((a, b) => a.start_time.localeCompare(b.start_time));
-    });
-
-    return groups;
-  }, [availabilityRules]);
+  const navigateMonth = (direction: number) => {
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1);
+    setCurrentDate(newDate);
+  };
 
   const handleDelete = (id: string | number) => {
     if (Platform.OS === 'web') {
-        if (confirm("Remove these hours? Patients won't be able to book this slot anymore.")) {
+        if (confirm("Delete this availability block?")) {
             deleteAvailabilityRule(id);
         }
         return;
     }
-    Alert.alert(
-      "Remove Hours",
-      "Patients won't be able to book this specific slot anymore. Continue?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => deleteAvailabilityRule(id) },
-      ]
-    );
+    Alert.alert("Remove Hours", "Delete this slot?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deleteAvailabilityRule(id) },
+    ]);
   };
 
-  const renderDayGroup = (dayIndex: number) => {
-    const rules = groupedRules[dayIndex];
-    if (rules.length === 0) return null;
+  const getRulesForDate = (day: number, month: number, year: number) => {
+    const targetDate = new Date(year, month, day);
+    const targetWeekday = targetDate.getDay();
+    const dateISO = targetDate.toISOString().split('T')[0];
 
-    return (
-      <View key={dayIndex} style={styles.dayGroup}>
-        <View style={styles.dayHeader}>
-            <Text style={styles.dayName}>{DAYS[dayIndex]}</Text>
-            <View style={styles.dayDot} />
-        </View>
-        <View style={styles.slotsContainer}>
-            {rules.map((rule) => {
-                const isSpecific = !!rule.specific_date;
-                return (
-                    <View key={rule.id} style={styles.slotRow}>
-                        <View style={styles.slotMain}>
-                            <View style={styles.timeBlock}>
-                                <Ionicons name="time-outline" size={14} color={theme.colors.textSecondary} />
-                                <Text style={styles.timeRange}>
-                                    {rule.start_time.slice(0, 5)} — {rule.end_time.slice(0, 5)}
-                                </Text>
-                            </View>
-                            {isSpecific && (
-                                <View style={styles.specificBadge}>
-                                    <Text style={styles.specificText}>
-                                        {new Date(rule.specific_date!).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                        <TouchableOpacity 
-                            onPress={() => handleDelete(rule.id)}
-                            style={styles.deleteAction}
-                        >
-                            <Ionicons name="close-circle-outline" size={20} color={theme.colors.textTertiary} />
-                        </TouchableOpacity>
-                    </View>
-                );
-            })}
-        </View>
-      </View>
-    );
+    return availabilityRules.filter(rule => {
+      if (rule.specific_date) {
+        return rule.specific_date === dateISO;
+      }
+      return rule.weekday === targetWeekday;
+    }).sort((a, b) => a.start_time.localeCompare(b.start_time));
   };
 
   return (
     <ScreenContainer padded={false} style={styles.screen}>
       <View style={styles.contentWrapper}>
+        {/* HEADER */}
         <View style={styles.header}>
-            <View>
-                <Text style={styles.title}>Working Hours</Text>
-                <Text style={styles.subtitle}>Set your weekly recurring and one-time availability.</Text>
+          <View>
+            <Text style={styles.monthTitle}>
+              {currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+            </Text>
+            <Text style={styles.subtitle}>Manage your schedule across the month</Text>
+          </View>
+          
+          <View style={styles.headerActions}>
+            <View style={styles.navGroup}>
+              <TouchableOpacity onPress={() => navigateMonth(-1)} style={styles.navBtn}>
+                <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setCurrentDate(new Date())} style={styles.todayBtn}>
+                <Text style={styles.todayText}>Today</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigateMonth(1)} style={styles.navBtn}>
+                <Ionicons name="chevron-forward" size={20} color={theme.colors.text} />
+              </TouchableOpacity>
             </View>
+            
             <Button
-                title="Add Hours"
-                variant="primary"
-                onPress={() => setShowAddModal(true)}
-                icon={<Ionicons name="add" size={18} color="#FFF" />}
-                style={styles.headerAddBtn}
+              title="Add Availability"
+              variant="primary"
+              size="sm"
+              onPress={() => setShowAddModal(true)}
+              icon={<Ionicons name="add" size={18} color="#FFF" />}
+              style={styles.addBtn}
             />
+          </View>
         </View>
 
-        {isLoading && availabilityRules.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator color={theme.colors.primary} />
+        {/* CALENDAR GRID */}
+        <View style={styles.calendarContainer}>
+          {/* Weekday Labels */}
+          <View style={styles.weekdayRow}>
+            {WEEKDAYS.map(day => (
+              <View key={day} style={styles.weekdayCell}>
+                <Text style={styles.weekdayLabel}>{day}</Text>
+              </View>
+            ))}
           </View>
-        ) : availabilityRules.length === 0 ? (
-          <EmptyState
-            icon="calendar-outline"
-            title="Your schedule is empty"
-            description="Add your first working hour block to start accepting appointments."
-            action={{
-              label: "Add Hours",
-              onPress: () => setShowAddModal(true)
-            }}
-          />
-        ) : (
-          <ScrollView 
-            showsVerticalScrollIndicator={false} 
-            contentContainerStyle={styles.scrollContent}
-          >
-            <View style={styles.grid}>
-                {[1, 2, 3, 4, 5, 6, 0].map(dayIndex => renderDayGroup(dayIndex))}
-            </View>
-          </ScrollView>
-        )}
+
+          {/* Days Grid */}
+          <View style={styles.grid}>
+            {monthData.map((item, index) => {
+              const dayRules = getRulesForDate(item.day, item.month, item.year);
+              const isToday = new Date().toDateString() === new Date(item.year, item.month, item.day).toDateString();
+              
+              return (
+                <View 
+                  key={index} 
+                  style={[
+                    styles.dayCell, 
+                    !item.isCurrentMonth && styles.notCurrentMonth,
+                    index % 7 === 6 && { borderRightWidth: 0 }
+                  ]}
+                >
+                  <View style={styles.dayCellHeader}>
+                    <Text style={[
+                      styles.dayNumber, 
+                      !item.isCurrentMonth && styles.dayNumberInactive,
+                      isToday && styles.todayNumber
+                    ]}>
+                      {item.day}
+                    </Text>
+                  </View>
+                  
+                  <ScrollView style={styles.dayContent} showsVerticalScrollIndicator={false}>
+                    {dayRules.map(rule => (
+                      <TouchableOpacity 
+                        key={rule.id} 
+                        style={[styles.rulePill, !!rule.specific_date && styles.specificPill]}
+                        onLongPress={() => handleDelete(rule.id)}
+                      >
+                        <Text style={[styles.ruleText, !!rule.specific_date && styles.specificRuleText]} numberOfLines={1}>
+                          {rule.start_time.slice(0, 5)} - {rule.end_time.slice(0, 5)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              );
+            })}
+          </View>
+        </View>
       </View>
 
       <AddAvailabilityModal
@@ -184,123 +220,150 @@ export default function AvailabilityScreen() {
   );
 }
 
-const createStyles = (theme: Theme) =>
+const createStyles = (theme: Theme, width: number) =>
   StyleSheet.create({
     screen: {
-      backgroundColor: theme.colors.background,
+      backgroundColor: '#F8F9FA', // Subtle dashboard grey
       flex: 1,
     },
     contentWrapper: {
       flex: 1,
-      maxWidth: 900,
-      width: '100%',
-      alignSelf: 'center',
-      paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
-      paddingTop: Platform.OS === 'web' ? 60 : 40,
+      paddingHorizontal: Platform.OS === 'web' ? 40 : 10,
+      paddingTop: Platform.OS === 'web' ? 40 : 20,
     },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-end',
-      marginBottom: 48,
+      alignItems: 'center',
+      marginBottom: 32,
     },
-    title: {
-      fontSize: 32,
+    monthTitle: {
+      fontSize: 28,
       fontWeight: '800',
       color: theme.colors.text,
-      letterSpacing: -1,
+      letterSpacing: -0.5,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: 14,
       color: theme.colors.textSecondary,
-      marginTop: 6,
+      marginTop: 2,
     },
-    headerAddBtn: {
-        height: 44,
-        borderRadius: 12,
-        paddingHorizontal: 20,
-        ...theme.shadows.sm,
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
     },
-    scrollContent: {
-        paddingBottom: 100,
+    navGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#FFF',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: 4,
+    },
+    navBtn: {
+      padding: 8,
+    },
+    todayBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: '#F3F4F6',
+      borderRadius: 8,
+      marginHorizontal: 4,
+    },
+    todayText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: theme.colors.text,
+    },
+    addBtn: {
+      height: 40,
+      borderRadius: 10,
+      paddingHorizontal: 16,
+    },
+    calendarContainer: {
+      flex: 1,
+      backgroundColor: '#FFF',
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      overflow: 'hidden',
+      ...theme.shadows.sm,
+      marginBottom: 40,
+    },
+    weekdayRow: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      backgroundColor: '#FBFCFD',
+    },
+    weekdayCell: {
+      flex: 1,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    weekdayLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: theme.colors.textTertiary,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
     },
     grid: {
-        gap: 24,
-    },
-    dayGroup: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: 24,
-        padding: 24,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        ...theme.shadows.sm,
-    },
-    dayHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        marginBottom: 20,
-    },
-    dayName: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: theme.colors.text,
-    },
-    dayDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: theme.colors.primary,
-        opacity: 0.3,
-    },
-    slotsContainer: {
-        gap: 12,
-    },
-    slotRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: theme.colors.background,
-        padding: 14,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: theme.colors.border + '40',
-    },
-    slotMain: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    timeBlock: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    timeRange: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: theme.colors.text,
-    },
-    specificBadge: {
-        backgroundColor: theme.colors.primary + '10',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    specificText: {
-        fontSize: 11,
-        fontWeight: '800',
-        color: theme.colors.primary,
-        textTransform: 'uppercase',
-    },
-    deleteAction: {
-        padding: 6,
-        opacity: 0.5,
-    },
-    loadingContainer: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingTop: 100,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    dayCell: {
+      width: '14.28%',
+      height: '16.66%',
+      borderRightWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: theme.colors.border + '50',
+      padding: 8,
+    },
+    notCurrentMonth: {
+      backgroundColor: '#FAFAFA',
+    },
+    dayCellHeader: {
+      marginBottom: 6,
+    },
+    dayNumber: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    dayNumberInactive: {
+      color: theme.colors.textTertiary,
+      opacity: 0.5,
+    },
+    todayNumber: {
+      color: theme.colors.primary,
+      fontWeight: '900',
+    },
+    dayContent: {
+      flex: 1,
+    },
+    rulePill: {
+      backgroundColor: theme.colors.primary + '10',
+      paddingHorizontal: 6,
+      paddingVertical: 4,
+      borderRadius: 6,
+      marginBottom: 4,
+      borderLeftWidth: 3,
+      borderLeftColor: theme.colors.primary,
+    },
+    specificPill: {
+      backgroundColor: '#6366F115',
+      borderLeftColor: '#6366F1',
+    },
+    ruleText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: theme.colors.primary,
+    },
+    specificRuleText: {
+      color: '#6366F1',
     },
   });
