@@ -49,7 +49,7 @@ export function PendingApproval() {
           title: 'Identity Verification',
           subtitle: 'Your profile details are securely saved. For regulatory compliance, please upload your medical credentials.',
           actionComponent: (
-            <View style={{ gap: 12 }}>
+            <View style={{ width: '100%', gap: 12 }}>
               <Button
                 title="Upload Secure Documents"
                 onPress={() => setDocsModalVisible(true)}
@@ -74,19 +74,24 @@ export function PendingApproval() {
           title: 'Verification Pending',
           subtitle: 'Your credentials have been safely transmitted and are currently undergoing review. We will notify you once your account is active.',
           actionComponent: (
-            <View style={{ gap: 12 }}>
-              <Button
-                title="Manage Documents"
-                variant="outline"
+            <View style={styles.actionRow}>
+              <TouchableOpacity
                 onPress={() => setDocsModalVisible(true)}
-                fullWidth
-              />
-              <Button
-                title="Review Profile"
-                variant="ghost"
+                style={styles.secondaryActionBtn}
+              >
+                <Ionicons name="documents-outline" size={18} color={theme.colors.primary} />
+                <Text style={styles.secondaryActionText}>Manage Docs</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.verticalDivider} />
+
+              <TouchableOpacity
                 onPress={() => setProfileModalVisible(true)}
-                fullWidth
-              />
+                style={styles.secondaryActionBtn}
+              >
+                <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
+                <Text style={styles.secondaryActionText}>Review Profile</Text>
+              </TouchableOpacity>
             </View>
           ),
         };
@@ -108,8 +113,6 @@ export function PendingApproval() {
         <Text style={styles.title}>{content.title}</Text>
         <Text style={styles.subtitle}>{content.subtitle}</Text>
         
-        <View style={styles.divider} />
-
         <View style={styles.actions}>
           {content.actionComponent}
         </View>
@@ -211,13 +214,47 @@ const createStyles = (theme: Theme) =>
     },
     actions: {
       width: '100%',
-      marginBottom: 16,
+      marginBottom: 32,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.background,
+      borderRadius: 16,
+      padding: 4,
+      borderWidth: 1,
+      borderColor: theme.colors.border + '50',
+    },
+    secondaryActionBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      gap: 8,
+    },
+    secondaryActionText: {
+      ...theme.typography.bodySm,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    verticalDivider: {
+      width: 1,
+      height: '60%',
+      backgroundColor: theme.colors.border,
+      alignSelf: 'center',
+      opacity: 0.5,
     },
     primaryActionBtn: {
-      paddingVertical: 12,
-      borderRadius: 12,
+      paddingVertical: 14,
+      borderRadius: 16,
+      backgroundColor: theme.colors.primary,
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
     },
     logoutBtn: {
-      marginTop: 8,
+      marginTop: 0,
     }
   });
