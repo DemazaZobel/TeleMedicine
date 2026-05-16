@@ -17,9 +17,10 @@ export default function TabsLayout() {
   const verificationStage = useDoctorStore((s) => s.verificationStage());
   const { isNotificationsDrawerOpen, setIsNotificationsDrawerOpen } = useBookingStore();
 
+  const isPendingDoctor = userRole === 'DOCTOR' && verificationStage !== 'APPROVED';
   const isDesktop = width > 768;
   const isWeb = Platform.OS === 'web';
-  const hideTabBar = isDesktop || isWeb;
+  const hideTabBar = isDesktop || isWeb || isPendingDoctor;
 
   const tabsElement = (
     <Tabs
@@ -83,7 +84,7 @@ export default function TabsLayout() {
         {isWeb ? (
           isDesktop ? (
             <View style={{ flex: 1, flexDirection: 'row' }}>
-              {isDesktop && user && (
+              {isDesktop && user && !isPendingDoctor && (
                 <Sidebar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
               )}
               <View style={{ flex: 1 }}>
@@ -92,7 +93,9 @@ export default function TabsLayout() {
             </View>
           ) : (
             <View style={{ flex: 1 }}>
-              <MobileWebNav onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+              {!isPendingDoctor && (
+                <MobileWebNav onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+              )}
               <View style={{ flex: 1 }}>
                 {tabsElement}
               </View>

@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Text, View, StyleSheet, Platform } from 'react-native';
+import { Text, View, StyleSheet, Platform, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../../components/ui';
 import { useDoctorStore } from '../../../store/doctor.store';
 import { useAuthStore } from '../../../store/authStore';
@@ -28,30 +29,36 @@ export function PendingApproval() {
     switch (stage) {
       case 'NEW_DOCTOR':
         return {
+          icon: 'person-circle-outline' as const,
+          iconColor: theme.colors.primary,
           title: 'Provider Onboarding',
-          subtitle: 'Welcome to MedLink. Please complete your professional profile before accepting patient appointments.',
+          subtitle: 'Welcome to MedLink. Please configure your professional profile to begin accepting patient appointments.',
           actionComponent: (
             <Button
               title="Configure Profile"
               onPress={() => setProfileModalVisible(true)}
               fullWidth
+              style={styles.primaryActionBtn}
             />
           ),
         };
       case 'PROFILE_FILLED':
         return {
+          icon: 'shield-checkmark-outline' as const,
+          iconColor: '#13C2C2',
           title: 'Identity Verification',
-          subtitle: 'Your profile details are saved. For regulatory compliance, please upload your medical credentials.',
+          subtitle: 'Your profile details are securely saved. For regulatory compliance, please upload your medical credentials.',
           actionComponent: (
             <View style={{ gap: 12 }}>
               <Button
                 title="Upload Secure Documents"
                 onPress={() => setDocsModalVisible(true)}
                 fullWidth
+                style={styles.primaryActionBtn}
               />
               <Button
                 title="Review Profile"
-                variant="ghost"
+                variant="outline"
                 onPress={() => setProfileModalVisible(true)}
                 fullWidth
               />
@@ -62,8 +69,10 @@ export function PendingApproval() {
       case 'PENDING_REVIEW':
       default:
         return {
+          icon: 'hourglass-outline' as const,
+          iconColor: '#FAAD14',
           title: 'Verification Pending',
-          subtitle: 'Your credentials have been transmitted and are undergoing review. We will notify you once active.',
+          subtitle: 'Your credentials have been safely transmitted and are currently undergoing review. We will notify you once your account is active.',
           actionComponent: (
             <View style={{ gap: 12 }}>
               <Button
@@ -86,20 +95,31 @@ export function PendingApproval() {
 
   return (
     <View style={styles.outerContainer}>
+      <View style={styles.logoContainer}>
+        <Ionicons name="medical" size={32} color={theme.colors.primary} />
+        <Text style={styles.logoText}>MedLink</Text>
+      </View>
+
       <View style={styles.card}>
+        <View style={[styles.iconWrapper, { backgroundColor: content.iconColor + '15' }]}>
+          <Ionicons name={content.icon} size={48} color={content.iconColor} />
+        </View>
+        
         <Text style={styles.title}>{content.title}</Text>
         <Text style={styles.subtitle}>{content.subtitle}</Text>
         
+        <View style={styles.divider} />
+
         <View style={styles.actions}>
           {content.actionComponent}
         </View>
 
         <Button
-          title="Log Out"
+          title="Log Out Securely"
           variant="ghost"
           onPress={logout}
           style={styles.logoutBtn}
-          textStyle={{ color: theme.colors.textTertiary }}
+          textStyle={{ color: theme.colors.textTertiary, fontWeight: '500' }}
         />
       </View>
 
@@ -124,46 +144,80 @@ const createStyles = (theme: Theme) =>
       alignItems: 'center',
       padding: theme.spacing.xl,
     },
+    logoContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 32,
+      gap: 8,
+    },
+    logoText: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: theme.colors.text,
+      letterSpacing: -0.5,
+    },
     card: {
       width: '100%',
-      maxWidth: 480,
+      maxWidth: 440,
       backgroundColor: theme.colors.surface,
-      borderRadius: 24,
-      padding: theme.spacing['2xl'],
+      borderRadius: 28,
+      padding: 32,
       alignItems: 'center',
-      // Subtle shadow for premium feel
+      borderWidth: 1,
+      borderColor: theme.colors.border + '50',
       ...Platform.select({
         web: {
-          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
         },
         default: {
-          elevation: 4,
+          elevation: 8,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.06,
+          shadowRadius: 24,
         }
       })
     },
+    iconWrapper: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
     title: {
-      ...theme.typography.h3,
+      fontSize: 22,
       color: theme.colors.text,
       textAlign: 'center',
-      marginBottom: theme.spacing.sm,
-      fontWeight: '800',
+      marginBottom: 12,
+      fontWeight: '700',
+      letterSpacing: -0.5,
     },
     subtitle: {
-      ...theme.typography.body,
+      fontSize: 15,
       color: theme.colors.textSecondary,
       textAlign: 'center',
-      lineHeight: 24,
-      marginBottom: theme.spacing['2xl'],
+      lineHeight: 22,
+      marginBottom: 24,
+      paddingHorizontal: 8,
+    },
+    divider: {
+      width: '100%',
+      height: 1,
+      backgroundColor: theme.colors.border,
+      opacity: 0.5,
+      marginBottom: 24,
     },
     actions: {
       width: '100%',
-      marginBottom: theme.spacing.xl,
+      marginBottom: 16,
+    },
+    primaryActionBtn: {
+      paddingVertical: 12,
+      borderRadius: 12,
     },
     logoutBtn: {
-      marginTop: theme.spacing.md,
+      marginTop: 8,
     }
   });
