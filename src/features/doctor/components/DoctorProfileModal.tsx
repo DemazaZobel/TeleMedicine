@@ -1,12 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Platform, Pressable, Alert, Switch } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button, Card, Input } from '../../../components/ui';
-import { ModalBase } from '../../../components/ui/ModalBase';
-import { useDoctorStore } from '../../../store/doctor.store';
-import { useTheme, Theme } from '../../../theme';
-import type { DoctorProfileUpdate } from '../types/doctor.types';
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Button, Card, Input } from "../../../components/ui";
+import { ModalBase } from "../../../components/ui/ModalBase";
+import { useDoctorStore } from "../../../store/doctor.store";
+import { Theme, useTheme } from "../../../theme";
+import type { DoctorProfileUpdate } from "../types/doctor.types";
 
 interface DoctorProfileModalProps {
   visible: boolean;
@@ -17,7 +28,11 @@ interface EducationItem {
   id: string;
   degree: string;
   institution: string;
-  year: string;
+  fieldOfStudy?: string;
+  startYear?: string;
+  endYear: string;
+  grade?: string;
+  description?: string;
   isEditing?: boolean;
 }
 
@@ -34,9 +49,18 @@ interface ExperienceItem {
   isEditing?: boolean;
 }
 
-const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
+const EMPLOYMENT_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Freelance",
+];
 
-export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps) {
+export function DoctorProfileModal({
+  visible,
+  onClose,
+}: DoctorProfileModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -50,76 +74,123 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
     clearError,
   } = useDoctorStore();
 
-  const [specialization, setSpecialization] = useState('');
-  const [location, setLocation] = useState('');
-  const [hospital, setHospital] = useState('');
-  const [biography, setBiography] = useState('');
+  const [specialization, setSpecialization] = useState("");
+  const [location, setLocation] = useState("");
+  const [hospital, setHospital] = useState("");
+  const [biography, setBiography] = useState("");
   const [educationList, setEducationList] = useState<EducationItem[]>([]);
   const [experienceList, setExperienceList] = useState<ExperienceItem[]>([]);
-  const [youtube, setYoutube] = useState('');
-  const [linkedin, setLinkedin] = useState('');
-  const [yearsOfExperience, setYearsOfExperience] = useState('');
-  const [consultationFee, setConsultationFee] = useState('');
+  const [youtube, setYoutube] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [yearsOfExperience, setYearsOfExperience] = useState("");
+  const [consultationFee, setConsultationFee] = useState("");
   const [saved, setSaved] = useState(false);
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState("");
   const [showDatePickerId, setShowDatePickerId] = useState<string | null>(null);
 
   const handleAddEducation = () => {
-    setEducationList([...educationList, { id: Date.now().toString(), degree: '', institution: '', year: '', isEditing: true }]);
+    setEducationList([
+      ...educationList,
+      {
+        id: Date.now().toString(),
+        degree: "",
+        institution: "",
+        fieldOfStudy: "",
+        startYear: "",
+        endYear: "",
+        grade: "",
+        description: "",
+        isEditing: true,
+      },
+    ]);
   };
 
   const handleRemoveEducation = (id: string) => {
-    setEducationList(educationList.filter(e => e.id !== id));
+    setEducationList(educationList.filter((e) => e.id !== id));
   };
 
-  const updateEducation = (id: string, field: keyof EducationItem, value: any) => {
-    setEducationList(educationList.map(e => e.id === id ? { ...e, [field]: value } : e));
+  const updateEducation = (
+    id: string,
+    field: keyof EducationItem,
+    value: any,
+  ) => {
+    setEducationList(
+      educationList.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+    );
     clearError();
     setSaved(false);
   };
 
   const handleSaveEducation = (id: string) => {
-    const edu = educationList.find(e => e.id === id);
-    if (!edu?.degree || !edu?.institution || !edu?.year) {
-      Alert.alert("Missing Fields", "Please complete all fields for this degree.");
+    const edu = educationList.find((e) => e.id === id);
+    if (!edu?.degree || !edu?.institution || !edu?.endYear) {
+      Alert.alert(
+        "Missing Fields",
+        "Please complete the required fields (Institution, Degree, and End Year).",
+      );
       return;
     }
-    updateEducation(id, 'isEditing', false);
+    updateEducation(id, "isEditing", false);
   };
 
   const handleAddExperience = () => {
-    setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', startYear: '', endYear: '', isCurrent: false, isEditing: true }]);
+    setExperienceList([
+      ...experienceList,
+      {
+        id: Date.now().toString(),
+        role: "",
+        hospital: "",
+        startYear: "",
+        endYear: "",
+        isCurrent: false,
+        isEditing: true,
+      },
+    ]);
   };
 
   const handleRemoveExperience = (id: string) => {
-    setExperienceList(experienceList.filter(e => e.id !== id));
+    setExperienceList(experienceList.filter((e) => e.id !== id));
   };
 
-  const updateExperience = (id: string, field: keyof ExperienceItem, value: any) => {
-    setExperienceList(experienceList.map(e => e.id === id ? { ...e, [field]: value } : e));
+  const updateExperience = (
+    id: string,
+    field: keyof ExperienceItem,
+    value: any,
+  ) => {
+    setExperienceList(
+      experienceList.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
+    );
     clearError();
     setSaved(false);
   };
 
   const handleSaveExperience = (id: string) => {
-    const exp = experienceList.find(e => e.id === id);
-    if (!exp?.role || !exp?.hospital || !exp?.startYear || (!exp.isCurrent && !exp?.endYear)) {
-      Alert.alert("Missing Fields", "Please complete all fields for this experience.");
+    const exp = experienceList.find((e) => e.id === id);
+    if (
+      !exp?.role ||
+      !exp?.hospital ||
+      !exp?.startYear ||
+      (!exp.isCurrent && !exp?.endYear)
+    ) {
+      Alert.alert(
+        "Missing Fields",
+        "Please complete all fields for this experience.",
+      );
       return;
     }
-    updateExperience(id, 'isEditing', false);
+    updateExperience(id, "isEditing", false);
   };
 
   const handleYearsChange = (t: string) => {
-    setYearsOfExperience(t.replace(/[^0-9]/g, ''));
+    setYearsOfExperience(t.replace(/[^0-9]/g, ""));
     clearError();
     setSaved(false);
   };
 
   const handleFeeChange = (t: string) => {
-    let val = t.replace(/[^0-9.]/g, '');
-    const parts = val.split('.');
-    if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+    let val = t.replace(/[^0-9.]/g, "");
+    const parts = val.split(".");
+    if (parts.length > 2) val = parts[0] + "." + parts.slice(1).join("");
     setConsultationFee(val);
     clearError();
     setSaved(false);
@@ -135,31 +206,43 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
 
   useEffect(() => {
     if (profile && visible) {
-      setSpecialization(profile.specialization ?? '');
-      setLocation(profile.location ?? '');
-      setHospital(profile.current_working_hospital ?? '');
-      setBiography(profile.biography ?? '');
-      
+      setSpecialization(profile.specialization ?? "");
+      setLocation(profile.location ?? "");
+      setHospital(profile.current_working_hospital ?? "");
+      setBiography(profile.biography ?? "");
+
       // Parse backend arrays if available
       if (Array.isArray(profile.education)) {
-        setEducationList(profile.education.map((e, i) => ({ id: i.toString(), isEditing: false, ...e })));
+        setEducationList(
+          profile.education.map((e, i) => ({
+            id: i.toString(),
+            isEditing: false,
+            ...e,
+          })),
+        );
       } else {
         setEducationList([]);
       }
 
       if (Array.isArray(profile.experience)) {
-        setExperienceList(profile.experience.map((e, i) => ({ id: i.toString(), isEditing: false, ...e })));
+        setExperienceList(
+          profile.experience.map((e, i) => ({
+            id: i.toString(),
+            isEditing: false,
+            ...e,
+          })),
+        );
       } else {
         setExperienceList([]);
       }
 
-      setYoutube(profile.youtube_link ?? '');
-      setLinkedin(profile.linkedin_link ?? '');
+      setYoutube(profile.youtube_link ?? "");
+      setLinkedin(profile.linkedin_link ?? "");
       setYearsOfExperience(
-        profile.years_of_experience ? String(profile.years_of_experience) : ''
+        profile.years_of_experience ? String(profile.years_of_experience) : "",
       );
       setConsultationFee(
-        profile.consultation_fee ? String(profile.consultation_fee) : ''
+        profile.consultation_fee ? String(profile.consultation_fee) : "",
       );
     }
   }, [profile, visible]);
@@ -167,20 +250,22 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   const handleSave = useCallback(async () => {
     setSaved(false);
     clearError();
-    setFormError('');
-    
-    const parsedYears = yearsOfExperience ? Number(yearsOfExperience) : undefined;
+    setFormError("");
+
+    const parsedYears = yearsOfExperience
+      ? Number(yearsOfExperience)
+      : undefined;
     const parsedFee = consultationFee ? Number(consultationFee) : undefined;
 
     if (yearsOfExperience && isNaN(parsedYears!)) {
-      setFormError('Experience (years) must be a valid number.');
+      setFormError("Experience (years) must be a valid number.");
       return;
     }
     if (consultationFee && isNaN(parsedFee!)) {
-      setFormError('Consultation Fee must be a valid number.');
+      setFormError("Consultation Fee must be a valid number.");
       return;
     }
-    
+
     const payload: DoctorProfileUpdate = {
       specialization: specialization.trim(),
       location: location.trim(),
@@ -193,7 +278,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       years_of_experience: parsedYears,
       consultation_fee: parsedFee,
     };
-    
+
     try {
       await updateProfile(payload);
       setSaved(true);
@@ -204,9 +289,19 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       // Error is set in the store
     }
   }, [
-    specialization, location, hospital, biography, educationList, experienceList, 
-    youtube, linkedin, yearsOfExperience, consultationFee, 
-    updateProfile, clearError, onClose
+    specialization,
+    location,
+    hospital,
+    biography,
+    educationList,
+    experienceList,
+    youtube,
+    linkedin,
+    yearsOfExperience,
+    consultationFee,
+    updateProfile,
+    clearError,
+    onClose,
   ]);
 
   return (
@@ -218,11 +313,15 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <Image 
-            source={require('../../../../assets/images/doctor-avatar.png')} 
-            style={styles.avatar} 
+          <Image
+            source={require("../../../../assets/images/doctor-avatar.png")}
+            style={styles.avatar}
           />
-          <Text style={styles.title}>{profile?.is_verified ? 'Verified Practitioner' : 'Profile Configuration'}</Text>
+          <Text style={styles.title}>
+            {profile?.is_verified
+              ? "Verified Practitioner"
+              : "Profile Configuration"}
+          </Text>
         </View>
 
         {(error || formError) && (
@@ -233,7 +332,9 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
 
         {saved && (
           <View style={styles.successBanner}>
-            <Text style={styles.successText}>Profile updated successfully!</Text>
+            <Text style={styles.successText}>
+              Profile updated successfully!
+            </Text>
           </View>
         )}
 
@@ -242,7 +343,11 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             label="Specialization"
             placeholder="e.g. Cardiology"
             value={specialization}
-            onChangeText={(t) => { setSpecialization(t); clearError(); setSaved(false); }}
+            onChangeText={(t) => {
+              setSpecialization(t);
+              clearError();
+              setSaved(false);
+            }}
           />
 
           <View style={styles.row}>
@@ -250,14 +355,22 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               label="Location"
               placeholder="e.g. Addis Ababa"
               value={location}
-              onChangeText={(t) => { setLocation(t); clearError(); setSaved(false); }}
+              onChangeText={(t) => {
+                setLocation(t);
+                clearError();
+                setSaved(false);
+              }}
               containerStyle={styles.halfField}
             />
             <Input
               label="Current Hospital/Clinic"
               placeholder="e.g. Tikur Anbessa"
               value={hospital}
-              onChangeText={(t) => { setHospital(t); clearError(); setSaved(false); }}
+              onChangeText={(t) => {
+                setHospital(t);
+                clearError();
+                setSaved(false);
+              }}
               containerStyle={styles.halfField}
             />
           </View>
@@ -266,7 +379,11 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             label="Biography"
             placeholder="Tell patients about your medical background..."
             value={biography}
-            onChangeText={(t) => { setBiography(t); clearError(); setSaved(false); }}
+            onChangeText={(t) => {
+              setBiography(t);
+              clearError();
+              setSaved(false);
+            }}
             multiline
             numberOfLines={3}
             containerStyle={styles.multilineContainer}
@@ -275,175 +392,272 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
           {/* Education Section */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Education</Text>
-            <TouchableOpacity onPress={handleAddEducation} style={styles.addBtn}>
-              <Ionicons name="add-circle-outline" size={20} color={theme.colors.primary} />
+            <TouchableOpacity
+              onPress={handleAddEducation}
+              style={styles.addBtn}
+            >
+              <Ionicons
+                name="add-circle-outline"
+                size={20}
+                color={theme.colors.primary}
+              />
               <Text style={styles.addBtnText}>Add</Text>
             </TouchableOpacity>
           </View>
           {educationList.map((edu, index) => {
-            const isEduComplete = edu.degree.trim() !== '' && edu.institution.trim() !== '' && edu.year.trim() !== '';
-            
+            const isEduComplete =
+              edu.degree.trim() !== "" &&
+              edu.institution.trim() !== "" &&
+              edu.endYear.trim() !== "";
+
             return (
               <View key={edu.id} style={styles.dynamicItemCard}>
                 <View style={styles.dynamicItemHeader}>
-                  <Text style={styles.dynamicItemTitle}>Degree {index + 1}</Text>
+                  <Text style={styles.dynamicItemTitle}>
+                    Education {index + 1}
+                  </Text>
                   <View style={styles.dynamicItemActions}>
                     {edu.isEditing ? (
-                      <TouchableOpacity 
-                        onPress={() => handleSaveEducation(edu.id)} 
-                        style={[styles.textActionBtn, !isEduComplete && { opacity: 0.4 }]}
+                      <TouchableOpacity
+                        onPress={() => handleSaveEducation(edu.id)}
+                        style={[
+                          styles.textActionBtn,
+                          !isEduComplete && { opacity: 0.4 },
+                        ]}
                         disabled={!isEduComplete}
                       >
                         <Text style={styles.textActionBtnSuccess}>Done</Text>
                       </TouchableOpacity>
                     ) : (
-                      <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', true)} style={styles.textActionBtn}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateEducation(edu.id, "isEditing", true)
+                        }
+                        style={styles.textActionBtn}
+                      >
                         <Text style={styles.textActionBtnPrimary}>Edit</Text>
                       </TouchableOpacity>
                     )}
-                    <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} style={styles.actionBtn}>
-                      <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                    <TouchableOpacity
+                      onPress={() => handleRemoveEducation(edu.id)}
+                      style={styles.actionBtn}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={theme.colors.error}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>
-              
-              {edu.isEditing ? (
-                <>
-                  <Input
-                    label="Degree/Major"
-                    placeholder="e.g. MD, PhD"
-                    value={edu.degree}
-                    onChangeText={(t) => updateEducation(edu.id, 'degree', t)}
-                    containerStyle={styles.dynamicInputMargin}
-                  />
+
+                {edu.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
-                      label="Institution"
-                      placeholder="e.g. AAU"
+                      label="School*"
+                      placeholder="Ex: Boston University"
                       value={edu.institution}
-                      onChangeText={(t) => updateEducation(edu.id, 'institution', t)}
+                      onChangeText={(t) =>
+                        updateEducation(edu.id, "institution", t)
+                      }
                       containerStyle={styles.dynamicInputMargin}
                     />
-                    
-                    {/* Date Picker for Graduation Year */}
-                    {Platform.OS === 'web' ? (
-                      <View style={{ marginBottom: 12 }}>
-                        <Text style={styles.dateLabel}>Graduation Date</Text>
-                        <input 
-                          type="date" 
-                          value={edu.year} 
-                          onChange={(e) => updateEducation(edu.id, 'year', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: 12,
-                            border: '1px solid ' + theme.colors.border,
-                            backgroundColor: theme.colors.background,
-                            color: theme.colors.text,
-                            fontSize: 16,
-                            fontFamily: 'inherit'
-                          }}
-                        />
-                      </View>
-                    ) : (
-                      <View style={{ marginBottom: 12 }}>
-                        <Text style={styles.dateLabel}>Graduation Date</Text>
-                        <Pressable 
-                          style={[styles.dateInput, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]} 
-                          onPress={() => setShowDatePickerId(edu.id)}
-                        >
-                          <Text style={{ color: edu.year ? theme.colors.text : theme.colors.placeholder }}>
-                            {edu.year || "Select Date"}
-                          </Text>
-                          <Ionicons name="calendar-outline" size={20} color={theme.colors.textTertiary} />
-                        </Pressable>
-                        {showDatePickerId === edu.id && (
-                          <DateTimePicker
-                            value={edu.year ? new Date(edu.year) : new Date()}
-                            mode="date"
-                            display="default"
-                            onChange={(event: any, selectedDate?: Date) => {
-                              setShowDatePickerId(null);
-                              if (selectedDate) {
-                                updateEducation(edu.id, 'year', selectedDate.toISOString().split('T')[0]);
-                              }
-                            }}
-                            maximumDate={new Date()}
-                          />
-                        )}
-                      </View>
-                    )}
+                    <Input
+                      label="Degree*"
+                      placeholder="Ex: Bachelor of Science"
+                      value={edu.degree}
+                      onChangeText={(t) => updateEducation(edu.id, "degree", t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+                    <Input
+                      label="Field of study"
+                      placeholder="Ex: Business"
+                      value={edu.fieldOfStudy || ""}
+                      onChangeText={(t) =>
+                        updateEducation(edu.id, "fieldOfStudy", t)
+                      }
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+
+                    <View style={styles.row}>
+                      <Input
+                        label="Start Year"
+                        placeholder="Ex: 2018"
+                        value={edu.startYear || ""}
+                        onChangeText={(t) =>
+                          updateEducation(
+                            edu.id,
+                            "startYear",
+                            t.replace(/[^0-9]/g, ""),
+                          )
+                        }
+                        keyboardType="numeric"
+                        containerStyle={styles.halfField}
+                      />
+                      <Input
+                        label="End Year (or expected)*"
+                        placeholder="Ex: 2022"
+                        value={edu.endYear || ""}
+                        onChangeText={(t) =>
+                          updateEducation(
+                            edu.id,
+                            "endYear",
+                            t.replace(/[^0-9]/g, ""),
+                          )
+                        }
+                        keyboardType="numeric"
+                        containerStyle={styles.halfField}
+                      />
+                    </View>
+
+                    <Input
+                      label="Grade"
+                      placeholder="Ex: 3.8 GPA"
+                      value={edu.grade || ""}
+                      onChangeText={(t) => updateEducation(edu.id, "grade", t)}
+                      containerStyle={styles.dynamicInputMargin}
+                    />
+
+                    <Input
+                      label="Description"
+                      placeholder="Describe your studies, awards, etc."
+                      value={edu.description || ""}
+                      onChangeText={(t) =>
+                        updateEducation(edu.id, "description", t)
+                      }
+                      multiline
+                      numberOfLines={3}
+                      containerStyle={styles.multilineContainer}
+                    />
                   </View>
-                </>
-              ) : (
-                <View style={styles.summaryContainer}>
-                  <Text style={styles.summaryTitle}>{edu.degree || 'Untitled Degree'}</Text>
-                  <Text style={styles.summarySubtitle}>
-                    {edu.institution}{edu.institution && edu.year ? ' • ' : ''}{edu.year}
-                  </Text>
-                </View>
-              )}
-            </View>
+                ) : (
+                  <View style={styles.summaryContainer}>
+                    <Text style={styles.summaryTitle}>
+                      {edu.institution || "Untitled School"}
+                    </Text>
+                    <Text style={styles.summarySubtitle}>
+                      {edu.degree}
+                      {edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ""}
+                    </Text>
+                    <Text style={styles.summaryTertiary}>
+                      {edu.startYear ? `${edu.startYear} - ` : ""}
+                      {edu.endYear}
+                    </Text>
+                    {edu.grade ? (
+                      <Text style={styles.summarySubtitle}>
+                        Grade: {edu.grade}
+                      </Text>
+                    ) : null}
+                    {edu.description ? (
+                      <Text style={styles.summaryDescription}>
+                        {edu.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                )}
+              </View>
             );
           })}
 
           {/* Experience Section */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Experience</Text>
-            <TouchableOpacity onPress={handleAddExperience} style={styles.addBtn}>
-              <Ionicons name="add-circle-outline" size={20} color={theme.colors.primary} />
+            <TouchableOpacity
+              onPress={handleAddExperience}
+              style={styles.addBtn}
+            >
+              <Ionicons
+                name="add-circle-outline"
+                size={20}
+                color={theme.colors.primary}
+              />
               <Text style={styles.addBtnText}>Add</Text>
             </TouchableOpacity>
           </View>
+
           {experienceList.map((exp, index) => {
-            const isExpComplete = exp.role.trim() !== '' && exp.hospital.trim() !== '' && exp.startYear.trim() !== '' && (exp.isCurrent || exp.endYear.trim() !== '');
+            const isExpComplete =
+              exp.role.trim() !== "" &&
+              exp.hospital.trim() !== "" &&
+              exp.startYear.trim() !== "" &&
+              (exp.isCurrent || exp.endYear.trim() !== "");
 
             return (
               <View key={exp.id} style={styles.dynamicItemCard}>
                 <View style={styles.dynamicItemHeader}>
                   <Text style={styles.dynamicItemTitle}>Role {index + 1}</Text>
+
                   <View style={styles.dynamicItemActions}>
                     {exp.isEditing ? (
-                      <TouchableOpacity 
-                        onPress={() => handleSaveExperience(exp.id)} 
-                        style={[styles.textActionBtn, !isExpComplete && { opacity: 0.4 }]}
+                      <TouchableOpacity
+                        onPress={() => handleSaveExperience(exp.id)}
+                        style={[
+                          styles.textActionBtn,
+                          !isExpComplete && { opacity: 0.4 },
+                        ]}
                         disabled={!isExpComplete}
                       >
                         <Text style={styles.textActionBtnSuccess}>Done</Text>
                       </TouchableOpacity>
                     ) : (
-                      <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', true)} style={styles.textActionBtn}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          updateExperience(exp.id, "isEditing", true)
+                        }
+                        style={styles.textActionBtn}
+                      >
                         <Text style={styles.textActionBtnPrimary}>Edit</Text>
                       </TouchableOpacity>
                     )}
-                    <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} style={styles.actionBtn}>
-                      <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+
+                    <TouchableOpacity
+                      onPress={() => handleRemoveExperience(exp.id)}
+                      style={styles.actionBtn}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={theme.colors.error}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>
-              
-              {exp.isEditing ? (
+
+                {exp.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
                       label="Title*"
                       placeholder="Ex: Senior Surgeon"
                       value={exp.role}
-                      onChangeText={(t) => updateExperience(exp.id, 'role', t)}
+                      onChangeText={(t) => updateExperience(exp.id, "role", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
 
                     <Text style={styles.dateLabel}>Employment type</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, flexDirection: 'row' }}>
-                      {EMPLOYMENT_TYPES.map(type => (
+
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={{ marginBottom: 12, flexDirection: "row" }}
+                    >
+                      {EMPLOYMENT_TYPES.map((type) => (
                         <Pressable
                           key={type}
-                          onPress={() => updateExperience(exp.id, 'employmentType', type)}
+                          onPress={() =>
+                            updateExperience(exp.id, "employmentType", type)
+                          }
                           style={[
                             styles.chip,
-                            exp.employmentType === type && styles.chipSelected
+                            exp.employmentType === type && styles.chipSelected,
                           ]}
                         >
-                          <Text style={[styles.chipText, exp.employmentType === type && styles.chipTextSelected]}>
+                          <Text
+                            style={[
+                              styles.chipText,
+                              exp.employmentType === type &&
+                                styles.chipTextSelected,
+                            ]}
+                          >
                             {type}
                           </Text>
                         </Pressable>
@@ -454,33 +668,50 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                       label="Company or hospital*"
                       placeholder="Ex: Tikur Anbessa"
                       value={exp.hospital}
-                      onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
+                      onChangeText={(t) =>
+                        updateExperience(exp.id, "hospital", t)
+                      }
                       containerStyle={styles.dynamicInputMargin}
                     />
 
                     <Input
                       label="Location"
                       placeholder="Ex: Addis Ababa, Ethiopia"
-                      value={exp.location || ''}
-                      onChangeText={(t) => updateExperience(exp.id, 'location', t)}
+                      value={exp.location || ""}
+                      onChangeText={(t) =>
+                        updateExperience(exp.id, "location", t)
+                      }
                       containerStyle={styles.dynamicInputMargin}
                     />
-                    
+
                     <View style={styles.row}>
                       <Input
                         label="Start Year*"
                         placeholder="Ex: 2018"
-                        value={exp.startYear || ''}
-                        onChangeText={(t) => updateExperience(exp.id, 'startYear', t.replace(/[^0-9]/g, ''))}
+                        value={exp.startYear || ""}
+                        onChangeText={(t) =>
+                          updateExperience(
+                            exp.id,
+                            "startYear",
+                            t.replace(/[^0-9]/g, ""),
+                          )
+                        }
                         keyboardType="numeric"
                         containerStyle={styles.halfField}
                       />
+
                       {!exp.isCurrent && (
                         <Input
                           label="End Year*"
                           placeholder="Ex: 2023"
-                          value={exp.endYear || ''}
-                          onChangeText={(t) => updateExperience(exp.id, 'endYear', t.replace(/[^0-9]/g, ''))}
+                          value={exp.endYear || ""}
+                          onChangeText={(t) =>
+                            updateExperience(
+                              exp.id,
+                              "endYear",
+                              t.replace(/[^0-9]/g, ""),
+                            )
+                          }
                           keyboardType="numeric"
                           containerStyle={styles.halfField}
                         />
@@ -488,41 +719,59 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                     </View>
 
                     <View style={styles.switchRow}>
-                      <Switch 
-                        value={exp.isCurrent} 
-                        onValueChange={(val) => updateExperience(exp.id, 'isCurrent', val)}
-                        trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+                      <Switch
+                        value={exp.isCurrent}
+                        onValueChange={(val) =>
+                          updateExperience(exp.id, "isCurrent", val)
+                        }
+                        trackColor={{
+                          true: theme.colors.primary,
+                          false: theme.colors.border,
+                        }}
                       />
-                      <Text style={styles.switchLabel}>I am currently working in this role</Text>
+
+                      <Text style={styles.switchLabel}>
+                        I am currently working in this role
+                      </Text>
                     </View>
 
                     <Input
                       label="Description"
                       placeholder="Describe your responsibilities, achievements, etc."
-                      value={exp.description || ''}
-                      onChangeText={(t) => updateExperience(exp.id, 'description', t)}
+                      value={exp.description || ""}
+                      onChangeText={(t) =>
+                        updateExperience(exp.id, "description", t)
+                      }
                       multiline
                       numberOfLines={3}
                       containerStyle={styles.multilineContainer}
                     />
                   </View>
-                </>
-              ) : (
-                <View style={styles.summaryContainer}>
-                  <Text style={styles.summaryTitle}>{exp.role || 'Untitled Role'}</Text>
-                  <Text style={styles.summarySubtitle}>
-                    {exp.hospital}{exp.employmentType ? ` · ${exp.employmentType}` : ''}
-                  </Text>
-                  <Text style={styles.summaryTertiary}>
-                    {exp.startYear} - {exp.isCurrent ? 'Present' : exp.endYear}
-                    {exp.location ? ` · ${exp.location}` : ''}
-                  </Text>
-                  {exp.description ? (
-                    <Text style={styles.summaryDescription}>{exp.description}</Text>
-                  ) : null}
-                </View>
-              )}
-            </View>
+                ) : (
+                  <View style={styles.summaryContainer}>
+                    <Text style={styles.summaryTitle}>
+                      {exp.role || "Untitled Role"}
+                    </Text>
+
+                    <Text style={styles.summarySubtitle}>
+                      {exp.hospital}
+                      {exp.employmentType ? ` · ${exp.employmentType}` : ""}
+                    </Text>
+
+                    <Text style={styles.summaryTertiary}>
+                      {exp.startYear} -{" "}
+                      {exp.isCurrent ? "Present" : exp.endYear}
+                      {exp.location ? ` · ${exp.location}` : ""}
+                    </Text>
+
+                    {exp.description ? (
+                      <Text style={styles.summaryDescription}>
+                        {exp.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                )}
+              </View>
             );
           })}
 
@@ -533,7 +782,11 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               label="YouTube Link (Optional)"
               placeholder="https://youtube.com/..."
               value={youtube}
-              onChangeText={(t) => { setYoutube(t); clearError(); setSaved(false); }}
+              onChangeText={(t) => {
+                setYoutube(t);
+                clearError();
+                setSaved(false);
+              }}
               containerStyle={styles.halfField}
               keyboardType="url"
               autoCapitalize="none"
@@ -542,7 +795,11 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               label="LinkedIn (Optional)"
               placeholder="https://linkedin.com/in/..."
               value={linkedin}
-              onChangeText={(t) => { setLinkedin(t); clearError(); setSaved(false); }}
+              onChangeText={(t) => {
+                setLinkedin(t);
+                clearError();
+                setSaved(false);
+              }}
               containerStyle={styles.halfField}
               keyboardType="url"
               autoCapitalize="none"
@@ -587,7 +844,7 @@ const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing.xl,
     },
     header: {
-      alignItems: 'center',
+      alignItems: "center",
       marginBottom: theme.spacing.xl,
     },
     avatar: {
@@ -599,14 +856,14 @@ const createStyles = (theme: Theme) =>
     title: {
       ...theme.typography.h4,
       color: theme.colors.text,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     card: {
       marginBottom: theme.spacing.lg,
       padding: theme.spacing.lg,
     },
     row: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: theme.spacing.md,
       marginTop: theme.spacing.md,
     },
@@ -614,7 +871,7 @@ const createStyles = (theme: Theme) =>
       flex: 1,
     },
     inputStack: {
-      flexDirection: 'column',
+      flexDirection: "column",
     },
     dynamicInputMargin: {
       marginBottom: theme.spacing.sm,
@@ -643,34 +900,34 @@ const createStyles = (theme: Theme) =>
     },
     successText: {
       color: theme.colors.success,
-      fontWeight: '500',
+      fontWeight: "500",
       fontSize: 14,
-      textAlign: 'center',
+      textAlign: "center",
     },
     sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       marginTop: theme.spacing.xl,
       marginBottom: theme.spacing.sm,
     },
     sectionTitle: {
       ...theme.typography.h6,
       color: theme.colors.text,
-      fontWeight: '700',
+      fontWeight: "700",
     },
     addBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 4,
       paddingHorizontal: 8,
       paddingVertical: 4,
-      backgroundColor: theme.colors.primary + '15',
+      backgroundColor: theme.colors.primary + "15",
       borderRadius: 8,
     },
     addBtnText: {
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: "600",
       fontSize: 14,
     },
     dynamicItemCard: {
@@ -682,27 +939,27 @@ const createStyles = (theme: Theme) =>
       marginBottom: theme.spacing.md,
     },
     dynamicItemHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       marginBottom: theme.spacing.sm,
     },
     dynamicItemTitle: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.textSecondary,
     },
     dynamicItemActions: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: theme.spacing.sm,
-      alignItems: 'center',
+      alignItems: "center",
     },
     actionBtn: {
       padding: 4,
     },
     switchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       marginTop: theme.spacing.sm,
       marginBottom: theme.spacing.xs,
       gap: theme.spacing.sm,
@@ -710,7 +967,7 @@ const createStyles = (theme: Theme) =>
     switchLabel: {
       fontSize: 14,
       color: theme.colors.text,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     textActionBtn: {
       paddingHorizontal: 8,
@@ -719,24 +976,24 @@ const createStyles = (theme: Theme) =>
     },
     textActionBtnSuccess: {
       color: theme.colors.success,
-      fontWeight: '600',
+      fontWeight: "600",
       fontSize: 14,
     },
     textActionBtnPrimary: {
       color: theme.colors.primary,
-      fontWeight: '600',
+      fontWeight: "600",
       fontSize: 14,
     },
     dateLabel: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.colors.text,
       marginBottom: 6,
     },
     dateInput: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       borderWidth: 1,
       borderRadius: 12,
       paddingHorizontal: 16,
@@ -747,7 +1004,7 @@ const createStyles = (theme: Theme) =>
     },
     summaryTitle: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.colors.text,
       marginBottom: 4,
     },
@@ -782,13 +1039,13 @@ const createStyles = (theme: Theme) =>
       marginRight: 8,
     },
     chipSelected: {
-      backgroundColor: theme.colors.primary + '15',
+      backgroundColor: theme.colors.primary + "15",
       borderColor: theme.colors.primary,
     },
     chipText: {
       fontSize: 13,
       color: theme.colors.textSecondary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     chipTextSelected: {
       color: theme.colors.primary,

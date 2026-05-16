@@ -1,10 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, Text, View } from 'react-native';
-import { Button, Card, Input, ScreenContainer } from '../../../components/ui';
-import { useDoctorStore } from '../../../store/doctor.store';
-import { useTheme } from '../../../theme';
-import { createDoctorProfileStyles } from '../styles/doctorProfile.styles';
-import type { DoctorProfileUpdate } from '../types/doctor.types';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Image, Text, View } from "react-native";
+import {
+  Button,
+  Card,
+  Input,
+  ScreenContainer,
+  StarRating,
+} from "../../../components/ui";
+import { useDoctorStore } from "../../../store/doctor.store";
+import { useTheme } from "../../../theme";
+import { createDoctorProfileStyles } from "../styles/doctorProfile.styles";
+import type { DoctorProfileUpdate } from "../types/doctor.types";
 
 export function DoctorProfileForm() {
   const { theme } = useTheme();
@@ -22,11 +28,11 @@ export function DoctorProfileForm() {
     verificationStage,
   } = useDoctorStore();
 
-  const [specialization, setSpecialization] = useState('');
-  const [yearsOfExperience, setYearsOfExperience] = useState('');
-  const [consultationFee, setConsultationFee] = useState('');
-  const [youtubeLink, setYoutubeLink] = useState('');
-  const [linkedinLink, setLinkedinLink] = useState('');
+  const [specialization, setSpecialization] = useState("");
+  const [yearsOfExperience, setYearsOfExperience] = useState("");
+  const [consultationFee, setConsultationFee] = useState("");
+  const [youtubeLink, setYoutubeLink] = useState("");
+  const [linkedinLink, setLinkedinLink] = useState("");
   const [saved, setSaved] = useState(false);
 
   // Populate form when profile loads
@@ -36,15 +42,15 @@ export function DoctorProfileForm() {
 
   useEffect(() => {
     if (profile) {
-      setSpecialization(profile.specialization ?? '');
+      setSpecialization(profile.specialization ?? "");
       setYearsOfExperience(
-        profile.years_of_experience ? String(profile.years_of_experience) : ''
+        profile.years_of_experience ? String(profile.years_of_experience) : "",
       );
       setConsultationFee(
-        profile.consultation_fee ? String(profile.consultation_fee) : ''
+        profile.consultation_fee ? String(profile.consultation_fee) : "",
       );
-      setYoutubeLink(profile.youtube_link ?? '');
-      setLinkedinLink(profile.linkedin_link ?? '');
+      setYoutubeLink(profile.youtube_link ?? "");
+      setLinkedinLink(profile.linkedin_link ?? "");
     }
   }, [profile]);
 
@@ -52,7 +58,9 @@ export function DoctorProfileForm() {
     setSaved(false);
     const payload: DoctorProfileUpdate = {
       specialization: specialization.trim(),
-      years_of_experience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
+      years_of_experience: yearsOfExperience
+        ? Number(yearsOfExperience)
+        : undefined,
       consultation_fee: consultationFee ? Number(consultationFee) : undefined,
       youtube_link: youtubeLink.trim() || undefined,
       linkedin_link: linkedinLink.trim() || undefined,
@@ -63,51 +71,165 @@ export function DoctorProfileForm() {
     } catch {
       // Error is set in the store
     }
-  }, [specialization, yearsOfExperience, consultationFee, youtubeLink, linkedinLink, updateProfile]);
+  }, [
+    specialization,
+    yearsOfExperience,
+    consultationFee,
+    youtubeLink,
+    linkedinLink,
+    updateProfile,
+  ]);
 
   return (
     <ScreenContainer scrollable>
       <View style={styles.container}>
         {/* Premium Profile Header */}
-        <View style={{ alignItems: 'center', marginBottom: theme.spacing['2xl'] }}>
-          <Image 
-            source={require('../../../../assets/images/doctor-avatar.png')} 
-            style={{ width: 120, height: 120, borderRadius: 60, marginBottom: theme.spacing.md }} 
+        <View
+          style={{ alignItems: "center", marginBottom: theme.spacing["2xl"] }}
+        >
+          <Image
+            source={require("../../../../assets/images/doctor-avatar.png")}
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              marginBottom: theme.spacing.md,
+            }}
           />
-          <Text style={{ ...theme.typography.h3, color: theme.colors.text }}>Doctor Profile</Text>
+          <Text style={{ ...theme.typography.h3, color: theme.colors.text }}>
+            Doctor Profile
+          </Text>
           {profile?.is_verified ? (
-            <View style={{ backgroundColor: theme.colors.successLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 8 }}>
-              <Text style={{ color: theme.colors.success, fontWeight: '600', fontSize: 12 }}>Verified Practitioner</Text>
+            <View
+              style={{
+                backgroundColor: theme.colors.successLight,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 16,
+                marginTop: 8,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.success,
+                  fontWeight: "600",
+                  fontSize: 12,
+                }}
+              >
+                Verified Practitioner
+              </Text>
             </View>
           ) : (
-            <View style={{ backgroundColor: theme.colors.primaryLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16, marginTop: 8 }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 12 }}>Pending Institutional Review</Text>
+            <View
+              style={{
+                backgroundColor: theme.colors.primaryLight,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 16,
+                marginTop: 8,
+              }}
+            >
+              <Text
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: "600",
+                  fontSize: 12,
+                }}
+              >
+                Pending Institutional Review
+              </Text>
             </View>
           )}
         </View>
 
         {error && (
-          <View style={[styles.errorBanner, { backgroundColor: theme.colors.errorLight, borderRadius: 12, padding: 16, marginBottom: 24 }]}>
-            <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+          <View
+            style={[
+              styles.errorBanner,
+              {
+                backgroundColor: theme.colors.errorLight,
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 24,
+              },
+            ]}
+          >
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>
+              {error}
+            </Text>
           </View>
         )}
 
         {saved && (
-          <View style={[styles.successBanner, { backgroundColor: theme.colors.successLight, borderRadius: 12, padding: 16, marginBottom: 24 }]}>
-            <Text style={[styles.successText, { color: theme.colors.success, fontWeight: '500' }]}>Profile updated successfully!</Text>
+          <View
+            style={[
+              styles.successBanner,
+              {
+                backgroundColor: theme.colors.successLight,
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 24,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.successText,
+                { color: theme.colors.success, fontWeight: "500" },
+              ]}
+            >
+              Profile updated successfully!
+            </Text>
           </View>
         )}
 
         {profile && (
           <Card style={{ marginBottom: 24 }}>
-            <Text style={{ ...theme.typography.h4, color: theme.colors.text, marginBottom: 16, fontWeight: '600' }}>Platform Stats</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
-              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Average Rating</Text>
-              <StarRating rating={Number(profile.average_rating) || 0} size={16} />
+            <Text
+              style={{
+                ...theme.typography.h4,
+                color: theme.colors.text,
+                marginBottom: 16,
+                fontWeight: "600",
+              }}
+            >
+              Platform Stats
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 12,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  ...theme.typography.body,
+                  color: theme.colors.textSecondary,
+                }}
+              >
+                Average Rating
+              </Text>
+              <StarRating
+                rating={Number(profile.average_rating) || 0}
+                size={16}
+              />
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Total Consultations Reviews</Text>
-              <Text style={{ ...theme.typography.body, fontWeight: 'bold' }}>{profile.review_count}</Text>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Text
+                style={{
+                  ...theme.typography.body,
+                  color: theme.colors.textSecondary,
+                }}
+              >
+                Total Consultations Reviews
+              </Text>
+              <Text style={{ ...theme.typography.body, fontWeight: "bold" }}>
+                {profile.review_count}
+              </Text>
             </View>
           </Card>
         )}
@@ -119,7 +241,11 @@ export function DoctorProfileForm() {
             label="Specialization"
             placeholder="e.g. Cardiology"
             value={specialization}
-            onChangeText={(t) => { setSpecialization(t); clearError(); setSaved(false); }}
+            onChangeText={(t) => {
+              setSpecialization(t);
+              clearError();
+              setSaved(false);
+            }}
           />
 
           <View style={styles.row}>
@@ -127,7 +253,11 @@ export function DoctorProfileForm() {
               label="Experience (years)"
               placeholder="0"
               value={yearsOfExperience}
-              onChangeText={(t) => { setYearsOfExperience(t); clearError(); setSaved(false); }}
+              onChangeText={(t) => {
+                setYearsOfExperience(t);
+                clearError();
+                setSaved(false);
+              }}
               keyboardType="numeric"
               containerStyle={styles.halfField}
             />
@@ -135,19 +265,29 @@ export function DoctorProfileForm() {
               label="Consultation Fee"
               placeholder="0.00"
               value={consultationFee}
-              onChangeText={(t) => { setConsultationFee(t); clearError(); setSaved(false); }}
+              onChangeText={(t) => {
+                setConsultationFee(t);
+                clearError();
+                setSaved(false);
+              }}
               keyboardType="decimal-pad"
               containerStyle={styles.halfField}
             />
           </View>
 
-          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Social Links</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+            Social Links
+          </Text>
 
           <Input
             label="YouTube Channel"
             placeholder="https://youtube.com/..."
             value={youtubeLink}
-            onChangeText={(t) => { setYoutubeLink(t); clearError(); setSaved(false); }}
+            onChangeText={(t) => {
+              setYoutubeLink(t);
+              clearError();
+              setSaved(false);
+            }}
             autoCapitalize="none"
             keyboardType="url"
           />
@@ -156,7 +296,11 @@ export function DoctorProfileForm() {
             label="LinkedIn Profile"
             placeholder="https://linkedin.com/in/..."
             value={linkedinLink}
-            onChangeText={(t) => { setLinkedinLink(t); clearError(); setSaved(false); }}
+            onChangeText={(t) => {
+              setLinkedinLink(t);
+              clearError();
+              setSaved(false);
+            }}
             autoCapitalize="none"
             keyboardType="url"
           />
