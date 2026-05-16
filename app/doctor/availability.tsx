@@ -87,31 +87,44 @@ export default function AvailabilityScreen() {
     );
   };
 
-  const renderRule = ({ item }: { item: any }) => (
-    <View style={styles.ruleCard}>
-      <View style={styles.ruleMain}>
-        <View style={styles.dayIndicator}>
-           <Text style={styles.dayText}>{DAYS[item.weekday]}</Text>
-           <View style={styles.recurringBadge}>
-             <Ionicons name="repeat" size={10} color={theme.colors.success} />
-             <Text style={styles.recurringText}>Weekly</Text>
-           </View>
+  const renderRule = ({ item }: { item: any }) => {
+    const isSpecific = !!item.specific_date;
+    const dateLabel = isSpecific 
+      ? new Date(item.specific_date).toLocaleDateString(undefined, { dateStyle: 'medium' })
+      : DAYS[item.weekday];
+
+    return (
+      <View style={styles.ruleCard}>
+        <View style={styles.ruleMain}>
+          <View style={styles.dayIndicator}>
+             <Text style={styles.dayText}>{dateLabel}</Text>
+             <View style={[styles.recurringBadge, isSpecific && styles.specificBadge]}>
+               <Ionicons 
+                name={isSpecific ? "calendar-outline" : "repeat"} 
+                size={10} 
+                color={isSpecific ? theme.colors.primary : theme.colors.success} 
+              />
+               <Text style={[styles.recurringText, isSpecific && styles.specificText]}>
+                 {isSpecific ? "One-time" : "Weekly"}
+               </Text>
+             </View>
+          </View>
+          <View style={styles.timeSection}>
+            <Ionicons name="time-outline" size={16} color={theme.colors.textTertiary} />
+            <Text style={styles.timeText}>
+              {item.start_time.slice(0, 5)} — {item.end_time.slice(0, 5)}
+            </Text>
+          </View>
         </View>
-        <View style={styles.timeSection}>
-          <Ionicons name="time-outline" size={16} color={theme.colors.textTertiary} />
-          <Text style={styles.timeText}>
-            {item.start_time.slice(0, 5)} — {item.end_time.slice(0, 5)}
-          </Text>
-        </View>
+        <TouchableOpacity 
+          onPress={() => handleDelete(item.id)}
+          style={styles.deleteBtn}
+        >
+          <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity 
-        onPress={() => handleDelete(item.id)}
-        style={styles.deleteBtn}
-      >
-        <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <ScreenContainer padded={false} style={{ backgroundColor: theme.colors.background }}>
@@ -366,6 +379,12 @@ const createStyles = (theme: Theme) =>
       fontSize: 10,
       fontWeight: '800',
       color: theme.colors.success,
+    },
+    specificBadge: {
+      backgroundColor: theme.colors.primary + '10',
+    },
+    specificText: {
+      color: theme.colors.primary,
     },
     timeSection: {
       flexDirection: 'row',

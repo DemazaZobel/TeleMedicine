@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Button, Input } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { useTheme, Theme } from '../../../theme';
@@ -18,7 +19,13 @@ const DAYS = [
 interface AddAvailabilityModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (payload: { weekday: number; start_time: string; end_time: string; is_active: boolean }) => Promise<void>;
+  onConfirm: (payload: { 
+    weekday?: number; 
+    specific_date?: string; 
+    start_time: string; 
+    end_time: string; 
+    is_active: boolean 
+  }) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -26,12 +33,15 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
-  const [weekday, setWeekday] = useState(1); // Default Monday
+  const [isRecurring, setIsRecurring] = useState(true);
+  const [weekday, setWeekday] = useState(1);
+  const [specificDate, setSpecificDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
 
   const handleAdd = async () => {
-    // Basic validation for time format
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
       Alert.alert("Invalid Time", "Please use the HH:MM format (e.g., 09:30)");
@@ -48,7 +58,8 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
     
     try {
       await onConfirm({
-        weekday,
+        weekday: isRecurring ? weekday : undefined,
+        specific_date: !isRecurring ? specificDate.toISOString().split('T')[0] : undefined,
         start_time: startTime + ":00",
         end_time: endTime + ":00",
         is_active: true,
@@ -64,30 +75,72 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
       visible={visible}
       onClose={onClose}
       title="Add Working Hours"
-      subtitle="Set your recurring consultation times."
-      maxWidth={480}
+      subtitle="Define when patients can book your time."
+      maxWidth={500}
     >
       <View style={styles.container}>
-        <Text style={styles.label}>Select Day</Text>
-        <View style={styles.daySelector}>
-          {DAYS.map((day, index) => {
-            const isActive = weekday === index;
-            return (
-              <TouchableOpacity
-                key={day.full}
-                style={[
-                  styles.dayButton,
-                  isActive && styles.dayButtonActive,
-                ]}
-                onPress={() => setWeekday(index)}
-              >
-                <Text style={[styles.dayButtonText, isActive && styles.dayButtonTextActive]}>
-                  {day.short}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        {/* RECURRING TOGGLE */}
+        <View style={styles.recurringSection}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.recurringTitle}>Repeat Weekly</Text>
+            <Text style={styles.recurringSubtitle}>Make these hours available every week</Text>
+          </View>
+          <Switch 
+            value={isRecurring} 
+            onValueChange={setIsRecurring}
+            trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+            thumbColor="#FFF"
+          />
         </View>
+
+        <View style={styles.divider} />
+
+        {isRecurring ? (
+          <View style={styles.section}>
+            <Text style={styles.label}>Select Day</Text>
+            <View style={styles.daySelector}>
+              {DAYS.map((day, index) => {
+                const isActive = weekday === index;
+                return (
+                  <TouchableOpacity
+                    key={day.full}
+                    style={[styles.dayButton, isActive && styles.dayButtonActive]}
+                    onPress={() => setWeekday(index)}
+                  >
+                    <Text style={[styles.dayButtonText, isActive && styles.dayButtonTextActive]}>
+                      {day.short}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.section}>
+            <Text style={styles.label}>Select Specific Date</Text>
+            <TouchableOpacity 
+              style={styles.datePickerBtn}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Ionicons name="calendar" size={20} color={theme.colors.primary} />
+              <Text style={styles.datePickerText}>
+                {specificDate.toLocaleDateString(undefined, { dateStyle: 'long' })}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={specificDate}
+                mode="date"
+                minimumDate={new Date()}
+                onChange={(event, date) => {
+                  setShowDatePicker(false);
+                  if (date) setSpecificDate(date);
+                }}
+              />
+            )}
+          </View>
+        )}
 
         <View style={styles.timeRow}>
           <View style={styles.timeField}>
@@ -99,7 +152,6 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
                 onChangeText={setStartTime}
                 placeholder="09:00"
                 containerStyle={styles.cleanInput}
-                keyboardType="numbers-and-punctuation"
               />
             </View>
           </View>
@@ -117,17 +169,9 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
                 onChangeText={setEndTime}
                 placeholder="17:00"
                 containerStyle={styles.cleanInput}
-                keyboardType="numbers-and-punctuation"
               />
             </View>
           </View>
-        </View>
-
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
-          <Text style={styles.infoText}>
-            These hours will repeat weekly. You can add multiple blocks for the same day.
-          </Text>
         </View>
 
         <View style={styles.actions}>
@@ -155,18 +199,41 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     paddingTop: theme.spacing.sm,
   },
+  recurringSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingRight: 8,
+  },
+  recurringTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 2,
+  },
+  recurringSubtitle: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginBottom: 20,
+  },
+  section: {
+    marginBottom: 24,
+  },
   label: {
     fontSize: 12,
     fontWeight: '800',
     color: theme.colors.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: theme.spacing.md,
+    marginBottom: 12,
   },
   daySelector: {
     flexDirection: "row",
     justifyContent: 'space-between',
-    marginBottom: theme.spacing.xl,
     gap: 6,
   },
   dayButton: {
@@ -191,6 +258,22 @@ const createStyles = (theme: Theme) => StyleSheet.create({
   },
   dayButtonTextActive: {
     color: "#FFF",
+  },
+  datePickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: theme.colors.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: 12,
+  },
+  datePickerText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.text,
   },
   timeRow: {
     flexDirection: "row",
@@ -234,24 +317,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     height: 2,
     backgroundColor: theme.colors.border,
   },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.primary + '08',
-    padding: 12,
-    borderRadius: 12,
-    gap: 10,
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '10',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    color: theme.colors.primary,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
   actions: {
     flexDirection: 'row',
     gap: theme.spacing.md,
@@ -265,4 +330,5 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     height: 48,
   },
 });
+
 

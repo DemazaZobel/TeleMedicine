@@ -58,8 +58,9 @@ export function RescheduleModal({
       currentDay.setDate(today.getDate() + dayOffset);
       const weekday = currentDay.getDay();
 
+      const dateISO = currentDay.toISOString().split('T')[0];
       const rulesForDay = doctorAvailabilityRules.filter(
-        (r) => r.weekday === weekday && r.is_active,
+        (r) => (r.weekday === weekday || r.specific_date === dateISO) && r.is_active,
       );
 
       for (const rule of rulesForDay) {
