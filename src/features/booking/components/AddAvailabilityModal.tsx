@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button, Input } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { useTheme, Theme } from '../../../theme';
 
@@ -133,11 +133,15 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
                 value={specificDate}
                 mode="date"
                 minimumDate={new Date()}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={(event, date) => {
-                  setShowDatePicker(false);
+                  if (Platform.OS === 'android') setShowDatePicker(false);
                   if (date) setSpecificDate(date);
                 }}
               />
+            )}
+            {Platform.OS === 'ios' && showDatePicker && (
+              <Button title="Done" size="sm" onPress={() => setShowDatePicker(false)} style={{ marginTop: 10 }} />
             )}
           </View>
         )}
@@ -147,11 +151,12 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
             <Text style={styles.fieldLabel}>Start Time</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="time-outline" size={18} color={theme.colors.textTertiary} style={styles.inputIcon} />
-              <Input
+              <TextInput
                 value={startTime}
                 onChangeText={setStartTime}
                 placeholder="09:00"
-                containerStyle={styles.cleanInput}
+                style={styles.cleanInput}
+                placeholderTextColor={theme.colors.textTertiary}
               />
             </View>
           </View>
@@ -164,11 +169,12 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
             <Text style={styles.fieldLabel}>End Time</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="time" size={18} color={theme.colors.textTertiary} style={styles.inputIcon} />
-              <Input
+              <TextInput
                 value={endTime}
                 onChangeText={setEndTime}
                 placeholder="17:00"
-                containerStyle={styles.cleanInput}
+                style={styles.cleanInput}
+                placeholderTextColor={theme.colors.textTertiary}
               />
             </View>
           </View>
@@ -296,21 +302,24 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    paddingLeft: 12,
+    paddingHorizontal: 12,
+    height: 52,
   },
   inputIcon: {
-    marginRight: -4,
+    marginRight: 8,
   },
   cleanInput: {
     flex: 1,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    height: 48,
+    height: '100%',
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.text,
+    padding: 0,
   },
   timeDivider: {
     width: 30,
     alignItems: 'center',
-    paddingBottom: 24,
+    paddingBottom: 25,
   },
   dividerLine: {
     width: 12,
@@ -330,5 +339,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     height: 48,
   },
 });
+
 
 
