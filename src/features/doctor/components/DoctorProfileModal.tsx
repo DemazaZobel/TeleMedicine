@@ -454,8 +454,8 @@ export function DoctorProfileModal({
                 {edu.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
-                      label="School*"
-                      placeholder="Ex: Boston University"
+                      label="Medical School/University*"
+                      placeholder="Ex: Addis Ababa University"
                       value={edu.institution}
                       onChangeText={(t) =>
                         updateEducation(edu.id, "institution", t)
@@ -463,15 +463,15 @@ export function DoctorProfileModal({
                       containerStyle={styles.dynamicInputMargin}
                     />
                     <Input
-                      label="Degree*"
-                      placeholder="Ex: Bachelor of Science"
+                      label="Medical Degree*"
+                      placeholder="Ex: MD, MBBS, PhD"
                       value={edu.degree}
                       onChangeText={(t) => updateEducation(edu.id, "degree", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
                     <Input
-                      label="Field of study"
-                      placeholder="Ex: Business"
+                      label="Specialization Field"
+                      placeholder="Ex: Neurosurgery"
                       value={edu.fieldOfStudy || ""}
                       onChangeText={(t) =>
                         updateEducation(edu.id, "fieldOfStudy", t)
@@ -511,16 +511,16 @@ export function DoctorProfileModal({
                     </View>
 
                     <Input
-                      label="Grade"
-                      placeholder="Ex: 3.8 GPA"
+                      label="Academic Honors/Grade"
+                      placeholder="Ex: With Great Distinction"
                       value={edu.grade || ""}
                       onChangeText={(t) => updateEducation(edu.id, "grade", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
 
                     <Input
-                      label="Description"
-                      placeholder="Describe your studies, awards, etc."
+                      label="Additional Academic Info"
+                      placeholder="Awards, research topics, or societies..."
                       value={edu.description || ""}
                       onChangeText={(t) =>
                         updateEducation(edu.id, "description", t)
@@ -626,14 +626,14 @@ export function DoctorProfileModal({
                 {exp.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
-                      label="Title*"
-                      placeholder="Ex: Senior Surgeon"
+                      label="Medical Role*"
+                      placeholder="Ex: Senior Surgeon, General Practitioner"
                       value={exp.role}
                       onChangeText={(t) => updateExperience(exp.id, "role", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
 
-                    <Text style={styles.dateLabel}>Employment type</Text>
+                    <Text style={styles.dateLabel}>Practice type</Text>
 
                     <ScrollView
                       horizontal
@@ -665,8 +665,8 @@ export function DoctorProfileModal({
                     </ScrollView>
 
                     <Input
-                      label="Company or hospital*"
-                      placeholder="Ex: Tikur Anbessa"
+                      label="Hospital/Clinic Name*"
+                      placeholder="Ex: Tikur Anbessa Hospital"
                       value={exp.hospital}
                       onChangeText={(t) =>
                         updateExperience(exp.id, "hospital", t)
@@ -731,13 +731,13 @@ export function DoctorProfileModal({
                       />
 
                       <Text style={styles.switchLabel}>
-                        I am currently working in this role
+                        I am currently practicing in this role
                       </Text>
                     </View>
 
                     <Input
-                      label="Description"
-                      placeholder="Describe your responsibilities, achievements, etc."
+                      label="Role Description & Responsibilities"
+                      placeholder="Describe your clinical duties, specific cases handled, etc."
                       value={exp.description || ""}
                       onChangeText={(t) =>
                         updateExperience(exp.id, "description", t)
