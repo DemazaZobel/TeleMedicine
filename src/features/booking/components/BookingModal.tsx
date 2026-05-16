@@ -123,7 +123,7 @@ export function BookingModal({
   }, [uniqueDates, selectedDate]);
 
   const activeDaySlots = useMemo(() => {
-    return selectedDate ? groupedSlots[selectedDate] : [];
+    return (selectedDate ? groupedSlots[selectedDate] : []) || [];
   }, [selectedDate, groupedSlots]);
 
   const hasActiveAppointment = useMemo(() => {

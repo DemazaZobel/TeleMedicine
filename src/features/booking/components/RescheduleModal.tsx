@@ -108,7 +108,7 @@ export function RescheduleModal({
   }, [uniqueDates, selectedDate]);
 
   const activeDaySlots = useMemo(() => {
-    return selectedDate ? groupedSlots[selectedDate] : [];
+    return (selectedDate ? groupedSlots[selectedDate] : []) || [];
   }, [selectedDate, groupedSlots]);
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export function RescheduleModal({
             title="Propose" 
             onPress={handleConfirm} 
             loading={isLoading}
-            disabled={isLoading || slots.length === 0 || selectedSlotIndex === null}
+            disabled={isLoading || allSlots.length === 0 || selectedSlotIndex === null}
             style={styles.footerBtn}
           />
         </View>
