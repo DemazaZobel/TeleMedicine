@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Platform, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Button, Card, Input } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { useDoctorStore } from '../../../store/doctor.store';
@@ -54,6 +55,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   const [consultationFee, setConsultationFee] = useState('');
   const [saved, setSaved] = useState(false);
   const [formError, setFormError] = useState('');
+  const [showDatePickerId, setShowDatePickerId] = useState<string | null>(null);
 
   const handleAddEducation = () => {
     setEducationList([...educationList, { id: Date.now().toString(), degree: '', institution: '', year: '', isEditing: true }]);
@@ -69,6 +71,15 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
     setSaved(false);
   };
 
+  const handleSaveEducation = (id: string) => {
+    const edu = educationList.find(e => e.id === id);
+    if (!edu?.degree || !edu?.institution || !edu?.year) {
+      Alert.alert("Missing Fields", "Please complete all fields for this degree.");
+      return;
+    }
+    updateEducation(id, 'isEditing', false);
+  };
+
   const handleAddExperience = () => {
     setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', duration: '', isEditing: true }]);
   };
@@ -81,6 +92,15 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
     setExperienceList(experienceList.map(e => e.id === id ? { ...e, [field]: value } : e));
     clearError();
     setSaved(false);
+  };
+
+  const handleSaveExperience = (id: string) => {
+    const exp = experienceList.find(e => e.id === id);
+    if (!exp?.role || !exp?.hospital || !exp?.duration) {
+      Alert.alert("Missing Fields", "Please complete all fields for this experience.");
+      return;
+    }
+    updateExperience(id, 'isEditing', false);
   };
 
   const handleYearsChange = (t: string) => {
@@ -259,12 +279,12 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 <Text style={styles.dynamicItemTitle}>Degree {index + 1}</Text>
                 <View style={styles.dynamicItemActions}>
                   {edu.isEditing ? (
-                    <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', false)} style={styles.actionBtn}>
-                      <Ionicons name="checkmark-circle-outline" size={22} color={theme.colors.success} />
+                    <TouchableOpacity onPress={() => handleSaveEducation(edu.id)} style={styles.textActionBtn}>
+                      <Text style={styles.textActionBtnSuccess}>Done</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', true)} style={styles.actionBtn}>
-                      <Ionicons name="pencil-outline" size={20} color={theme.colors.primary} />
+                    <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', true)} style={styles.textActionBtn}>
+                      <Text style={styles.textActionBtnPrimary}>Edit</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} style={styles.actionBtn}>
@@ -290,14 +310,55 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                       onChangeText={(t) => updateEducation(edu.id, 'institution', t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
-                    <Input
-                      label="Year of Graduation"
-                      placeholder="e.g. 2018"
-                      value={edu.year}
-                      onChangeText={(t) => updateEducation(edu.id, 'year', t.replace(/[^0-9]/g, ''))}
-                      keyboardType="numeric"
-                      containerStyle={styles.dynamicInputMargin}
-                    />
+                    
+                    {/* Date Picker for Graduation Year */}
+                    {Platform.OS === 'web' ? (
+                      <View style={{ marginBottom: 12 }}>
+                        <Text style={styles.dateLabel}>Graduation Date</Text>
+                        <input 
+                          type="date" 
+                          value={edu.year} 
+                          onChange={(e) => updateEducation(edu.id, 'year', e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: 12,
+                            border: '1px solid ' + theme.colors.border,
+                            backgroundColor: theme.colors.background,
+                            color: theme.colors.text,
+                            fontSize: 16,
+                            fontFamily: 'inherit'
+                          }}
+                        />
+                      </View>
+                    ) : (
+                      <View style={{ marginBottom: 12 }}>
+                        <Text style={styles.dateLabel}>Graduation Date</Text>
+                        <Pressable 
+                          style={[styles.dateInput, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]} 
+                          onPress={() => setShowDatePickerId(edu.id)}
+                        >
+                          <Text style={{ color: edu.year ? theme.colors.text : theme.colors.placeholder }}>
+                            {edu.year || "Select Date"}
+                          </Text>
+                          <Ionicons name="calendar-outline" size={20} color={theme.colors.textTertiary} />
+                        </Pressable>
+                        {showDatePickerId === edu.id && (
+                          <DateTimePicker
+                            value={edu.year ? new Date(edu.year) : new Date()}
+                            mode="date"
+                            display="default"
+                            onChange={(event: any, selectedDate?: Date) => {
+                              setShowDatePickerId(null);
+                              if (selectedDate) {
+                                updateEducation(edu.id, 'year', selectedDate.toISOString().split('T')[0]);
+                              }
+                            }}
+                            maximumDate={new Date()}
+                          />
+                        )}
+                      </View>
+                    )}
                   </View>
                 </>
               ) : (
@@ -325,12 +386,12 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 <Text style={styles.dynamicItemTitle}>Role {index + 1}</Text>
                 <View style={styles.dynamicItemActions}>
                   {exp.isEditing ? (
-                    <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', false)} style={styles.actionBtn}>
-                      <Ionicons name="checkmark-circle-outline" size={22} color={theme.colors.success} />
+                    <TouchableOpacity onPress={() => handleSaveExperience(exp.id)} style={styles.textActionBtn}>
+                      <Text style={styles.textActionBtnSuccess}>Done</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', true)} style={styles.actionBtn}>
-                      <Ionicons name="pencil-outline" size={20} color={theme.colors.primary} />
+                    <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', true)} style={styles.textActionBtn}>
+                      <Text style={styles.textActionBtnPrimary}>Edit</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} style={styles.actionBtn}>
@@ -549,6 +610,36 @@ const createStyles = (theme: Theme) =>
     },
     actionBtn: {
       padding: 4,
+    },
+    textActionBtn: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+    },
+    textActionBtnSuccess: {
+      color: theme.colors.success,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    textActionBtnPrimary: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    dateLabel: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.colors.text,
+      marginBottom: 6,
+    },
+    dateInput: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderWidth: 1,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      height: 48,
     },
     summaryContainer: {
       paddingVertical: theme.spacing.xs,
