@@ -63,27 +63,6 @@ export default function AvailabilityScreen() {
     fetchMyAppointments();
   }, []);
 
-  // Calendar Logic
-  const monthData = useMemo(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
-      days.push({ day: prevMonthLastDay - i, month: month - 1, year, isCurrentMonth: false });
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push({ day: i, month, year, isCurrentMonth: true });
-    }
-    const remainingSlots = 42 - days.length;
-    for (let i = 1; i <= remainingSlots; i++) {
-      days.push({ day: i, month: month + 1, year, isCurrentMonth: false });
-    }
-    return days;
-  }, [currentDate]);
-
   const navigateMonth = (direction: number) => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, currentDate.getDate());
     setCurrentDate(newDate);
@@ -115,7 +94,6 @@ export default function AvailabilityScreen() {
   const getItemsForDate = (day: number, month: number, year: number): CalendarItem[] => {
     const targetDate = new Date(year, month, day);
     const targetWeekday = targetDate.getDay();
-    // Use local date string for comparison to avoid timezone shifts
     const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     let filteredRules = availabilityRules.filter(rule => {
@@ -143,6 +121,26 @@ export default function AvailabilityScreen() {
     });
   };
 
+  const monthData = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const days = [];
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+      days.push({ day: prevMonthLastDay - i, month: month - 1, year, isCurrentMonth: false });
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push({ day: i, month, year, isCurrentMonth: true });
+    }
+    const remainingSlots = 42 - days.length;
+    for (let i = 1; i <= remainingSlots; i++) {
+      days.push({ day: i, month: month + 1, year, isCurrentMonth: false });
+    }
+    return days;
+  }, [currentDate]);
+
   const appointmentsToday = useMemo(() => {
     const now = new Date();
     const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -153,107 +151,46 @@ export default function AvailabilityScreen() {
     return getItemsForDate(currentDate.getDate(), currentDate.getMonth(), currentDate.getFullYear());
   }, [currentDate, availabilityRules, appointments, filterType, showBooked]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'COMPLETED': return theme.colors.success;
-      case 'CANCELLED': return theme.colors.error;
-      case 'CONFIRMED': return theme.colors.primary;
-      default: return theme.colors.warning;
+      case 'COMPLETED': return { color: theme.colors.success, icon: 'checkmark-sharp', label: 'Completed' };
+      case 'CANCELLED': return { color: theme.colors.error, icon: 'close-sharp', label: 'Canceled' };
+      case 'CONFIRMED': return { color: theme.colors.primary, icon: 'time-outline', label: 'Scheduled' };
+      default: return { color: theme.colors.warning, icon: 'person', label: 'Patient is waiting' };
     }
   };
 
-  const renderListView = () => (
-    <View style={styles.listViewContainer}>
-        <View style={styles.listHeader}>
-            <Text style={styles.listTitle}>
-                Schedule for {currentDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-            </Text>
+  const renderAppointmentCard = (entry: AppointmentDetail, isMini = false) => {
+    const config = getStatusConfig(entry.status);
+    const name = entry.patient_first_name ? `${entry.patient_first_name} ${entry.patient_last_name || ''}`.trim() : 'Patient';
+    const timeRange = `${entry.scheduled_start.split('T')[1].slice(0, 5)} - ${entry.scheduled_end?.split('T')[1]?.slice(0, 5) || '...'}`;
+    
+    return (
+        <View key={`app-${entry.id}`} style={[styles.richCard, { borderLeftColor: config.color }, isMini && styles.miniCard]}>
+            <Text style={styles.cardTime}>{timeRange}</Text>
+            <Text style={styles.cardName} numberOfLines={1}>{name}</Text>
+            {(!isMini || entry.reason?.length < 20) && entry.reason && (
+                <Text style={styles.cardReason} numberOfLines={1}>{entry.reason}</Text>
+            )}
+            <View style={[styles.cardBadge, { backgroundColor: config.color + '15' }]}>
+                <Ionicons name={config.icon as any} size={isMini ? 10 : 12} color={config.color} />
+                <Text style={[styles.cardStatus, { color: config.color }]}>{config.label}</Text>
+            </View>
         </View>
-        
-        {listItems.length === 0 ? (
-            <EmptyState
-                icon="calendar-outline"
-                title="No items found"
-                description="There are no availability blocks or appointments for this date."
-                actionLabel="Add Hours"
-                onAction={() => setShowAddModal(true)}
-            />
-        ) : (
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listScroll}>
-                {listItems.map((entry, idx) => {
-                    const isApp = entry.type === 'appointment';
-                    const name = isApp ? (entry.patient_first_name ? `${entry.patient_first_name} ${entry.patient_last_name || ''}` : 'Patient') : '';
-                    
-                    return (
-                        <View key={idx} style={styles.listItem}>
-                            <View style={[
-                                styles.listItemType, 
-                                { backgroundColor: isApp ? getStatusColor(entry.status) + '15' : theme.colors.primary + '15' }
-                            ]}>
-                                <Ionicons 
-                                    name={isApp ? "person" : "time-outline"} 
-                                    size={20} 
-                                    color={isApp ? getStatusColor(entry.status) : theme.colors.primary} 
-                                />
-                            </View>
-                            <View style={styles.listItemContent}>
-                                <View style={styles.listTitleRow}>
-                                    <Text style={styles.listItemTitle}>
-                                        {isApp ? name : entry.specific_date ? 'One-time Availability' : 'Weekly Availability'}
-                                    </Text>
-                                    {isApp && (
-                                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(entry.status) + '20' }]}>
-                                            <Text style={[styles.statusText, { color: getStatusColor(entry.status) }]}>{entry.status}</Text>
-                                        </View>
-                                    )}
-                                </View>
-                                {isApp && entry.reason && (
-                                    <Text style={styles.listDiagnosis} numberOfLines={1}>
-                                        {entry.reason}
-                                    </Text>
-                                )}
-                                <Text style={styles.listItemSubtitle}>
-                                    {isApp 
-                                        ? entry.scheduled_start.split('T')[1].slice(0, 5) + ' - ' + (entry.scheduled_end?.split('T')[1]?.slice(0, 5) || '...')
-                                        : entry.start_time.slice(0, 5) + ' - ' + entry.end_time.slice(0, 5)}
-                                </Text>
-                            </View>
-                            {entry.type === 'rule' && (
-                                <View style={styles.listItemActions}>
-                                    <TouchableOpacity onPress={() => handleEdit(entry)} style={styles.listActionBtn}>
-                                        <Ionicons name="create-outline" size={18} color={theme.colors.primary} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => handleDelete(entry.id)} style={styles.listActionBtn}>
-                                        <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
-                    );
-                })}
-            </ScrollView>
-        )}
-    </View>
-  );
+    );
+  };
 
   return (
     <ScreenContainer padded={false} style={styles.screen}>
       <View style={styles.contentWrapper}>
-        
-        {/* TOP BAR */}
+        {/* HEADER & TOGGLES */}
         <View style={styles.topActions}>
             <View style={styles.viewToggle}>
-                <TouchableOpacity 
-                    onPress={() => setViewMode('list')}
-                    style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
-                >
+                <TouchableOpacity onPress={() => setViewMode('list')} style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}>
                     <Ionicons name="list-outline" size={16} color={viewMode === 'list' ? theme.colors.text : theme.colors.textTertiary} />
                     <Text style={[styles.toggleText, viewMode === 'list' && styles.toggleTextActive]}>List</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                    onPress={() => setViewMode('calendar')}
-                    style={[styles.toggleBtn, viewMode === 'calendar' && styles.toggleBtnActive]}
-                >
+                <TouchableOpacity onPress={() => setViewMode('calendar')} style={[styles.toggleBtn, viewMode === 'calendar' && styles.toggleBtnActive]}>
                     <Ionicons name="calendar-outline" size={16} color={viewMode === 'calendar' ? theme.colors.text : theme.colors.textTertiary} />
                     <Text style={[styles.toggleText, viewMode === 'calendar' && styles.toggleTextActive]}>Calendar</Text>
                 </TouchableOpacity>
@@ -262,10 +199,7 @@ export default function AvailabilityScreen() {
               title="Add Availability"
               variant="primary"
               size="sm"
-              onPress={() => {
-                setEditingRule(null);
-                setShowAddModal(true);
-              }}
+              onPress={() => { setEditingRule(null); setShowAddModal(true); }}
               icon={<Ionicons name="add" size={18} color="#FFF" />}
               style={styles.addBtn}
             />
@@ -276,8 +210,6 @@ export default function AvailabilityScreen() {
                 <TouchableOpacity onPress={() => navigateMonth(-1)} style={styles.navArrow}>
                     <Ionicons name="chevron-back" size={16} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
-                
-                {/* IMPROVED WEB DATE PICKER: Overlay for better user gesture support */}
                 <View style={styles.dateDisplayWrapper}>
                     <View style={styles.dateDisplay}>
                         <Ionicons name="calendar-outline" size={14} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
@@ -286,33 +218,16 @@ export default function AvailabilityScreen() {
                         </Text>
                     </View>
                     {Platform.OS === 'web' ? (
-                        <input
-                            type="date"
-                            style={{ 
-                                position: 'absolute', 
-                                opacity: 0, 
-                                width: '100%', 
-                                height: '100%', 
-                                top: 0, 
-                                left: 0,
-                                cursor: 'pointer' 
-                            }}
-                            onChange={(e) => {
-                                if (e.target.value) {
-                                    // Handle timezone correctly for date only string
-                                    const parts = e.target.value.split('-');
-                                    setCurrentDate(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
-                                }
-                            }}
-                        />
+                        <input type="date" style={styles.webPickerOverlay} onChange={(e) => {
+                            if (e.target.value) {
+                                const parts = e.target.value.split('-');
+                                setCurrentDate(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
+                            }
+                        }} />
                     ) : (
-                        <TouchableOpacity 
-                            onPress={() => setShowDatePicker(true)} 
-                            style={StyleSheet.absoluteFill}
-                        />
+                        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={StyleSheet.absoluteFill} />
                     )}
                 </View>
-
                 <TouchableOpacity onPress={() => navigateMonth(1)} style={styles.navArrow}>
                     <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
@@ -324,10 +239,7 @@ export default function AvailabilityScreen() {
             </View>
 
             <View style={styles.rightGroup}>
-                <TouchableOpacity 
-                    style={[styles.iconAction, showFilters && styles.iconActionActive]}
-                    onPress={() => setShowFilters(!showFilters)}
-                >
+                <TouchableOpacity style={[styles.iconAction, showFilters && styles.iconActionActive]} onPress={() => setShowFilters(!showFilters)}>
                     <Ionicons name="options-outline" size={18} color={theme.colors.textSecondary} />
                     <Text style={styles.iconActionText}>Filter</Text>
                 </TouchableOpacity>
@@ -335,25 +247,16 @@ export default function AvailabilityScreen() {
         </View>
 
         {showDatePicker && Platform.OS !== 'web' && (
-            <DateTimePicker
-                value={currentDate}
-                mode="date"
-                onChange={onDateChange}
-            />
+            <DateTimePicker value={currentDate} mode="date" onChange={onDateChange} />
         )}
 
-        {/* CONDITIONAL FILTERS BAR */}
         {showFilters && (
             <View style={styles.filterBar}>
-                <TouchableOpacity onPress={() => setFilterType('all')} style={[styles.filterChip, filterType === 'all' && styles.filterChipActive]}>
-                    <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setFilterType('recurring')} style={[styles.filterChip, filterType === 'recurring' && styles.filterChipActive]}>
-                    <Text style={[styles.filterText, filterType === 'recurring' && styles.filterTextActive]}>Weekly</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setFilterType('one-time')} style={[styles.filterChip, filterType === 'one-time' && styles.filterChipActive]}>
-                    <Text style={[styles.filterText, filterType === 'one-time' && styles.filterTextActive]}>One-time</Text>
-                </TouchableOpacity>
+                {['all', 'recurring', 'one-time'].map((t) => (
+                    <TouchableOpacity key={t} onPress={() => setFilterType(t as any)} style={[styles.filterChip, filterType === t && styles.filterChipActive]}>
+                        <Text style={[styles.filterText, filterType === t && styles.filterTextActive]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                    </TouchableOpacity>
+                ))}
                 <TouchableOpacity onPress={() => setShowBooked(!showBooked)} style={[styles.filterChip, showBooked && styles.filterChipActiveBooked]}>
                     <Text style={[styles.filterText, showBooked && styles.filterTextActiveBooked]}>Appointments</Text>
                 </TouchableOpacity>
@@ -361,16 +264,12 @@ export default function AvailabilityScreen() {
         )}
 
         {viewMode === 'calendar' ? (
-            /* CALENDAR GRID */
             <View style={styles.calendarContainer}>
                 <View style={styles.weekdayRow}>
                     {WEEKDAYS.map(day => (
-                    <View key={day} style={styles.weekdayCell}>
-                        <Text style={styles.weekdayLabel}>{day}</Text>
-                    </View>
+                    <View key={day} style={styles.weekdayCell}><Text style={styles.weekdayLabel}>{day}</Text></View>
                     ))}
                 </View>
-
                 <View style={styles.grid}>
                     {monthData.map((item, index) => {
                     const dayItems = getItemsForDate(item.day, item.month, item.year);
@@ -380,48 +279,25 @@ export default function AvailabilityScreen() {
                     return (
                         <TouchableOpacity 
                             key={index} 
-                            style={[
-                                styles.dayCell, 
-                                !item.isCurrentMonth && styles.notCurrentMonth,
-                                isSelected && styles.selectedDayCell,
-                                index % 7 === 6 && { borderRightWidth: 0 }
-                            ]}
+                            style={[styles.dayCell, !item.isCurrentMonth && styles.notCurrentMonth, isSelected && styles.selectedDayCell, index % 7 === 6 && { borderRightWidth: 0 }]}
                             onPress={() => setCurrentDate(new Date(item.year, item.month, item.day))}
                         >
                         <View style={styles.dayCellHeader}>
-                            <Text style={[
-                            styles.dayNumber, 
-                            !item.isCurrentMonth && styles.dayNumberInactive,
-                            isToday && styles.todayNumber
-                            ]}>
-                            {item.day}
-                            </Text>
+                            <Text style={[styles.dayNumber, !item.isCurrentMonth && styles.dayNumberInactive, isToday && styles.todayNumber]}>{item.day}</Text>
                         </View>
-                        
                         <View style={styles.dayContent}>
-                            {dayItems.slice(0, 3).map((entry, idx) => {
-                            if (entry.type === 'rule') {
-                                const isSpecific = !!entry.specific_date;
-                                return (
-                                <View key={`rule-${entry.id}`} style={[styles.rulePill, isSpecific && styles.specificPill]}>
-                                    <Text style={[styles.ruleText, isSpecific && styles.specificRuleText]} numberOfLines={1}>
-                                    {entry.start_time.slice(0, 5)}
-                                    </Text>
-                                </View>
-                                );
-                            } else {
-                                return (
-                                <View key={`app-${entry.id}`} style={[styles.appointmentPill, { borderLeftColor: getStatusColor(entry.status) }]}>
-                                    <Text style={[styles.appointmentText, { color: getStatusColor(entry.status) }]} numberOfLines={1}>
-                                        {entry.patient_first_name || 'Patient'}
-                                    </Text>
-                                </View>
-                                );
-                            }
+                            {dayItems.map((entry, idx) => {
+                                if (entry.type === 'rule') {
+                                    const isSpecific = !!entry.specific_date;
+                                    return (
+                                        <View key={`rule-${entry.id}`} style={[styles.rulePill, isSpecific && styles.specificPill]}>
+                                            <Text style={[styles.ruleText, isSpecific && styles.specificRuleText]} numberOfLines={1}>{entry.start_time.slice(0, 5)}</Text>
+                                        </View>
+                                    );
+                                } else {
+                                    return renderAppointmentCard(entry, true);
+                                }
                             })}
-                            {dayItems.length > 3 && (
-                                <Text style={styles.moreText}>+{dayItems.length - 3} more</Text>
-                            )}
                         </View>
                         </TouchableOpacity>
                     );
@@ -429,376 +305,103 @@ export default function AvailabilityScreen() {
                 </View>
             </View>
         ) : (
-            renderListView()
+            <View style={styles.listViewContainer}>
+                <View style={styles.listHeader}><Text style={styles.listTitle}>Schedule for {currentDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</Text></View>
+                {listItems.length === 0 ? (
+                    <EmptyState icon="calendar-outline" title="No items found" description="No availability or appointments for this date." actionLabel="Add Hours" onAction={() => setShowAddModal(true)} />
+                ) : (
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listScroll}>
+                        {listItems.map((entry, idx) => entry.type === 'appointment' ? renderAppointmentCard(entry) : (
+                            <View key={idx} style={styles.ruleItem}>
+                                <View style={styles.ruleIcon}><Ionicons name="time-outline" size={20} color={theme.colors.primary} /></View>
+                                <View style={{ flex: 1, marginLeft: 16 }}>
+                                    <Text style={styles.listItemTitle}>{entry.specific_date ? 'One-time Availability' : 'Weekly Availability'}</Text>
+                                    <Text style={styles.listItemSubtitle}>{entry.start_time.slice(0, 5)} - {entry.end_time.slice(0, 5)}</Text>
+                                </View>
+                                <View style={styles.listItemActions}>
+                                    <TouchableOpacity onPress={() => handleEdit(entry)} style={styles.listActionBtn}><Ionicons name="create-outline" size={18} color={theme.colors.primary} /></TouchableOpacity>
+                                    <TouchableOpacity onPress={() => handleDelete(entry.id)} style={styles.listActionBtn}><Ionicons name="trash-outline" size={18} color={theme.colors.error} /></TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+            </View>
         )}
       </View>
-
-      <AddAvailabilityModal
-        visible={showAddModal}
-        onClose={() => {
-            setShowAddModal(false);
-            setEditingRule(null);
-        }}
-        onConfirm={createAvailabilityRule}
-        isLoading={isLoading}
-        initialData={editingRule}
-      />
+      <AddAvailabilityModal visible={showAddModal} onClose={() => { setShowAddModal(false); setEditingRule(null); }} onConfirm={createAvailabilityRule} isLoading={isLoading} initialData={editingRule} />
     </ScreenContainer>
   );
 }
 
 const createStyles = (theme: Theme, width: number) =>
   StyleSheet.create({
-    screen: {
-      backgroundColor: '#F9FAFB',
-      flex: 1,
-    },
-    contentWrapper: {
-      flex: 1,
-      paddingHorizontal: Platform.OS === 'web' ? 40 : 10,
-      paddingTop: Platform.OS === 'web' ? 40 : 20,
-    },
-    topActions: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    viewToggle: {
-        flexDirection: 'row',
-        backgroundColor: '#F3F4F6',
-        padding: 4,
-        borderRadius: 12,
-    },
-    toggleBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-        gap: 8,
-    },
-    toggleBtnActive: {
-        backgroundColor: '#FFF',
-        ...theme.shadows.sm,
-    },
-    toggleText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: theme.colors.textTertiary,
-    },
-    toggleTextActive: {
-        color: theme.colors.text,
-    },
-    subHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingBottom: 24,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
-        marginBottom: 24,
-    },
-    dateNav: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    navArrow: {
-        padding: 10,
-        backgroundColor: '#FFF',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    dateDisplayWrapper: {
-        position: 'relative',
-        borderRadius: 10,
-        overflow: 'hidden',
-    },
-    dateDisplay: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        height: 38,
-        backgroundColor: '#FFF',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    dateDisplayText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: theme.colors.text,
-    },
-    centerStat: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        gap: 6,
-    },
-    statCount: {
-        fontSize: 24,
-        fontWeight: '800',
-        color: theme.colors.text,
-    },
-    statLabel: {
-        fontSize: 14,
-        color: theme.colors.textTertiary,
-    },
-    rightGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    iconAction: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        height: 38,
-        backgroundColor: '#FFF',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        gap: 8,
-    },
-    iconActionActive: {
-        borderColor: theme.colors.primary,
-        backgroundColor: theme.colors.primary + '05',
-    },
-    iconActionText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: theme.colors.textSecondary,
-    },
-    filterBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        marginBottom: 24,
-    },
-    filterChip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 10,
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-    },
-    filterChipActive: {
-        backgroundColor: theme.colors.primary + '10',
-        borderColor: theme.colors.primary,
-    },
-    filterChipActiveBooked: {
-        backgroundColor: theme.colors.warning + '10',
-        borderColor: theme.colors.warning,
-    },
-    filterText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: theme.colors.textSecondary,
-    },
-    filterTextActive: {
-        color: theme.colors.primary,
-    },
-    filterTextActiveBooked: {
-        color: theme.colors.warning,
-    },
-    addBtn: {
-      height: 44,
-      borderRadius: 12,
-      paddingHorizontal: 20,
-    },
-    calendarContainer: {
-      flex: 1,
-      backgroundColor: '#FFF',
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
-      overflow: 'hidden',
-      ...theme.shadows.sm,
-      marginBottom: 40,
-    },
-    weekdayRow: {
-      flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderBottomColor: '#F3F4F6',
-      backgroundColor: '#FAFBFC',
-    },
-    weekdayCell: {
-      flex: 1,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    weekdayLabel: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: theme.colors.textTertiary,
-      textTransform: 'uppercase',
-      letterSpacing: 1.5,
-    },
-    grid: {
-      flex: 1,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-    },
-    dayCell: {
-      width: '14.28%',
-      height: '16.66%',
-      borderRightWidth: 1,
-      borderBottomWidth: 1,
-      borderColor: '#F3F4F6',
-      padding: 10,
-    },
-    selectedDayCell: {
-        backgroundColor: theme.colors.primary + '03',
-        borderColor: theme.colors.primary + '30',
-    },
-    notCurrentMonth: {
-      backgroundColor: '#F9FAFB',
-    },
-    dayCellHeader: {
-      marginBottom: 8,
-    },
-    dayNumber: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.colors.textSecondary,
-    },
-    dayNumberInactive: {
-      color: theme.colors.textTertiary,
-      opacity: 0.4,
-    },
-    todayNumber: {
-      color: theme.colors.primary,
-      fontWeight: '900',
-    },
-    dayContent: {
-      flex: 1,
-      gap: 4,
-    },
-    rulePill: {
-      backgroundColor: theme.colors.primary + '10',
-      paddingHorizontal: 4,
-      paddingVertical: 2,
-      borderRadius: 4,
-      borderLeftWidth: 2,
-      borderLeftColor: theme.colors.primary,
-    },
-    specificPill: {
-      backgroundColor: '#6366F115',
-      borderLeftColor: '#6366F1',
-    },
-    ruleText: {
-      fontSize: 8,
-      fontWeight: '800',
-      color: theme.colors.primary,
-    },
-    specificRuleText: {
-      color: '#6366F1',
-    },
-    appointmentPill: {
-        backgroundColor: theme.colors.warning + '10',
-        paddingHorizontal: 4,
-        paddingVertical: 2,
-        borderRadius: 4,
-        borderLeftWidth: 2,
-        borderLeftColor: theme.colors.warning,
-    },
-    appointmentText: {
-        fontSize: 8,
-        fontWeight: '800',
-        color: theme.colors.warning,
-    },
-    moreText: {
-        fontSize: 8,
-        fontWeight: '700',
-        color: theme.colors.textTertiary,
-    },
-    // LIST VIEW STYLES
-    listViewContainer: {
-        flex: 1,
-        backgroundColor: '#FFF',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        ...theme.shadows.sm,
-        marginBottom: 40,
-        padding: 24,
-    },
-    listHeader: {
-        marginBottom: 24,
-    },
-    listTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: theme.colors.text,
-    },
-    listScroll: {
-        gap: 16,
-    },
-    listItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#F9FAFB',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#F3F4F6',
-    },
-    listItemType: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    listItemContent: {
-        flex: 1,
-        marginLeft: 16,
-    },
-    listTitleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 4,
-    },
-    listItemTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: theme.colors.text,
-    },
-    listDiagnosis: {
-        fontSize: 13,
-        color: theme.colors.textSecondary,
-        fontStyle: 'italic',
-        marginBottom: 4,
-    },
-    listItemSubtitle: {
-        fontSize: 13,
-        color: theme.colors.textTertiary,
-        fontWeight: '600',
-    },
-    statusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
-    },
-    statusText: {
-        fontSize: 10,
-        fontWeight: '800',
-    },
-    listItemActions: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    listActionBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        alignItems: 'center',
-        justifyContent: 'center',
-    }
+    screen: { backgroundColor: '#F9FAFB', flex: 1 },
+    contentWrapper: { flex: 1, paddingHorizontal: Platform.OS === 'web' ? 40 : 10, paddingTop: Platform.OS === 'web' ? 40 : 20 },
+    topActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+    viewToggle: { flexDirection: 'row', backgroundColor: '#F3F4F6', padding: 4, borderRadius: 12 },
+    toggleBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, gap: 8 },
+    toggleBtnActive: { backgroundColor: '#FFF', ...theme.shadows.sm },
+    toggleText: { fontSize: 13, fontWeight: '600', color: theme.colors.textTertiary },
+    toggleTextActive: { color: theme.colors.text },
+    subHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', marginBottom: 24 },
+    dateNav: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    navArrow: { padding: 10, backgroundColor: '#FFF', borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+    dateDisplayWrapper: { position: 'relative', borderRadius: 10, overflow: 'hidden' },
+    dateDisplay: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 38, backgroundColor: '#FFF', borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+    dateDisplayText: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+    webPickerOverlay: { position: 'absolute', opacity: 0, width: '100%', height: '100%', top: 0, left: 0, cursor: 'pointer' },
+    centerStat: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+    statCount: { fontSize: 24, fontWeight: '800', color: theme.colors.text },
+    statLabel: { fontSize: 14, color: theme.colors.textTertiary },
+    rightGroup: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    iconAction: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 38, backgroundColor: '#FFF', borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB', gap: 8 },
+    iconActionActive: { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary + '05' },
+    iconActionText: { fontSize: 14, fontWeight: '600', color: theme.colors.textSecondary },
+    filterBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24 },
+    filterChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB' },
+    filterChipActive: { backgroundColor: theme.colors.primary + '10', borderColor: theme.colors.primary },
+    filterChipActiveBooked: { backgroundColor: theme.colors.warning + '10', borderColor: theme.colors.warning },
+    filterText: { fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary },
+    filterTextActive: { color: theme.colors.primary },
+    filterTextActiveBooked: { color: theme.colors.warning },
+    addBtn: { height: 44, borderRadius: 12, paddingHorizontal: 20 },
+    calendarContainer: { flex: 1, backgroundColor: '#FFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden', ...theme.shadows.sm, marginBottom: 40 },
+    weekdayRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F3F4F6', backgroundColor: '#FAFBFC' },
+    weekdayCell: { flex: 1, paddingVertical: 14, alignItems: 'center' },
+    weekdayLabel: { fontSize: 12, fontWeight: '700', color: theme.colors.textTertiary, textTransform: 'uppercase', letterSpacing: 1.5 },
+    grid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
+    dayCell: { width: '14.28%', minHeight: 180, borderRightWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6', padding: 8 },
+    selectedDayCell: { backgroundColor: theme.colors.primary + '03', borderColor: theme.colors.primary + '30' },
+    notCurrentMonth: { backgroundColor: '#F9FAFB' },
+    dayCellHeader: { marginBottom: 8 },
+    dayNumber: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary },
+    dayNumberInactive: { color: theme.colors.textTertiary, opacity: 0.4 },
+    todayNumber: { color: theme.colors.primary, fontWeight: '900' },
+    dayContent: { flex: 1, gap: 6 },
+    rulePill: { backgroundColor: theme.colors.primary + '10', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: theme.colors.primary },
+    specificPill: { backgroundColor: '#6366F115', borderLeftColor: '#6366F1' },
+    ruleText: { fontSize: 9, fontWeight: '800', color: theme.colors.primary },
+    specificRuleText: { color: '#6366F1' },
+    
+    // RICH CARD STYLES
+    richCard: { backgroundColor: '#FFF', borderRadius: 10, padding: 12, borderLeftWidth: 4, borderWidth: 1, borderColor: '#F3F4F6', gap: 4, ...theme.shadows.sm },
+    miniCard: { padding: 6, gap: 2 },
+    cardTime: { fontSize: 10, color: theme.colors.textTertiary, fontWeight: '600' },
+    cardName: { fontSize: 13, fontWeight: '800', color: theme.colors.text },
+    cardReason: { fontSize: 11, color: theme.colors.textSecondary, fontWeight: '500' },
+    cardBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, gap: 4, marginTop: 4 },
+    cardStatus: { fontSize: 9, fontWeight: '800' },
+    
+    // LIST VIEW
+    listViewContainer: { flex: 1, backgroundColor: '#FFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', ...theme.shadows.sm, marginBottom: 40, padding: 24 },
+    listHeader: { marginBottom: 24 },
+    listTitle: { fontSize: 20, fontWeight: '800', color: theme.colors.text },
+    listScroll: { gap: 16 },
+    ruleItem: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: '#F3F4F6' },
+    ruleIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: theme.colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
+    listItemTitle: { fontSize: 15, fontWeight: '700', color: theme.colors.text },
+    listItemSubtitle: { fontSize: 13, color: theme.colors.textTertiary, fontWeight: '600' },
+    listItemActions: { flexDirection: 'row', gap: 8 },
+    listActionBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }
   });
