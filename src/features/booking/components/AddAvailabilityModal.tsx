@@ -120,15 +120,38 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
             <Text style={styles.label}>Select Specific Date</Text>
             <TouchableOpacity 
               style={styles.datePickerBtn}
-              onPress={() => setShowDatePicker(true)}
+              onPress={() => {
+                if (Platform.OS !== 'web') setShowDatePicker(true);
+              }}
             >
               <Ionicons name="calendar" size={20} color={theme.colors.primary} />
               <Text style={styles.datePickerText}>
                 {specificDate.toLocaleDateString(undefined, { dateStyle: 'long' })}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
+              
+              {Platform.OS === 'web' && (
+                <input
+                  type="date"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    opacity: 0,
+                    cursor: 'pointer',
+                    width: '100%',
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    if (e.target.value) setSpecificDate(new Date(e.target.value));
+                  }}
+                />
+              )}
             </TouchableOpacity>
-            {showDatePicker && (
+
+            {Platform.OS !== 'web' && showDatePicker && (
               <DateTimePicker
                 value={specificDate}
                 mode="date"
