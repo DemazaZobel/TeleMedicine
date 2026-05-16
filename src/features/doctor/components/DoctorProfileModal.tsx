@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Platform, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Platform, Pressable, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Button, Card, Input } from '../../../components/ui';
@@ -25,7 +25,9 @@ interface ExperienceItem {
   id: string;
   role: string;
   hospital: string;
-  duration: string;
+  startYear: string;
+  endYear: string;
+  isCurrent: boolean;
   isEditing?: boolean;
 }
 
@@ -81,7 +83,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   };
 
   const handleAddExperience = () => {
-    setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', duration: '', isEditing: true }]);
+    setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', startYear: '', endYear: '', isCurrent: false, isEditing: true }]);
   };
 
   const handleRemoveExperience = (id: string) => {
@@ -96,7 +98,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
 
   const handleSaveExperience = (id: string) => {
     const exp = experienceList.find(e => e.id === id);
-    if (!exp?.role || !exp?.hospital || !exp?.duration) {
+    if (!exp?.role || !exp?.hospital || !exp?.startYear || (!exp.isCurrent && !exp?.endYear)) {
       Alert.alert("Missing Fields", "Please complete all fields for this experience.");
       return;
     }
@@ -389,7 +391,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             </TouchableOpacity>
           </View>
           {experienceList.map((exp, index) => {
-            const isExpComplete = exp.role.trim() !== '' && exp.hospital.trim() !== '' && exp.duration.trim() !== '';
+            const isExpComplete = exp.role.trim() !== '' && exp.hospital.trim() !== '' && exp.startYear.trim() !== '' && (exp.isCurrent || exp.endYear.trim() !== '');
 
             return (
               <View key={exp.id} style={styles.dynamicItemCard}>
@@ -432,20 +434,44 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                       onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
-                    <Input
-                      label="Duration"
-                      placeholder="e.g. 2020-Present"
-                      value={exp.duration}
-                      onChangeText={(t) => updateExperience(exp.id, 'duration', t)}
-                      containerStyle={styles.dynamicInputMargin}
-                    />
+                    
+                    <View style={styles.row}>
+                      <Input
+                        label="Start Year"
+                        placeholder="e.g. 2018"
+                        value={exp.startYear || ''}
+                        onChangeText={(t) => updateExperience(exp.id, 'startYear', t.replace(/[^0-9]/g, ''))}
+                        keyboardType="numeric"
+                        containerStyle={styles.halfField}
+                      />
+                      {!exp.isCurrent && (
+                        <Input
+                          label="End Year"
+                          placeholder="e.g. 2023"
+                          value={exp.endYear || ''}
+                          onChangeText={(t) => updateExperience(exp.id, 'endYear', t.replace(/[^0-9]/g, ''))}
+                          keyboardType="numeric"
+                          containerStyle={styles.halfField}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.switchRow}>
+                      <Switch 
+                        value={exp.isCurrent} 
+                        onValueChange={(val) => updateExperience(exp.id, 'isCurrent', val)}
+                        trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
+                      />
+                      <Text style={styles.switchLabel}>I currently work here</Text>
+                    </View>
+
                   </View>
                 </>
               ) : (
                 <View style={styles.summaryContainer}>
                   <Text style={styles.summaryTitle}>{exp.role || 'Untitled Role'}</Text>
                   <Text style={styles.summarySubtitle}>
-                    {exp.hospital}{exp.hospital && exp.duration ? ' • ' : ''}{exp.duration}
+                    {exp.hospital} • {exp.startYear} - {exp.isCurrent ? 'Present' : exp.endYear}
                   </Text>
                 </View>
               )}
@@ -626,6 +652,18 @@ const createStyles = (theme: Theme) =>
     },
     actionBtn: {
       padding: 4,
+    },
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: theme.spacing.sm,
+      marginBottom: theme.spacing.xs,
+      gap: theme.spacing.sm,
+    },
+    switchLabel: {
+      fontSize: 14,
+      color: theme.colors.text,
+      fontWeight: '500',
     },
     textActionBtn: {
       paddingHorizontal: 8,
