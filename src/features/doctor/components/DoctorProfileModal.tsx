@@ -51,6 +51,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [consultationFee, setConsultationFee] = useState('');
   const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const handleAddEducation = () => {
     setEducationList([...educationList, { id: Date.now().toString(), degree: '', institution: '', year: '' }]);
@@ -122,6 +123,19 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   const handleSave = useCallback(async () => {
     setSaved(false);
     clearError();
+    setFormError('');
+    
+    const parsedYears = yearsOfExperience ? Number(yearsOfExperience) : undefined;
+    const parsedFee = consultationFee ? Number(consultationFee) : undefined;
+
+    if (yearsOfExperience && isNaN(parsedYears!)) {
+      setFormError('Experience (years) must be a valid number.');
+      return;
+    }
+    if (consultationFee && isNaN(parsedFee!)) {
+      setFormError('Consultation Fee must be a valid number.');
+      return;
+    }
     
     const payload: DoctorProfileUpdate = {
       specialization: specialization.trim(),
@@ -132,8 +146,8 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       experience: experienceList.map(({ id, ...rest }) => rest),
       youtube_link: youtube.trim(),
       linkedin_link: linkedin.trim(),
-      years_of_experience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
-      consultation_fee: consultationFee ? Number(consultationFee) : undefined,
+      years_of_experience: parsedYears,
+      consultation_fee: parsedFee,
     };
     
     try {
@@ -167,9 +181,9 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
           <Text style={styles.title}>{profile?.is_verified ? 'Verified Practitioner' : 'Profile Configuration'}</Text>
         </View>
 
-        {error && (
+        {(error || formError) && (
           <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>{formError || error}</Text>
           </View>
         )}
 
@@ -231,22 +245,27 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 </TouchableOpacity>
               </View>
               <Input
-                placeholder="Degree/Major (e.g. MD, PhD)"
+                label="Degree/Major"
+                placeholder="e.g. MD, PhD"
                 value={edu.degree}
                 onChangeText={(t) => updateEducation(edu.id, 'degree', t)}
+                containerStyle={styles.dynamicInputMargin}
               />
-              <View style={styles.row}>
+              <View style={styles.inputStack}>
                 <Input
-                  placeholder="Institution (e.g. AAU)"
+                  label="Institution"
+                  placeholder="e.g. AAU"
                   value={edu.institution}
                   onChangeText={(t) => updateEducation(edu.id, 'institution', t)}
-                  containerStyle={styles.halfField}
+                  containerStyle={styles.dynamicInputMargin}
                 />
                 <Input
-                  placeholder="Year (e.g. 2018)"
+                  label="Year of Graduation"
+                  placeholder="e.g. 2018"
                   value={edu.year}
                   onChangeText={(t) => updateEducation(edu.id, 'year', t)}
-                  containerStyle={styles.halfField}
+                  keyboardType="numeric"
+                  containerStyle={styles.dynamicInputMargin}
                 />
               </View>
             </View>
@@ -269,22 +288,26 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 </TouchableOpacity>
               </View>
               <Input
-                placeholder="Role/Title (e.g. Senior Surgeon)"
+                label="Role/Title"
+                placeholder="e.g. Senior Surgeon"
                 value={exp.role}
                 onChangeText={(t) => updateExperience(exp.id, 'role', t)}
+                containerStyle={styles.dynamicInputMargin}
               />
-              <View style={styles.row}>
+              <View style={styles.inputStack}>
                 <Input
-                  placeholder="Hospital/Clinic"
+                  label="Hospital/Clinic"
+                  placeholder="e.g. Tikur Anbessa"
                   value={exp.hospital}
                   onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
-                  containerStyle={styles.halfField}
+                  containerStyle={styles.dynamicInputMargin}
                 />
                 <Input
-                  placeholder="Duration (e.g. 2020-Present)"
+                  label="Duration"
+                  placeholder="e.g. 2020-Present"
                   value={exp.duration}
                   onChangeText={(t) => updateExperience(exp.id, 'duration', t)}
-                  containerStyle={styles.halfField}
+                  containerStyle={styles.dynamicInputMargin}
                 />
               </View>
             </View>
@@ -376,6 +399,12 @@ const createStyles = (theme: Theme) =>
     },
     halfField: {
       flex: 1,
+    },
+    inputStack: {
+      flexDirection: 'column',
+    },
+    dynamicInputMargin: {
+      marginBottom: theme.spacing.sm,
     },
     multilineContainer: {
       marginTop: theme.spacing.md,
