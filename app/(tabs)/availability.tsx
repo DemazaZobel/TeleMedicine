@@ -92,9 +92,8 @@ export default function AvailabilityScreen() {
   };
 
   const getItemsForDate = (day: number, month: number, year: number): CalendarItem[] => {
-    const targetDate = new Date(year, month, day);
-    const targetWeekday = targetDate.getDay();
     const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const targetWeekday = new Date(year, month, day).getDay();
 
     let filteredRules = availabilityRules.filter(rule => {
       if (rule.specific_date) {
@@ -106,7 +105,9 @@ export default function AvailabilityScreen() {
     });
 
     const dateAppointments = showBooked ? appointments.filter(app => {
-        return app.scheduled_start.startsWith(dateISO) && app.status !== 'CANCELLED';
+        // Robust check for date match ignoring timezone/time part
+        const appDate = app.scheduled_start.split('T')[0];
+        return appDate === dateISO && app.status !== 'CANCELLED';
     }) : [];
 
     const items: CalendarItem[] = [
@@ -162,18 +163,22 @@ export default function AvailabilityScreen() {
 
   const renderAppointmentCard = (entry: AppointmentDetail, isMini = false) => {
     const config = getStatusConfig(entry.status);
-    const name = entry.patient_first_name ? `${entry.patient_first_name} ${entry.patient_last_name || ''}`.trim() : 'Patient';
-    const timeRange = `${entry.scheduled_start.split('T')[1].slice(0, 5)} - ${entry.scheduled_end?.split('T')[1]?.slice(0, 5) || '...'}`;
+    const name = entry.patient_first_name 
+      ? `${entry.patient_first_name} ${entry.patient_last_name || ''}`.trim() 
+      : (entry.patient?.user?.first_name ? `${entry.patient.user.first_name} ${entry.patient.user.last_name || ''}`.trim() : 'Patient');
+    
+    const startTime = entry.scheduled_start.split('T')[1].slice(0, 5);
+    const endTime = entry.scheduled_end?.split('T')[1]?.slice(0, 5) || '...';
     
     return (
         <View key={`app-${entry.id}`} style={[styles.richCard, { borderLeftColor: config.color }, isMini && styles.miniCard]}>
-            <Text style={styles.cardTime}>{timeRange}</Text>
+            <Text style={styles.cardTime}>{startTime} - {endTime}</Text>
             <Text style={styles.cardName} numberOfLines={1}>{name}</Text>
-            {(!isMini || entry.reason?.length < 20) && entry.reason && (
+            {entry.reason && (
                 <Text style={styles.cardReason} numberOfLines={1}>{entry.reason}</Text>
             )}
             <View style={[styles.cardBadge, { backgroundColor: config.color + '15' }]}>
-                <Ionicons name={config.icon as any} size={isMini ? 10 : 12} color={config.color} />
+                <Ionicons name={config.icon as any} size={isMini ? 8 : 12} color={config.color} />
                 <Text style={[styles.cardStatus, { color: config.color }]}>{config.label}</Text>
             </View>
         </View>
@@ -183,7 +188,6 @@ export default function AvailabilityScreen() {
   return (
     <ScreenContainer padded={false} style={styles.screen}>
       <View style={styles.contentWrapper}>
-        {/* HEADER & TOGGLES */}
         <View style={styles.topActions}>
             <View style={styles.viewToggle}>
                 <TouchableOpacity onPress={() => setViewMode('list')} style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}>
@@ -286,7 +290,7 @@ export default function AvailabilityScreen() {
                             <Text style={[styles.dayNumber, !item.isCurrentMonth && styles.dayNumberInactive, isToday && styles.todayNumber]}>{item.day}</Text>
                         </View>
                         <View style={styles.dayContent}>
-                            {dayItems.map((entry, idx) => {
+                            {dayItems.map((entry) => {
                                 if (entry.type === 'rule') {
                                     const isSpecific = !!entry.specific_date;
                                     return (
@@ -371,27 +375,27 @@ const createStyles = (theme: Theme, width: number) =>
     weekdayCell: { flex: 1, paddingVertical: 14, alignItems: 'center' },
     weekdayLabel: { fontSize: 12, fontWeight: '700', color: theme.colors.textTertiary, textTransform: 'uppercase', letterSpacing: 1.5 },
     grid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
-    dayCell: { width: '14.28%', minHeight: 180, borderRightWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6', padding: 8 },
+    dayCell: { width: '14.28%', minHeight: 220, borderRightWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6', padding: 8 },
     selectedDayCell: { backgroundColor: theme.colors.primary + '03', borderColor: theme.colors.primary + '30' },
     notCurrentMonth: { backgroundColor: '#F9FAFB' },
     dayCellHeader: { marginBottom: 8 },
     dayNumber: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary },
     dayNumberInactive: { color: theme.colors.textTertiary, opacity: 0.4 },
     todayNumber: { color: theme.colors.primary, fontWeight: '900' },
-    dayContent: { flex: 1, gap: 6 },
-    rulePill: { backgroundColor: theme.colors.primary + '10', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: theme.colors.primary },
+    dayContent: { flex: 1, gap: 8 },
+    rulePill: { backgroundColor: theme.colors.primary + '10', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: theme.colors.primary },
     specificPill: { backgroundColor: '#6366F115', borderLeftColor: '#6366F1' },
     ruleText: { fontSize: 9, fontWeight: '800', color: theme.colors.primary },
     specificRuleText: { color: '#6366F1' },
     
     // RICH CARD STYLES
-    richCard: { backgroundColor: '#FFF', borderRadius: 10, padding: 12, borderLeftWidth: 4, borderWidth: 1, borderColor: '#F3F4F6', gap: 4, ...theme.shadows.sm },
+    richCard: { backgroundColor: '#FFF', borderRadius: 10, padding: 10, borderLeftWidth: 4, borderWidth: 1, borderColor: '#F3F4F6', gap: 4, ...theme.shadows.sm, minWidth: 100 },
     miniCard: { padding: 6, gap: 2 },
-    cardTime: { fontSize: 10, color: theme.colors.textTertiary, fontWeight: '600' },
-    cardName: { fontSize: 13, fontWeight: '800', color: theme.colors.text },
-    cardReason: { fontSize: 11, color: theme.colors.textSecondary, fontWeight: '500' },
-    cardBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, gap: 4, marginTop: 4 },
-    cardStatus: { fontSize: 9, fontWeight: '800' },
+    cardTime: { fontSize: 9, color: theme.colors.textTertiary, fontWeight: '600' },
+    cardName: { fontSize: 12, fontWeight: '800', color: theme.colors.text },
+    cardReason: { fontSize: 10, color: theme.colors.textSecondary, fontWeight: '500' },
+    cardBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, gap: 4, marginTop: 2 },
+    cardStatus: { fontSize: 8, fontWeight: '800' },
     
     // LIST VIEW
     listViewContainer: { flex: 1, backgroundColor: '#FFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', ...theme.shadows.sm, marginBottom: 40, padding: 24 },
