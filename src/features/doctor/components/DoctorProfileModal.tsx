@@ -273,25 +273,32 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               <Text style={styles.addBtnText}>Add</Text>
             </TouchableOpacity>
           </View>
-          {educationList.map((edu, index) => (
-            <View key={edu.id} style={styles.dynamicItemCard}>
-              <View style={styles.dynamicItemHeader}>
-                <Text style={styles.dynamicItemTitle}>Degree {index + 1}</Text>
-                <View style={styles.dynamicItemActions}>
-                  {edu.isEditing ? (
-                    <TouchableOpacity onPress={() => handleSaveEducation(edu.id)} style={styles.textActionBtn}>
-                      <Text style={styles.textActionBtnSuccess}>Done</Text>
+          {educationList.map((edu, index) => {
+            const isEduComplete = edu.degree.trim() !== '' && edu.institution.trim() !== '' && edu.year.trim() !== '';
+            
+            return (
+              <View key={edu.id} style={styles.dynamicItemCard}>
+                <View style={styles.dynamicItemHeader}>
+                  <Text style={styles.dynamicItemTitle}>Degree {index + 1}</Text>
+                  <View style={styles.dynamicItemActions}>
+                    {edu.isEditing ? (
+                      <TouchableOpacity 
+                        onPress={() => handleSaveEducation(edu.id)} 
+                        style={[styles.textActionBtn, !isEduComplete && { opacity: 0.4 }]}
+                        disabled={!isEduComplete}
+                      >
+                        <Text style={styles.textActionBtnSuccess}>Done</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', true)} style={styles.textActionBtn}>
+                        <Text style={styles.textActionBtnPrimary}>Edit</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} style={styles.actionBtn}>
+                      <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
                     </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity onPress={() => updateEducation(edu.id, 'isEditing', true)} style={styles.textActionBtn}>
-                      <Text style={styles.textActionBtnPrimary}>Edit</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} style={styles.actionBtn}>
-                    <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-                  </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
               
               {edu.isEditing ? (
                 <>
@@ -370,7 +377,8 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 </View>
               )}
             </View>
-          ))}
+            );
+          })}
 
           {/* Experience Section */}
           <View style={styles.sectionHeader}>
@@ -380,25 +388,32 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
               <Text style={styles.addBtnText}>Add</Text>
             </TouchableOpacity>
           </View>
-          {experienceList.map((exp, index) => (
-            <View key={exp.id} style={styles.dynamicItemCard}>
-              <View style={styles.dynamicItemHeader}>
-                <Text style={styles.dynamicItemTitle}>Role {index + 1}</Text>
-                <View style={styles.dynamicItemActions}>
-                  {exp.isEditing ? (
-                    <TouchableOpacity onPress={() => handleSaveExperience(exp.id)} style={styles.textActionBtn}>
-                      <Text style={styles.textActionBtnSuccess}>Done</Text>
+          {experienceList.map((exp, index) => {
+            const isExpComplete = exp.role.trim() !== '' && exp.hospital.trim() !== '' && exp.duration.trim() !== '';
+
+            return (
+              <View key={exp.id} style={styles.dynamicItemCard}>
+                <View style={styles.dynamicItemHeader}>
+                  <Text style={styles.dynamicItemTitle}>Role {index + 1}</Text>
+                  <View style={styles.dynamicItemActions}>
+                    {exp.isEditing ? (
+                      <TouchableOpacity 
+                        onPress={() => handleSaveExperience(exp.id)} 
+                        style={[styles.textActionBtn, !isExpComplete && { opacity: 0.4 }]}
+                        disabled={!isExpComplete}
+                      >
+                        <Text style={styles.textActionBtnSuccess}>Done</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', true)} style={styles.textActionBtn}>
+                        <Text style={styles.textActionBtnPrimary}>Edit</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} style={styles.actionBtn}>
+                      <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
                     </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity onPress={() => updateExperience(exp.id, 'isEditing', true)} style={styles.textActionBtn}>
-                      <Text style={styles.textActionBtnPrimary}>Edit</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} style={styles.actionBtn}>
-                    <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-                  </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
               
               {exp.isEditing ? (
                 <>
@@ -435,7 +450,8 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
                 </View>
               )}
             </View>
-          ))}
+            );
+          })}
 
           <View style={styles.divider} />
 
