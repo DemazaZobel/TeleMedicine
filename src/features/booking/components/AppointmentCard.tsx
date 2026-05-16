@@ -59,6 +59,12 @@ export function AppointmentCard({
 
   const getStatus = () => {
     const status = appointment.status?.toUpperCase() || "UNKNOWN";
+    
+    // Virtual status override for expired appointments
+    if (isPast && !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(status)) {
+      return { label: "Expired", color: theme.colors.textTertiary };
+    }
+
     const map: Record<string, { label: string; color: string }> = {
       CONFIRMED: {
         label:
@@ -309,14 +315,11 @@ export function AppointmentCard({
     }
   };
 
-  const isCancelled = appointment.status?.toUpperCase() === "CANCELLED";
-  const isCompleted = appointment.status?.toUpperCase() === "COMPLETED";
-  const isNoShow = appointment.status?.toUpperCase() === "NO_SHOW";
-  const isExpired = appointment.status?.toUpperCase() === "EXPIRED";
+  const isExpired = appointment.status?.toUpperCase() === "EXPIRED" || (isPast && !isCompleted && !isCancelled);
   const isFinalized = isCancelled || isCompleted || isNoShow || isExpired;
 
   return (
-    <View style={[styles.card, isCancelled && { opacity: 0.7 }]}>
+    <View style={[styles.card, (isCancelled || isExpired) && { opacity: 0.6 }]}>
       <View style={styles.cardHeader}>
         <View style={styles.identity}>
           <View style={styles.avatar}>
