@@ -106,6 +106,7 @@ export interface ProviderAvailabilityRuleDetail {
 }
 
 export interface ProviderAvailabilityRuleCreatePayload {
+  id?: string | number;
   weekday?: number;
   specific_date?: string;
   start_time: string;

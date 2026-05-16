@@ -20,7 +20,9 @@ import { useBookingStore } from "../../src/store/booking.store";
 import { Theme, useTheme } from "../../src/theme";
 import { AddAvailabilityModal } from "../../src/features/booking/components/AddAvailabilityModal";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const HOUR_HEIGHT = 80;
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function AvailabilityScreen() {
   const router = useRouter();
@@ -40,63 +42,30 @@ export default function AvailabilityScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRule, setEditingRule] = useState<any>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  // Filters
-  const [filterType, setFilterType] = useState<'all' | 'recurring' | 'one-time'>('all');
-  const [showBooked, setShowBooked] = useState(true);
 
   useEffect(() => {
     fetchAvailabilityRules();
     fetchMyAppointments();
   }, []);
 
-  // Calendar Logic
-  const monthData = useMemo(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    const days = [];
-    
-    // Previous month padding
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
-      days.push({
-        day: prevMonthLastDay - i,
-        month: month - 1,
-        year,
-        isCurrentMonth: false,
-      });
+  // Calculate the current week's dates
+  const weekDates = useMemo(() => {
+    const dates = [];
+    const tempDate = new Date(currentDate);
+    const day = tempDate.getDay();
+    const diff = tempDate.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+    tempDate.setDate(diff);
+
+    for (let i = 0; i < 7; i++) {
+      dates.push(new Date(tempDate));
+      tempDate.setDate(tempDate.getDate() + 1);
     }
-    
-    // Current month days
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push({
-        day: i,
-        month,
-        year,
-        isCurrentMonth: true,
-      });
-    }
-    
-    // Next month padding
-    const remainingSlots = 42 - days.length;
-    for (let i = 1; i <= remainingSlots; i++) {
-      days.push({
-        day: i,
-        month: month + 1,
-        year,
-        isCurrentMonth: false,
-      });
-    }
-    
-    return days;
+    return dates;
   }, [currentDate]);
 
-  const navigateMonth = (direction: number) => {
-    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1);
+  const navigateWeek = (direction: number) => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() + direction * 7);
     setCurrentDate(newDate);
   };
 
@@ -107,10 +76,10 @@ export default function AvailabilityScreen() {
 
   const handleDelete = (id: string | number) => {
     if (Platform.OS === 'web') {
-        if (confirm("Delete this availability block?")) {
-            deleteAvailabilityRule(id);
-        }
-        return;
+      if (confirm("Remove this availability block?")) {
+        deleteAvailabilityRule(id);
+      }
+      return;
     }
     Alert.alert("Remove Hours", "Delete this slot?", [
       { text: "Cancel", style: "cancel" },
@@ -118,37 +87,33 @@ export default function AvailabilityScreen() {
     ]);
   };
 
-  const getItemsForDate = (day: number, month: number, year: number) => {
-    const targetDate = new Date(year, month, day);
-    const targetWeekday = targetDate.getDay();
-    const dateISO = targetDate.toISOString().split('T')[0];
-
-    // Get availability rules
-    let filteredRules = availabilityRules.filter(rule => {
-      if (rule.specific_date) {
-        if (filterType === 'recurring') return false;
-        return rule.specific_date === dateISO;
-      }
-      if (filterType === 'one-time') return false;
-      return rule.weekday === targetWeekday;
-    });
-
-    // Get appointments
-    const dateAppointments = showBooked ? appointments.filter(app => {
-        return app.scheduled_start.startsWith(dateISO) && app.status !== 'CANCELLED';
-    }) : [];
-
-    const items = [
-        ...filteredRules.map(r => ({ ...r, type: 'rule' })),
-        ...dateAppointments.map(a => ({ ...a, type: 'appointment' }))
-    ];
-
-    return items.sort((a, b) => {
-        const timeA = a.type === 'rule' ? a.start_time : a.scheduled_start.split('T')[1];
-        const timeB = b.type === 'rule' ? b.start_time : b.scheduled_start.split('T')[1];
-        return timeA.localeCompare(timeB);
-    });
+  const timeToMinutes = (timeStr: string) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
   };
+
+  const getPositionStyle = (startTime: string, endTime: string) => {
+    const startMins = timeToMinutes(startTime);
+    const endMins = timeToMinutes(endTime);
+    const duration = endMins - startMins;
+
+    return {
+      top: (startMins / 60) * HOUR_HEIGHT,
+      height: (duration / 60) * HOUR_HEIGHT,
+    };
+  };
+
+  const renderTimeline = () => (
+    <View style={styles.timeAxis}>
+      {HOURS.map(hour => (
+        <View key={hour} style={styles.timeLabelCell}>
+          <Text style={styles.timeLabel}>
+            {hour === 0 ? '12 AM' : hour > 12 ? `${hour - 12} PM` : `${hour} ${hour === 12 ? 'PM' : 'AM'}`}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
 
   return (
     <ScreenContainer padded={false} style={styles.screen}>
@@ -156,48 +121,21 @@ export default function AvailabilityScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.monthTitle}>
-              {currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+            <Text style={styles.title}>Weekly Schedule</Text>
+            <Text style={styles.subtitle}>
+              Week of {weekDates[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {weekDates[6].toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </Text>
-            <View style={styles.filterBar}>
-                <TouchableOpacity 
-                    onPress={() => setFilterType('all')} 
-                    style={[styles.filterChip, filterType === 'all' && styles.filterChipActive]}
-                >
-                    <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                    onPress={() => setFilterType('recurring')} 
-                    style={[styles.filterChip, filterType === 'recurring' && styles.filterChipActive]}
-                >
-                    <Text style={[styles.filterText, filterType === 'recurring' && styles.filterTextActive]}>Weekly</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                    onPress={() => setFilterType('one-time')} 
-                    style={[styles.filterChip, filterType === 'one-time' && styles.filterChipActive]}
-                >
-                    <Text style={[styles.filterText, filterType === 'one-time' && styles.filterTextActive]}>One-time</Text>
-                </TouchableOpacity>
-                <View style={styles.filterDivider} />
-                <TouchableOpacity 
-                    onPress={() => setShowBooked(!showBooked)} 
-                    style={[styles.filterChip, showBooked && styles.filterChipActiveBooked]}
-                >
-                    <Ionicons name={showBooked ? "eye" : "eye-off"} size={14} color={showBooked ? theme.colors.warning : theme.colors.textTertiary} />
-                    <Text style={[styles.filterText, showBooked && styles.filterTextActiveBooked]}>Appointments</Text>
-                </TouchableOpacity>
-            </View>
           </View>
           
           <View style={styles.headerActions}>
             <View style={styles.navGroup}>
-              <TouchableOpacity onPress={() => navigateMonth(-1)} style={styles.navBtn}>
+              <TouchableOpacity onPress={() => navigateWeek(-1)} style={styles.navBtn}>
                 <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setCurrentDate(new Date())} style={styles.todayBtn}>
                 <Text style={styles.todayText}>Today</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateMonth(1)} style={styles.navBtn}>
+              <TouchableOpacity onPress={() => navigateWeek(1)} style={styles.navBtn}>
                 <Ionicons name="chevron-forward" size={20} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
@@ -216,84 +154,108 @@ export default function AvailabilityScreen() {
           </View>
         </View>
 
-        {/* CALENDAR GRID */}
-        <View style={styles.calendarContainer}>
-          {/* Weekday Labels */}
-          <View style={styles.weekdayRow}>
-            {WEEKDAYS.map(day => (
-              <View key={day} style={styles.weekdayCell}>
-                <Text style={styles.weekdayLabel}>{day}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Days Grid */}
-          <View style={styles.grid}>
-            {monthData.map((item, index) => {
-              const dayItems = getItemsForDate(item.day, item.month, item.year);
-              const isToday = new Date().toDateString() === new Date(item.year, item.month, item.day).toDateString();
-              
+        {/* CALENDAR BOARD */}
+        <View style={styles.board}>
+          {/* Header Row */}
+          <View style={styles.boardHeader}>
+            <View style={styles.timeAxisSpace} />
+            {weekDates.map((date, i) => {
+              const isToday = date.toDateString() === new Date().toDateString();
               return (
-                <View 
-                  key={index} 
-                  style={[
-                    styles.dayCell, 
-                    !item.isCurrentMonth && styles.notCurrentMonth,
-                    index % 7 === 6 && { borderRightWidth: 0 }
-                  ]}
-                >
-                  <View style={styles.dayCellHeader}>
-                    <Text style={[
-                      styles.dayNumber, 
-                      !item.isCurrentMonth && styles.dayNumberInactive,
-                      isToday && styles.todayNumber
-                    ]}>
-                      {item.day}
-                    </Text>
-                  </View>
-                  
-                  <ScrollView style={styles.dayContent} showsVerticalScrollIndicator={false}>
-                    {dayItems.map((entry, idx) => {
-                      if (entry.type === 'rule') {
-                        return (
-                          <TouchableOpacity 
-                            key={`rule-${entry.id}`} 
-                            style={[styles.rulePill, !!entry.specific_date && styles.specificPill]}
-                            onPress={() => handleEdit(entry)}
-                            onLongPress={() => handleDelete(entry.id)}
-                          >
-                            <Text style={[styles.ruleText, !!entry.specific_date && styles.specificRuleText]} numberOfLines={1}>
-                              {entry.start_time.slice(0, 5)} - {entry.end_time.slice(0, 5)}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      } else {
-                        return (
-                          <View key={`app-${entry.id}`} style={styles.appointmentPill}>
-                            <Ionicons name="person" size={10} color={theme.colors.warning} />
-                            <Text style={styles.appointmentText} numberOfLines={1}>
-                                {entry.patient_name || 'Patient'}
-                            </Text>
-                            <Text style={styles.appointmentTime}>
-                                {entry.scheduled_start.split('T')[1].slice(0, 5)}
-                            </Text>
-                          </View>
-                        );
-                      }
-                    })}
-                  </ScrollView>
+                <View key={i} style={styles.dayHeaderCell}>
+                  <Text style={[styles.dayLabel, isToday && styles.todayLabel]}>{WEEKDAYS[i]}</Text>
+                  <Text style={[styles.dateLabel, isToday && styles.todayDateLabel]}>{date.getDate()}</Text>
                 </View>
               );
             })}
           </View>
+
+          {/* Grid Content */}
+          <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.gridBody}>
+              {renderTimeline()}
+              
+              <View style={styles.daysContainer}>
+                {weekDates.map((date, dayIdx) => {
+                  const dateISO = date.toISOString().split('T')[0];
+                  const weekday = date.getDay();
+                  // Correcting for Mon=0, Tue=1... Sun=6
+                  const adjustedWeekday = weekday === 0 ? 6 : weekday - 1;
+
+                  // Get items for this specific day
+                  const dayRules = availabilityRules.filter(r => {
+                    if (r.specific_date) return r.specific_date === dateISO;
+                    return r.weekday === (adjustedWeekday === 6 ? 6 : adjustedWeekday);
+                  });
+
+                  const dayAppointments = appointments.filter(app => 
+                    app.scheduled_start.startsWith(dateISO) && app.status !== 'CANCELLED'
+                  );
+
+                  return (
+                    <View key={dayIdx} style={styles.dayColumn}>
+                      {/* Grid Lines */}
+                      {HOURS.map(h => (
+                        <View key={h} style={styles.hourGridLine} />
+                      ))}
+
+                      {/* Availability Blocks */}
+                      {dayRules.map(rule => (
+                        <TouchableOpacity
+                          key={`rule-${rule.id}`}
+                          style={[
+                            styles.ruleCard,
+                            !!rule.specific_date && styles.specificRuleCard,
+                            getPositionStyle(rule.start_time, rule.end_time)
+                          ]}
+                          onPress={() => handleEdit(rule)}
+                          onLongPress={() => handleDelete(rule.id)}
+                        >
+                           <View style={styles.ruleCardIndicator} />
+                           <Text style={styles.ruleTimeText}>{rule.start_time.slice(0, 5)} - {rule.end_time.slice(0, 5)}</Text>
+                           <Text style={styles.ruleTypeLabel}>{!!rule.specific_date ? 'One-time' : 'Weekly'}</Text>
+                        </TouchableOpacity>
+                      ))}
+
+                      {/* Appointment Blocks */}
+                      {dayAppointments.map(app => {
+                        const start = app.scheduled_start.split('T')[1].slice(0, 5);
+                        const end = app.scheduled_end?.split('T')[1].slice(0, 5) || start;
+                        const patientName = app.patient_first_name 
+                          ? `${app.patient_first_name} ${app.patient_last_name || ''}`.trim()
+                          : 'Patient';
+
+                        return (
+                          <View
+                            key={`app-${app.id}`}
+                            style={[
+                              styles.appointmentCard,
+                              getPositionStyle(start, end)
+                            ]}
+                          >
+                             <View style={styles.appointmentIndicator} />
+                             <Text style={styles.appTimeText}>{start} - {end}</Text>
+                             <Text style={styles.appNameText} numberOfLines={1}>{patientName}</Text>
+                             <View style={[styles.statusBadge, styles[`status_${app.status}` as keyof typeof styles]]}>
+                                <Text style={styles.statusText}>{app.status}</Text>
+                             </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </ScrollView>
         </View>
       </View>
 
       <AddAvailabilityModal
         visible={showAddModal}
         onClose={() => {
-            setShowAddModal(false);
-            setEditingRule(null);
+          setShowAddModal(false);
+          setEditingRule(null);
         }}
         onConfirm={createAvailabilityRule}
         isLoading={isLoading}
@@ -306,7 +268,7 @@ export default function AvailabilityScreen() {
 const createStyles = (theme: Theme, width: number) =>
   StyleSheet.create({
     screen: {
-      backgroundColor: '#F8F9FA',
+      backgroundColor: '#FFF',
       flex: 1,
     },
     contentWrapper: {
@@ -317,56 +279,14 @@ const createStyles = (theme: Theme, width: number) =>
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       marginBottom: 32,
     },
-    monthTitle: {
+    title: {
       fontSize: 28,
-      fontWeight: '800',
+      fontWeight: '900',
       color: theme.colors.text,
-      letterSpacing: -0.5,
-    },
-    filterBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginTop: 12,
-    },
-    filterChip: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    filterChipActive: {
-        backgroundColor: theme.colors.primary + '10',
-        borderColor: theme.colors.primary,
-    },
-    filterChipActiveBooked: {
-        backgroundColor: theme.colors.warning + '10',
-        borderColor: theme.colors.warning,
-    },
-    filterText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: theme.colors.textSecondary,
-    },
-    filterTextActive: {
-        color: theme.colors.primary,
-    },
-    filterTextActiveBooked: {
-        color: theme.colors.warning,
-    },
-    filterDivider: {
-        width: 1,
-        height: 16,
-        backgroundColor: theme.colors.border,
-        marginHorizontal: 4,
+      letterSpacing: -1,
     },
     subtitle: {
       fontSize: 14,
@@ -381,10 +301,8 @@ const createStyles = (theme: Theme, width: number) =>
     navGroup: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#FFF',
+      backgroundColor: '#F3F4F6',
       borderRadius: 12,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
       padding: 4,
     },
     navBtn: {
@@ -393,9 +311,10 @@ const createStyles = (theme: Theme, width: number) =>
     todayBtn: {
       paddingHorizontal: 12,
       paddingVertical: 6,
-      backgroundColor: '#F3F4F6',
+      backgroundColor: '#FFF',
       borderRadius: 8,
       marginHorizontal: 4,
+      ...theme.shadows.sm,
     },
     todayText: {
       fontSize: 13,
@@ -407,113 +326,173 @@ const createStyles = (theme: Theme, width: number) =>
       borderRadius: 10,
       paddingHorizontal: 16,
     },
-    calendarContainer: {
+    board: {
       flex: 1,
-      backgroundColor: '#FFF',
-      borderRadius: 20,
       borderWidth: 1,
       borderColor: theme.colors.border,
+      borderRadius: 24,
       overflow: 'hidden',
-      ...theme.shadows.sm,
-      marginBottom: 40,
+      backgroundColor: '#FFF',
     },
-    weekdayRow: {
+    boardHeader: {
       flexDirection: 'row',
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      backgroundColor: '#FBFCFD',
+      backgroundColor: '#F9FAFB',
     },
-    weekdayCell: {
+    timeAxisSpace: {
+      width: 60,
+    },
+    dayHeaderCell: {
       flex: 1,
-      paddingVertical: 12,
+      paddingVertical: 16,
       alignItems: 'center',
+      borderLeftWidth: 1,
+      borderLeftColor: theme.colors.border + '50',
     },
-    weekdayLabel: {
-      fontSize: 12,
+    dayLabel: {
+      fontSize: 11,
       fontWeight: '700',
       color: theme.colors.textTertiary,
       textTransform: 'uppercase',
       letterSpacing: 1,
-    },
-    grid: {
-      flex: 1,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-    },
-    dayCell: {
-      width: '14.28%',
-      height: '16.66%',
-      borderRightWidth: 1,
-      borderBottomWidth: 1,
-      borderColor: theme.colors.border + '50',
-      padding: 8,
-    },
-    notCurrentMonth: {
-      backgroundColor: '#FAFAFA',
-    },
-    dayCellHeader: {
-      marginBottom: 6,
-    },
-    dayNumber: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.colors.textSecondary,
-    },
-    dayNumberInactive: {
-      color: theme.colors.textTertiary,
-      opacity: 0.5,
-    },
-    todayNumber: {
-      color: theme.colors.primary,
-      fontWeight: '900',
-    },
-    dayContent: {
-      flex: 1,
-    },
-    rulePill: {
-      backgroundColor: theme.colors.primary + '10',
-      paddingHorizontal: 6,
-      paddingVertical: 4,
-      borderRadius: 6,
       marginBottom: 4,
-      borderLeftWidth: 3,
-      borderLeftColor: theme.colors.primary,
     },
-    specificPill: {
-      backgroundColor: '#6366F115',
-      borderLeftColor: '#6366F1',
+    dateLabel: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: theme.colors.text,
     },
-    ruleText: {
+    todayLabel: {
+      color: theme.colors.primary,
+    },
+    todayDateLabel: {
+      color: theme.colors.primary,
+    },
+    gridScroll: {
+      flex: 1,
+    },
+    gridBody: {
+      flexDirection: 'row',
+      height: 24 * HOUR_HEIGHT,
+    },
+    timeAxis: {
+      width: 60,
+      paddingTop: HOUR_HEIGHT / 2,
+    },
+    timeLabelCell: {
+      height: HOUR_HEIGHT,
+      alignItems: 'center',
+    },
+    timeLabel: {
       fontSize: 10,
       fontWeight: '700',
-      color: theme.colors.primary,
+      color: theme.colors.textTertiary,
     },
-    specificRuleText: {
-      color: '#6366F1',
+    daysContainer: {
+      flex: 1,
+      flexDirection: 'row',
     },
-    appointmentPill: {
-        backgroundColor: theme.colors.warning + '10',
-        paddingHorizontal: 6,
-        paddingVertical: 4,
-        borderRadius: 6,
-        marginBottom: 4,
-        borderLeftWidth: 3,
-        borderLeftColor: theme.colors.warning,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        flexWrap: 'wrap',
+    dayColumn: {
+      flex: 1,
+      borderLeftWidth: 1,
+      borderLeftColor: theme.colors.border + '50',
+      position: 'relative',
     },
-    appointmentText: {
-        fontSize: 10,
-        fontWeight: '800',
-        color: theme.colors.warning,
-        flex: 1,
+    hourGridLine: {
+      height: HOUR_HEIGHT,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border + '30',
     },
-    appointmentTime: {
-        fontSize: 9,
-        fontWeight: '600',
-        color: theme.colors.warning,
-        opacity: 0.8,
-    }
+    // CARDS
+    ruleCard: {
+      position: 'absolute',
+      left: 4,
+      right: 4,
+      backgroundColor: theme.colors.primary + '08',
+      borderRadius: 10,
+      padding: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.primary + '30',
+      zIndex: 1,
+    },
+    specificRuleCard: {
+      backgroundColor: '#6366F108',
+      borderColor: '#6366F130',
+    },
+    ruleCardIndicator: {
+      width: 3,
+      position: 'absolute',
+      left: 0,
+      top: 8,
+      bottom: 8,
+      backgroundColor: theme.colors.primary,
+      borderRadius: 3,
+    },
+    ruleTimeText: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: theme.colors.text,
+      marginLeft: 6,
+    },
+    ruleTypeLabel: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+      marginLeft: 6,
+      marginTop: 2,
+    },
+    appointmentCard: {
+      position: 'absolute',
+      left: 4,
+      right: 4,
+      backgroundColor: theme.colors.warning + '08',
+      borderRadius: 12,
+      padding: 10,
+      borderWidth: 1,
+      borderColor: theme.colors.warning + '40',
+      zIndex: 2,
+      ...theme.shadows.sm,
+    },
+    appointmentIndicator: {
+      width: 4,
+      position: 'absolute',
+      left: 0,
+      top: 10,
+      bottom: 10,
+      backgroundColor: theme.colors.warning,
+      borderRadius: 4,
+    },
+    appTimeText: {
+      fontSize: 11,
+      fontWeight: '800',
+      color: theme.colors.text,
+      marginLeft: 8,
+    },
+    appNameText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: theme.colors.text,
+      marginLeft: 8,
+      marginTop: 2,
+    },
+    statusBadge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+      marginTop: 6,
+      marginLeft: 8,
+    },
+    statusText: {
+      fontSize: 8,
+      fontWeight: '900',
+      textTransform: 'uppercase',
+    },
+    status_REQUESTED: { backgroundColor: '#FFEDD5' },
+    status_CONFIRMED: { backgroundColor: '#DCFCE7' },
+    status_COMPLETED: { backgroundColor: '#DBEAFE' },
+    // status text colors
+    status_REQUESTED_text: { color: '#9A3412' },
+    status_CONFIRMED_text: { color: '#166534' },
   });
