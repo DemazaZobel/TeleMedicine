@@ -191,15 +191,24 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   createAvailabilityRule: async (payload: ProviderAvailabilityRuleCreatePayload) => {
     try {
       set({ isLoading: true, error: null });
-      const rule = await bookingService.createAvailabilityRule(payload);
-      set((state) => ({
-        availabilityRules: [...state.availabilityRules, rule],
-        isLoading: false,
-      }));
+      if (payload.id) {
+        // If ID is present, we are updating
+        const updated = await bookingService.updateAvailabilityRule(payload.id, payload);
+        set((state) => ({
+          availabilityRules: state.availabilityRules.map(r => r.id === payload.id ? updated : r),
+          isLoading: false,
+        }));
+      } else {
+        const rule = await bookingService.createAvailabilityRule(payload);
+        set((state) => ({
+          availabilityRules: [...state.availabilityRules, rule],
+          isLoading: false,
+        }));
+      }
     } catch (error: any) {
       set({
         isLoading: false,
-        error: error.response?.data?.detail || 'Failed to create availability rule.'
+        error: error.response?.data?.detail || 'Failed to manage availability rule.'
       });
       throw error;
     }

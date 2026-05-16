@@ -29,17 +29,25 @@ export default function AvailabilityScreen() {
   const styles = createStyles(theme, width);
   const {
     availabilityRules,
+    appointments,
     isLoading,
     fetchAvailabilityRules,
+    fetchMyAppointments,
     createAvailabilityRule,
     deleteAvailabilityRule,
   } = useBookingStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingRule, setEditingRule] = useState<any>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Filters
+  const [filterType, setFilterType] = useState<'all' | 'recurring' | 'one-time'>('all');
+  const [showBooked, setShowBooked] = useState(true);
 
   useEffect(() => {
     fetchAvailabilityRules();
+    fetchMyAppointments();
   }, []);
 
   // Calendar Logic
@@ -92,6 +100,11 @@ export default function AvailabilityScreen() {
     setCurrentDate(newDate);
   };
 
+  const handleEdit = (rule: any) => {
+    setEditingRule(rule);
+    setShowAddModal(true);
+  };
+
   const handleDelete = (id: string | number) => {
     if (Platform.OS === 'web') {
         if (confirm("Delete this availability block?")) {
@@ -105,17 +118,36 @@ export default function AvailabilityScreen() {
     ]);
   };
 
-  const getRulesForDate = (day: number, month: number, year: number) => {
+  const getItemsForDate = (day: number, month: number, year: number) => {
     const targetDate = new Date(year, month, day);
     const targetWeekday = targetDate.getDay();
     const dateISO = targetDate.toISOString().split('T')[0];
 
-    return availabilityRules.filter(rule => {
+    // Get availability rules
+    let filteredRules = availabilityRules.filter(rule => {
       if (rule.specific_date) {
+        if (filterType === 'recurring') return false;
         return rule.specific_date === dateISO;
       }
+      if (filterType === 'one-time') return false;
       return rule.weekday === targetWeekday;
-    }).sort((a, b) => a.start_time.localeCompare(b.start_time));
+    });
+
+    // Get appointments
+    const dateAppointments = showBooked ? appointments.filter(app => {
+        return app.scheduled_start.startsWith(dateISO) && app.status !== 'CANCELLED';
+    }) : [];
+
+    const items = [
+        ...filteredRules.map(r => ({ ...r, type: 'rule' })),
+        ...dateAppointments.map(a => ({ ...a, type: 'appointment' }))
+    ];
+
+    return items.sort((a, b) => {
+        const timeA = a.type === 'rule' ? a.start_time : a.scheduled_start.split('T')[1];
+        const timeB = b.type === 'rule' ? b.start_time : b.scheduled_start.split('T')[1];
+        return timeA.localeCompare(timeB);
+    });
   };
 
   return (
@@ -127,7 +159,34 @@ export default function AvailabilityScreen() {
             <Text style={styles.monthTitle}>
               {currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
             </Text>
-            <Text style={styles.subtitle}>Manage your schedule across the month</Text>
+            <View style={styles.filterBar}>
+                <TouchableOpacity 
+                    onPress={() => setFilterType('all')} 
+                    style={[styles.filterChip, filterType === 'all' && styles.filterChipActive]}
+                >
+                    <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    onPress={() => setFilterType('recurring')} 
+                    style={[styles.filterChip, filterType === 'recurring' && styles.filterChipActive]}
+                >
+                    <Text style={[styles.filterText, filterType === 'recurring' && styles.filterTextActive]}>Weekly</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                    onPress={() => setFilterType('one-time')} 
+                    style={[styles.filterChip, filterType === 'one-time' && styles.filterChipActive]}
+                >
+                    <Text style={[styles.filterText, filterType === 'one-time' && styles.filterTextActive]}>One-time</Text>
+                </TouchableOpacity>
+                <View style={styles.filterDivider} />
+                <TouchableOpacity 
+                    onPress={() => setShowBooked(!showBooked)} 
+                    style={[styles.filterChip, showBooked && styles.filterChipActiveBooked]}
+                >
+                    <Ionicons name={showBooked ? "eye" : "eye-off"} size={14} color={showBooked ? theme.colors.warning : theme.colors.textTertiary} />
+                    <Text style={[styles.filterText, showBooked && styles.filterTextActiveBooked]}>Appointments</Text>
+                </TouchableOpacity>
+            </View>
           </View>
           
           <View style={styles.headerActions}>
@@ -147,7 +206,10 @@ export default function AvailabilityScreen() {
               title="Add Availability"
               variant="primary"
               size="sm"
-              onPress={() => setShowAddModal(true)}
+              onPress={() => {
+                setEditingRule(null);
+                setShowAddModal(true);
+              }}
               icon={<Ionicons name="add" size={18} color="#FFF" />}
               style={styles.addBtn}
             />
@@ -168,7 +230,7 @@ export default function AvailabilityScreen() {
           {/* Days Grid */}
           <View style={styles.grid}>
             {monthData.map((item, index) => {
-              const dayRules = getRulesForDate(item.day, item.month, item.year);
+              const dayItems = getItemsForDate(item.day, item.month, item.year);
               const isToday = new Date().toDateString() === new Date(item.year, item.month, item.day).toDateString();
               
               return (
@@ -191,17 +253,34 @@ export default function AvailabilityScreen() {
                   </View>
                   
                   <ScrollView style={styles.dayContent} showsVerticalScrollIndicator={false}>
-                    {dayRules.map(rule => (
-                      <TouchableOpacity 
-                        key={rule.id} 
-                        style={[styles.rulePill, !!rule.specific_date && styles.specificPill]}
-                        onLongPress={() => handleDelete(rule.id)}
-                      >
-                        <Text style={[styles.ruleText, !!rule.specific_date && styles.specificRuleText]} numberOfLines={1}>
-                          {rule.start_time.slice(0, 5)} - {rule.end_time.slice(0, 5)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                    {dayItems.map((entry, idx) => {
+                      if (entry.type === 'rule') {
+                        return (
+                          <TouchableOpacity 
+                            key={`rule-${entry.id}`} 
+                            style={[styles.rulePill, !!entry.specific_date && styles.specificPill]}
+                            onPress={() => handleEdit(entry)}
+                            onLongPress={() => handleDelete(entry.id)}
+                          >
+                            <Text style={[styles.ruleText, !!entry.specific_date && styles.specificRuleText]} numberOfLines={1}>
+                              {entry.start_time.slice(0, 5)} - {entry.end_time.slice(0, 5)}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      } else {
+                        return (
+                          <View key={`app-${entry.id}`} style={styles.appointmentPill}>
+                            <Ionicons name="person" size={10} color={theme.colors.warning} />
+                            <Text style={styles.appointmentText} numberOfLines={1}>
+                                {entry.patient_name || 'Patient'}
+                            </Text>
+                            <Text style={styles.appointmentTime}>
+                                {entry.scheduled_start.split('T')[1].slice(0, 5)}
+                            </Text>
+                          </View>
+                        );
+                      }
+                    })}
                   </ScrollView>
                 </View>
               );
@@ -212,9 +291,13 @@ export default function AvailabilityScreen() {
 
       <AddAvailabilityModal
         visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+            setShowAddModal(false);
+            setEditingRule(null);
+        }}
         onConfirm={createAvailabilityRule}
         isLoading={isLoading}
+        initialData={editingRule}
       />
     </ScreenContainer>
   );
@@ -223,7 +306,7 @@ export default function AvailabilityScreen() {
 const createStyles = (theme: Theme, width: number) =>
   StyleSheet.create({
     screen: {
-      backgroundColor: '#F8F9FA', // Subtle dashboard grey
+      backgroundColor: '#F8F9FA',
       flex: 1,
     },
     contentWrapper: {
@@ -234,7 +317,7 @@ const createStyles = (theme: Theme, width: number) =>
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       marginBottom: 32,
     },
     monthTitle: {
@@ -242,6 +325,48 @@ const createStyles = (theme: Theme, width: number) =>
       fontWeight: '800',
       color: theme.colors.text,
       letterSpacing: -0.5,
+    },
+    filterBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 12,
+    },
+    filterChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    filterChipActive: {
+        backgroundColor: theme.colors.primary + '10',
+        borderColor: theme.colors.primary,
+    },
+    filterChipActiveBooked: {
+        backgroundColor: theme.colors.warning + '10',
+        borderColor: theme.colors.warning,
+    },
+    filterText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: theme.colors.textSecondary,
+    },
+    filterTextActive: {
+        color: theme.colors.primary,
+    },
+    filterTextActiveBooked: {
+        color: theme.colors.warning,
+    },
+    filterDivider: {
+        width: 1,
+        height: 16,
+        backgroundColor: theme.colors.border,
+        marginHorizontal: 4,
     },
     subtitle: {
       fontSize: 14,
@@ -366,4 +491,29 @@ const createStyles = (theme: Theme, width: number) =>
     specificRuleText: {
       color: '#6366F1',
     },
+    appointmentPill: {
+        backgroundColor: theme.colors.warning + '10',
+        paddingHorizontal: 6,
+        paddingVertical: 4,
+        borderRadius: 6,
+        marginBottom: 4,
+        borderLeftWidth: 3,
+        borderLeftColor: theme.colors.warning,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        flexWrap: 'wrap',
+    },
+    appointmentText: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: theme.colors.warning,
+        flex: 1,
+    },
+    appointmentTime: {
+        fontSize: 9,
+        fontWeight: '600',
+        color: theme.colors.warning,
+        opacity: 0.8,
+    }
   });

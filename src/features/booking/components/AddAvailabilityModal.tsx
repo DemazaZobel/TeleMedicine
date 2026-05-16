@@ -20,6 +20,7 @@ interface AddAvailabilityModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: (payload: { 
+    id?: string | number;
     weekday?: number; 
     specific_date?: string; 
     start_time: string; 
@@ -27,9 +28,17 @@ interface AddAvailabilityModalProps {
     is_active: boolean 
   }) => Promise<void>;
   isLoading: boolean;
+  initialData?: {
+    id: string | number;
+    weekday?: number;
+    specific_date?: string;
+    start_time: string;
+    end_time: string;
+    is_active: boolean;
+  } | null;
 }
 
-export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }: AddAvailabilityModalProps) {
+export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, initialData }: AddAvailabilityModalProps) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -40,6 +49,23 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
   
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
+
+  React.useEffect(() => {
+    if (initialData && visible) {
+      setIsRecurring(!initialData.specific_date);
+      if (initialData.weekday !== undefined) setWeekday(initialData.weekday);
+      if (initialData.specific_date) setSpecificDate(new Date(initialData.specific_date));
+      setStartTime(initialData.start_time.slice(0, 5));
+      setEndTime(initialData.end_time.slice(0, 5));
+    } else if (visible) {
+      // Reset for new entry
+      setIsRecurring(true);
+      setWeekday(1);
+      setSpecificDate(new Date());
+      setStartTime("09:00");
+      setEndTime("17:00");
+    }
+  }, [initialData, visible]);
 
   const handleAdd = async () => {
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -58,6 +84,7 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
     
     try {
       await onConfirm({
+        id: initialData?.id,
         weekday: isRecurring ? weekday : undefined,
         specific_date: !isRecurring ? specificDate.toISOString().split('T')[0] : undefined,
         start_time: startTime + ":00",
@@ -76,8 +103,8 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Add Working Hours"
-      subtitle="Define when patients can book your time."
+      title={initialData ? "Edit Working Hours" : "Add Working Hours"}
+      subtitle={initialData ? "Modify your existing schedule block." : "Define when patients can book your time."}
       maxWidth={500}
     >
       <View style={styles.container}>
@@ -217,7 +244,7 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading }:
             style={styles.actionBtn}
           />
           <Button
-            title="Save Hours"
+            title={initialData ? "Update Schedule" : "Save Hours"}
             onPress={handleAdd}
             loading={isLoading}
             disabled={isLoading}
