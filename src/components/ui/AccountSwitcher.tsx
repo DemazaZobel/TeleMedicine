@@ -26,9 +26,8 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
 
   const isDoctor = user.role === 'DOCTOR';
 
-  // If the user is a patient and they don't have a linked doctor account,
-  // there is no account switching functionality to show.
-  if (!isDoctor && !hasLinkedAccount) return null;
+  // We now show prompts to link/create even if no account is linked yet
+  // (e.g., Doctor can create Patient, Patient can link Doctor)
 
   const roleColor = isDoctor ? theme.colors.primary : '#13C2C2';
 
