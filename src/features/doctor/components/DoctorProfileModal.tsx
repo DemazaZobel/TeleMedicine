@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Button, Card, Input } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { useDoctorStore } from '../../../store/doctor.store';
@@ -9,6 +10,20 @@ import type { DoctorProfileUpdate } from '../types/doctor.types';
 interface DoctorProfileModalProps {
   visible: boolean;
   onClose: () => void;
+}
+
+interface EducationItem {
+  id: string;
+  degree: string;
+  institution: string;
+  year: string;
+}
+
+interface ExperienceItem {
+  id: string;
+  role: string;
+  hospital: string;
+  duration: string;
 }
 
 export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps) {
@@ -29,13 +44,41 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
   const [location, setLocation] = useState('');
   const [hospital, setHospital] = useState('');
   const [biography, setBiography] = useState('');
-  const [experience, setExperience] = useState('');
-  const [education, setEducation] = useState('');
+  const [educationList, setEducationList] = useState<EducationItem[]>([]);
+  const [experienceList, setExperienceList] = useState<ExperienceItem[]>([]);
   const [youtube, setYoutube] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [consultationFee, setConsultationFee] = useState('');
   const [saved, setSaved] = useState(false);
+
+  const handleAddEducation = () => {
+    setEducationList([...educationList, { id: Date.now().toString(), degree: '', institution: '', year: '' }]);
+  };
+
+  const handleRemoveEducation = (id: string) => {
+    setEducationList(educationList.filter(e => e.id !== id));
+  };
+
+  const updateEducation = (id: string, field: keyof EducationItem, value: string) => {
+    setEducationList(educationList.map(e => e.id === id ? { ...e, [field]: value } : e));
+    clearError();
+    setSaved(false);
+  };
+
+  const handleAddExperience = () => {
+    setExperienceList([...experienceList, { id: Date.now().toString(), role: '', hospital: '', duration: '' }]);
+  };
+
+  const handleRemoveExperience = (id: string) => {
+    setExperienceList(experienceList.filter(e => e.id !== id));
+  };
+
+  const updateExperience = (id: string, field: keyof ExperienceItem, value: string) => {
+    setExperienceList(experienceList.map(e => e.id === id ? { ...e, [field]: value } : e));
+    clearError();
+    setSaved(false);
+  };
 
   useEffect(() => {
     if (visible) {
@@ -51,8 +94,20 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       setLocation(profile.location ?? '');
       setHospital(profile.current_working_hospital ?? '');
       setBiography(profile.biography ?? '');
-      setExperience(profile.experience ?? '');
-      setEducation(profile.education ?? '');
+      
+      // Parse backend arrays if available
+      if (Array.isArray(profile.education)) {
+        setEducationList(profile.education.map((e, i) => ({ id: i.toString(), ...e })));
+      } else {
+        setEducationList([]);
+      }
+
+      if (Array.isArray(profile.experience)) {
+        setExperienceList(profile.experience.map((e, i) => ({ id: i.toString(), ...e })));
+      } else {
+        setExperienceList([]);
+      }
+
       setYoutube(profile.youtube_link ?? '');
       setLinkedin(profile.linkedin_link ?? '');
       setYearsOfExperience(
@@ -73,8 +128,8 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       location: location.trim(),
       current_working_hospital: hospital.trim(),
       biography: biography.trim(),
-      experience: experience.trim(),
-      education: education.trim(),
+      education: educationList.map(({ id, ...rest }) => rest), // Remove internal ID
+      experience: experienceList.map(({ id, ...rest }) => rest),
       youtube_link: youtube.trim(),
       linkedin_link: linkedin.trim(),
       years_of_experience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
@@ -91,7 +146,7 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
       // Error is set in the store
     }
   }, [
-    specialization, location, hospital, biography, experience, education, 
+    specialization, location, hospital, biography, educationList, experienceList, 
     youtube, linkedin, yearsOfExperience, consultationFee, 
     updateProfile, clearError, onClose
   ]);
@@ -159,25 +214,83 @@ export function DoctorProfileModal({ visible, onClose }: DoctorProfileModalProps
             containerStyle={styles.multilineContainer}
           />
 
-          <Input
-            label="Education"
-            placeholder="e.g. MD from Addis Ababa University"
-            value={education}
-            onChangeText={(t) => { setEducation(t); clearError(); setSaved(false); }}
-            multiline
-            numberOfLines={2}
-            containerStyle={styles.multilineContainer}
-          />
+          {/* Education Section */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Education</Text>
+            <TouchableOpacity onPress={handleAddEducation} style={styles.addBtn}>
+              <Ionicons name="add-circle-outline" size={20} color={theme.colors.primary} />
+              <Text style={styles.addBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+          {educationList.map((edu, index) => (
+            <View key={edu.id} style={styles.dynamicItemCard}>
+              <View style={styles.dynamicItemHeader}>
+                <Text style={styles.dynamicItemTitle}>Degree {index + 1}</Text>
+                <TouchableOpacity onPress={() => handleRemoveEducation(edu.id)} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                  <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
+              <Input
+                placeholder="Degree/Major (e.g. MD, PhD)"
+                value={edu.degree}
+                onChangeText={(t) => updateEducation(edu.id, 'degree', t)}
+              />
+              <View style={styles.row}>
+                <Input
+                  placeholder="Institution (e.g. AAU)"
+                  value={edu.institution}
+                  onChangeText={(t) => updateEducation(edu.id, 'institution', t)}
+                  containerStyle={styles.halfField}
+                />
+                <Input
+                  placeholder="Year (e.g. 2018)"
+                  value={edu.year}
+                  onChangeText={(t) => updateEducation(edu.id, 'year', t)}
+                  containerStyle={styles.halfField}
+                />
+              </View>
+            </View>
+          ))}
 
-          <Input
-            label="Experience"
-            placeholder="e.g. Senior Cardiologist at St. Paul's"
-            value={experience}
-            onChangeText={(t) => { setExperience(t); clearError(); setSaved(false); }}
-            multiline
-            numberOfLines={2}
-            containerStyle={styles.multilineContainer}
-          />
+          {/* Experience Section */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Experience</Text>
+            <TouchableOpacity onPress={handleAddExperience} style={styles.addBtn}>
+              <Ionicons name="add-circle-outline" size={20} color={theme.colors.primary} />
+              <Text style={styles.addBtnText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+          {experienceList.map((exp, index) => (
+            <View key={exp.id} style={styles.dynamicItemCard}>
+              <View style={styles.dynamicItemHeader}>
+                <Text style={styles.dynamicItemTitle}>Role {index + 1}</Text>
+                <TouchableOpacity onPress={() => handleRemoveExperience(exp.id)} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                  <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+                </TouchableOpacity>
+              </View>
+              <Input
+                placeholder="Role/Title (e.g. Senior Surgeon)"
+                value={exp.role}
+                onChangeText={(t) => updateExperience(exp.id, 'role', t)}
+              />
+              <View style={styles.row}>
+                <Input
+                  placeholder="Hospital/Clinic"
+                  value={exp.hospital}
+                  onChangeText={(t) => updateExperience(exp.id, 'hospital', t)}
+                  containerStyle={styles.halfField}
+                />
+                <Input
+                  placeholder="Duration (e.g. 2020-Present)"
+                  value={exp.duration}
+                  onChangeText={(t) => updateExperience(exp.id, 'duration', t)}
+                  containerStyle={styles.halfField}
+                />
+              </View>
+            </View>
+          ))}
+
+          <View style={styles.divider} />
 
           <View style={styles.row}>
             <Input
@@ -292,4 +405,55 @@ const createStyles = (theme: Theme) =>
       fontSize: 14,
       textAlign: 'center',
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: theme.spacing.xl,
+      marginBottom: theme.spacing.sm,
+    },
+    sectionTitle: {
+      ...theme.typography.h6,
+      color: theme.colors.text,
+      fontWeight: '700',
+    },
+    addBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      backgroundColor: theme.colors.primary + '15',
+      borderRadius: 8,
+    },
+    addBtnText: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    dynamicItemCard: {
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 12,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+    },
+    dynamicItemHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    dynamicItemTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.border,
+      marginVertical: theme.spacing.xl,
+      opacity: 0.5,
+    }
   });

@@ -17,8 +17,8 @@ export interface DoctorProfile {
   location: string;
   current_working_hospital: string;
   biography: string;
-  experience: string;
-  education: string;
+  experience: any[];
+  education: any[];
   profile_image: string;
   consultation_fee: string;
   is_verified: boolean;
@@ -34,8 +34,8 @@ export interface DoctorProfileUpdate {
   location?: string;
   current_working_hospital?: string;
   biography?: string;
-  experience?: string;
-  education?: string;
+  experience?: any[];
+  education?: any[];
   consultation_fee?: string | number;
   youtube_link?: string;
   linkedin_link?: string;
