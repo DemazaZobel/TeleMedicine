@@ -29,18 +29,14 @@ export default function DoctorLayout() {
         ),
       }}
     >
-      <Stack.Screen 
-        name="profile" 
-        options={{ title: 'Provider Profile' }} 
-      />
-      <Stack.Screen 
-        name="documents" 
-        options={{ title: 'Secure Documents' }} 
-      />
-      <Stack.Screen 
-        name="pending-approval" 
-        options={{ title: 'Verification', headerShown: !isWeb }} 
-      />
+      <Stack.Screen name="index" options={{ title: 'Home', headerShown: false }} />
+      <Stack.Screen name="appointments" options={{ title: 'Appointments' }} />
+      <Stack.Screen name="availability" options={{ title: 'Availability' }} />
+      <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
+      <Stack.Screen name="documents" options={{ title: 'Secure Documents' }} />
+      <Stack.Screen name="pending-approval" options={{ title: 'Verification', headerShown: !isWeb }} />
+      <Stack.Screen name="pending-profile" options={{ title: 'Complete Profile' }} />
     </Stack>
   );
 }

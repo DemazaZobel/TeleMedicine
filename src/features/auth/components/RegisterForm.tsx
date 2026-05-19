@@ -2,7 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
 import { AuthContainer, Button, Input } from '../../../components/ui';
+import { Checkbox } from '../../../components/ui/CheckBox';
+import { GoogleSignInButton } from '../../../components/ui/GoogleSignInButton';
+
 import { useAuthStore } from '../../../store/authStore';
 import { Theme, useTheme } from '../../../theme';
 import type { UserRole } from '../../../types';
@@ -12,10 +16,17 @@ const ROLES: { label: string; icon: keyof typeof Ionicons.glyphMap; value: UserR
   { label: 'Doctor', icon: 'medkit-outline', value: 'DOCTOR' },
 ];
 
+function getPasswordStrength(password: string): { label: string; color: string; width: string } {
+  if (password.length === 0) return { label: '', color: 'transparent', width: '0%' };
+  if (password.length < 6) return { label: 'Weak', color: '#ef4444', width: '33%' };
+  if (password.match(/[A-Z]/) && password.match(/[0-9]/)) return { label: 'Strong', color: '#22c55e', width: '100%' };
+  return { label: 'Medium', color: '#f59e0b', width: '66%' };
+}
+
 export function RegisterForm() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { register, isLoading, error, clearError } = useAuthStore();
 
@@ -24,309 +35,356 @@ export function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('PATIENT');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+
+  const strength = getPasswordStrength(password);
 
   const isValid =
-    firstName.trim() && lastName.trim() && email.trim() && password.length >= 6;
+    firstName.trim() &&
+    lastName.trim() &&
+    email.trim() &&
+    password.length >= 6 &&
+    agreeTerms;
 
   const handleRegister = useCallback(async () => {
     if (!isValid) return;
-    try {
-      await register({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email: email.trim(),
-        password,
-        role,
-      });
-      // Navigate to email verification
-      router.push({
-        pathname: '/(auth)/verify-email',
-        params: { email: email.trim() },
-      });
-    } catch {
-      // Error is set in the store
-    }
-  }, [firstName, lastName, email, password, role, isValid, register, router]);
+    await register({
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      email: email.trim(),
+      password,
+      role,
+    });
+    router.push({
+      pathname: '/(auth)/verify-email',
+      params: { email: email.trim() },
+    });
+  }, [firstName, lastName, email, password, role, isValid]);
+
+  const handleGoogle = () => console.log('Google signup clicked');
 
   const clearOnChange = useCallback(
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-      (text: string) => {
-        setter(text);
-        if (error) clearError();
-      },
-    [error, clearError]
+    (setter: any) => (text: string) => {
+      setter(text);
+      if (error) clearError();
+    },
+    [error]
   );
 
   return (
-    <AuthContainer
-      illustration={require('../../../../assets/images/signup-illustration.png')}
-      darkIllustration={require('../../../../assets/images/dark-signup-illustration.png')}
-    >
+    <AuthContainer>
       <View style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="medical" size={28} color={theme.colors.primary} />
-          </View>
-        </View>
 
-        {/* Header */}
+        {/* LOGO + HEADING */}
         <View style={styles.header}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="medical" size={26} color={theme.colors.primary} />
+          </View>
           <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join MedLink and take control of your health</Text>
         </View>
 
-        {/* Error */}
+        {/* ERROR */}
         {error && (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle" size={18} color={theme.colors.error} style={{ marginRight: 8 }} />
+            <Ionicons name="alert-circle" size={16} color="#ef4444" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
-        {/* Role Selector */}
+        {/* ROLE SELECTOR */}
         <View style={styles.roleSelector}>
           {ROLES.map((r) => (
             <Pressable
               key={r.value}
+              onPress={() => setRole(r.value)}
               style={[
                 styles.roleButton,
-                role === r.value && styles.roleButtonActive,
+                role === r.value && {
+                  backgroundColor: theme.colors.primary + '12',
+                  borderColor: theme.colors.primary,
+                },
               ]}
-              onPress={() => setRole(r.value)}
             >
-              <Ionicons
-                name={r.icon}
-                size={18}
-                color={role === r.value ? theme.colors.primary : theme.colors.textTertiary}
-                style={{ marginRight: 6 }}
-              />
-              <Text
-                style={[
-                  styles.roleButtonText,
-                  role === r.value && styles.roleButtonTextActive,
-                ]}
-              >
+              <View style={[
+                styles.roleIconWrap,
+                { backgroundColor: role === r.value ? theme.colors.primary + '18' : theme.colors.border + '40' }
+              ]}>
+                <Ionicons
+                  name={r.icon}
+                  size={18}
+                  color={role === r.value ? theme.colors.primary : theme.colors.textSecondary}
+                />
+              </View>
+              <Text style={[
+                styles.roleText,
+                role === r.value && { color: theme.colors.primary, fontWeight: '600' }
+              ]}>
                 {r.label}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        {/* Form */}
+        {/* FORM */}
         <View style={styles.form}>
-          <View style={styles.formRow}>
-            <Input
-              placeholder="First Name"
-              value={firstName}
-              onChangeText={clearOnChange(setFirstName)}
-              leftIcon={<Ionicons name="person-outline" size={20} color={theme.colors.textTertiary} />}
-              containerStyle={{ flex: 1 }}
-            />
-            <Input
-              placeholder="Last Name"
-              value={lastName}
-              onChangeText={clearOnChange(setLastName)}
-              leftIcon={<Ionicons name="person-outline" size={20} color={theme.colors.textTertiary} />}
-              containerStyle={{ flex: 1 }}
-            />
+
+          {/* NAME ROW */}
+          <View style={styles.nameRow}>
+            <View style={{ flex: 1 }}>
+              <Input placeholder="First Name" value={firstName} onChangeText={clearOnChange(setFirstName)} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Input placeholder="Last Name" value={lastName} onChangeText={clearOnChange(setLastName)} />
+            </View>
           </View>
 
           <Input
-            placeholder="email address"
+            placeholder="Email address"
             value={email}
             onChangeText={clearOnChange(setEmail)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            leftIcon={<Ionicons name="mail-outline" size={20} color={theme.colors.textTertiary} />}
           />
 
+          {/* PASSWORD */}
           <Input
-            placeholder="Password (min. 6 chars)"
+            placeholder="Password"
             value={password}
             onChangeText={clearOnChange(setPassword)}
-            secureTextEntry
-            leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.colors.textTertiary} />}
+            secureTextEntry={!showPassword}
+            rightIcon={
+              <Pressable onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={theme.colors.textSecondary}
+                />
+              </Pressable>
+            }
           />
 
+          {/* PASSWORD STRENGTH BAR */}
+          {password.length > 0 && (
+            <View style={styles.strengthWrap}>
+              <View style={styles.strengthTrack}>
+                <View style={[styles.strengthFill, { width: strength.width, backgroundColor: strength.color }]} />
+              </View>
+              <Text style={[styles.strengthLabel, { color: strength.color }]}>{strength.label}</Text>
+            </View>
+          )}
+
+          {/* TERMS */}
+          <View style={styles.termsRow}>
+            <Checkbox checked={agreeTerms} onChange={() => setAgreeTerms(!agreeTerms)} />
+            <Text style={styles.termsText}>
+              I agree to the{' '}
+              <Text style={[styles.termsText, styles.termsLinkText]} onPress={() => router.push('./terms')}>
+                Terms & Conditions
+              </Text>
+            </Text>
+          </View>
+
+          {/* SUBMIT */}
           <Button
             title="Create Account"
             onPress={handleRegister}
             loading={isLoading}
-            fullWidth
-            style={styles.submitBtn}
             disabled={!isValid}
+            fullWidth
           />
+
+          {/* DIVIDER */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <GoogleSignInButton onPress={handleGoogle} loading={isLoading} />
         </View>
 
-        {/* Social
-        
-           <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
+        {/* LOGIN LINK */}
+        <View style={styles.loginRow}>
+          <Text style={styles.loginText}>Already have an account? </Text>
+          <Pressable onPress={() => router.push('/(auth)/login')}>
+            <Text style={[styles.loginText, { color: theme.colors.primary, fontWeight: '600' }]}>
+              Sign In
+            </Text>
+          </Pressable>
         </View>
-           <View style={styles.socialRow}>
-          <Pressable style={styles.socialBtn}>
-            <Ionicons name="logo-apple" size={22} color={theme.colors.text} />
-          </Pressable>
-          <Pressable style={[styles.socialBtn, styles.socialBtnGoogle]}>
-            <Ionicons name="logo-google" size={22} color="#4285F4" />
-          </Pressable>
-          <Pressable style={styles.socialBtn}>
-            <Ionicons name="logo-twitter" size={22} color={theme.colors.text} />
-          </Pressable>
-        </View>*/}
 
-
-        <Text style={styles.subtitle}>
-          Already have an account?{' '}
-          <Text
-            style={styles.link}
-            onPress={() => router.push('/(auth)/login')}
-          >
-            Sign in
-          </Text>
-        </Text>
       </View>
     </AuthContainer>
   );
 }
 
-const createStyles = (theme: Theme, isDark: boolean) =>
+const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       width: '100%',
       alignItems: 'center',
+      
     },
-    logoContainer: {
-      marginBottom: 20,
-    },
-    logoBadge: {
-      width: 56,
-      height: 56,
-      borderRadius: 16,
-      backgroundColor: theme.colors.primary + '15',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.colors.primary + '25',
-    },
+
     header: {
       alignItems: 'center',
       marginBottom: 24,
     },
+
+    logoBadge: {
+      width: 54,
+      height: 54,
+      borderRadius: 16,
+      backgroundColor: theme.colors.primary + '15',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 14,
+    },
+
     title: {
-      fontSize: 26,
+      fontSize: 24,
       fontWeight: '700',
       color: theme.colors.text,
-      letterSpacing: -0.5,
-      marginBottom: 8,
+      marginBottom: 6,
     },
+
     subtitle: {
-      fontSize: 14,
+      fontSize: 13,
       color: theme.colors.textSecondary,
-      lineHeight: 20,
-      marginTop: 16,
+      textAlign: 'center',
     },
-    link: {
-      color: theme.colors.text,
-      fontWeight: '700',
-    },
+
     errorContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.errorLight + '20',
+      gap: 8,
       padding: 12,
-      borderRadius: 12,
-      marginBottom: 16,
-      width: '100%',
+      backgroundColor: '#ef444415',
+      borderRadius: 10,
       borderWidth: 1,
-      borderColor: theme.colors.error + '20',
+      borderColor: '#ef444430',
+      width: '100%',
+      marginBottom: 14,
     },
+
     errorText: {
+      color: '#ef4444',
       fontSize: 13,
-      color: theme.colors.error,
       flex: 1,
     },
+
     roleSelector: {
       flexDirection: 'row',
-      gap: 12,
+      gap: 10,
       width: '100%',
       marginBottom: 20,
     },
+
     roleButton: {
       flex: 1,
       flexDirection: 'row',
-      paddingVertical: 12,
-      borderRadius: 12,
+      alignItems: 'center',
+      gap: 8,
+      padding: 12,
       borderWidth: 1.5,
       borderColor: theme.colors.border,
-      alignItems: 'center',
+      borderRadius: 12,
+    },
+
+    roleIconWrap: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
       justifyContent: 'center',
-      backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+      alignItems: 'center',
     },
-    roleButtonActive: {
-      borderColor: theme.colors.primary + '60',
-      backgroundColor: theme.colors.primary + '08',
-    },
-    roleButtonText: {
+
+    roleText: {
       fontSize: 14,
-      fontWeight: '600',
       color: theme.colors.textSecondary,
     },
-    roleButtonTextActive: {
-      color: theme.colors.primary,
-      fontWeight: '700',
-    },
+
     form: {
       width: '100%',
-      gap: 14,
-    },
-    formRow: {
-      flexDirection: 'row',
       gap: 12,
+      maxWidth: 480,
     },
-    submitBtn: {
-      marginTop: 4,
-      height: 50,
-      borderRadius: 14,
+
+    nameRow: {
+      flexDirection: 'row',
+      gap: 10,
     },
+
+    strengthWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: -4,
+    },
+
+    strengthTrack: {
+      flex: 1,
+      height: 4,
+      backgroundColor: theme.colors.border,
+      borderRadius: 4,
+      overflow: 'hidden',
+    },
+
+    strengthFill: {
+      height: '100%',
+      borderRadius: 4,
+    },
+
+    strengthLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      width: 44,
+    },
+
+    termsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+
+    termsText: {
+      fontSize: 13,
+      color: theme.colors.textSecondary,
+      flex: 1,
+    },
+
+    termsLinkText: {
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+
     divider: {
       flexDirection: 'row',
       alignItems: 'center',
-      width: '100%',
-      marginVertical: 24,
+      gap: 10,
     },
+
     dividerLine: {
       flex: 1,
       height: 1,
       backgroundColor: theme.colors.border,
     },
+
     dividerText: {
-      marginHorizontal: 16,
       fontSize: 12,
-      color: theme.colors.textTertiary,
-      fontWeight: '500',
-      textTransform: 'uppercase',
+      color: theme.colors.textSecondary,
     },
-    socialRow: {
+
+    loginRow: {
       flexDirection: 'row',
-      gap: 12,
-      width: '100%',
-    },
-    socialBtn: {
-      flex: 1,
-      height: 48,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
       justifyContent: 'center',
       alignItems: 'center',
+      marginTop: 24,
+      paddingBottom: 8,
     },
-    socialBtnGoogle: {
-      borderColor: theme.colors.primary + '30',
-      backgroundColor: theme.colors.primary + '08',
+
+    loginText: {
+      fontSize: 13,
+      color: theme.colors.textSecondary,
     },
   });
