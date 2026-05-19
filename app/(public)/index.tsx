@@ -14,6 +14,7 @@ import {
   View,
   useWindowDimensions,
     ImageBackground,
+    Image,
 } from 'react-native';
 import { Card, ScreenContainer } from '../../src/components/ui';
 import type { ProviderSearchResult } from '../../src/features/doctor/types/doctor.types';
@@ -22,6 +23,7 @@ import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
 import femaleDoc from "../../assets/images/femaleDoc.jpeg";
+import logo from "../../assets/images/logo.png";
 
 const FEATURES = [
   { icon: 'calendar-outline', title: 'Easy Appointment Scheduling', desc: 'Book appointments quickly and easily.' },
@@ -82,26 +84,36 @@ function HeroSection({ isMobile, theme, isDark, onGetStarted, onLogin }: any) {
   }, [floatAnim1, floatAnim2, floatAnim3]);
 
   return (
-    <View style={[{ padding: 24, gap: 24, alignItems: 'center' }, !isMobile && { flexDirection: 'row' }]}>
-      <View style={{ width: isMobile ? '100%' : '50%', gap: 16 }}>
-        <Text style={{ fontSize: 34, fontWeight: '800', color: theme.colors.primary, lineHeight: 42, letterSpacing: -0.5 }}>
+    <View style={[{ padding: 62, alignItems: 'center' , margin: 4 }, !isMobile && { flexDirection: 'row' }]}>
+      <View style={{ width: isMobile ? '100%' : '50%', gap: 16, alignItems: 'center' }}>
+      <Image
+                source={logo} // adjust path
+                style={{
+                  width: 1100,
+                  height: 100,
+                  resizeMode: 'contain',
+                  
+                
+                }}
+              />     
+        <Text style={{ fontSize: 34, fontWeight: '800', color: theme.colors.primary, lineHeight: 42, letterSpacing: 0.5, textAlign: 'center', padding: 16 }}>
           Quality Healthcare,{'\n'}Closer Than You Think
         </Text>
-        <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>
-          Medlink connects you with trusted doctors across Ethiopia for appointments, consultations, and better healthcare.{' '}
+        <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24, textAlign: 'center' }}>
+          Medlink connects you with trusted doctors across Ethiopia <br></br> for appointments, consultations, and better healthcare.{' '}<br></br>
           <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Anytime. Anywhere.</Text>
         </Text>
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', gap: 32, alignItems: 'center', justifyContent: 'center', padding: 22 }}>
           <Pressable
             onPress={onGetStarted}
-            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 13, borderRadius: 10 }, pressed && { opacity: 0.85 }]}
+            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 13, borderRadius: 20 }, pressed && { opacity: 0.85 }]}
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Get Started</Text>
             <Ionicons name="arrow-forward" size={16} color="#fff" />
           </Pressable>
           <Pressable
             onPress={onLogin}
-            style={({ pressed }) => [{ paddingHorizontal: 20, paddingVertical: 13, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border }, pressed && { opacity: 0.85 }]}
+            style={({ pressed }) => [{ paddingHorizontal: 44, paddingVertical: 13, borderRadius: 20, borderWidth: 1, borderColor: theme.colors.primary }, pressed && { opacity: 0.85 }]}
           >
             <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 14 }}>Log In</Text>
           </Pressable>
@@ -120,23 +132,23 @@ function HeroSection({ isMobile, theme, isDark, onGetStarted, onLogin }: any) {
         </View>
       </View>
 
-      <View style={{ width: isMobile ? '100%' : '48%', alignItems: 'center' }}>
-  <ImageBackground
-    source={femaleDoc}
-    resizeMode="cover"
-    imageStyle={{ borderRadius: 24 }}
-    style={{
-      width: '100%',
-      height: 260,
-      borderRadius: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      position: 'relative',
-      borderWidth: 1,
-      borderColor: isDark ? theme.colors.border : '#caefe4',
-    }}
-  >
+      <View style={{ width: isMobile ? '100%' : '55%', height: '110%', alignItems: 'center' }}>
+        <ImageBackground
+          source={femaleDoc}
+          resizeMode="cover"
+          imageStyle={{ borderRadius: 24 }}
+          style={{
+            width: '100%',
+            height: 650,
+            borderRadius: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            position: 'relative',
+            borderWidth: 1,
+            borderColor: isDark ? theme.colors.border : '#caefe4',
+          }}
+        >
     
     {/* Everything below stays EXACTLY the same */}
 
@@ -169,7 +181,7 @@ function HeroSection({ isMobile, theme, isDark, onGetStarted, onLogin }: any) {
     </View>
 
   </ImageBackground>
-</View>
+     </View>
     </View>
   );
 }
@@ -244,10 +256,16 @@ export default function PublicHomeScreen() {
         {/* Navbar */}
         <View style={styles.navbar}>
           <View style={styles.navLogo}>
-            <Ionicons name="heart" size={20} color={theme.colors.primary} />
-            <View>
-              <Text style={styles.navBrand}>Medlink</Text>
-              <Text style={styles.navTagline}>Your Health. Our Link.</Text>
+ {/* LOGO */}
+            <Image
+                source={logo} // adjust path
+                style={{
+                  width: 130,
+                  height: 40,
+                
+                }}
+              />            
+              <View>
             </View>
           </View>
           {!isMobile ? (
@@ -552,13 +570,38 @@ export default function PublicHomeScreen() {
 }
 
 const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.colors.background },
-  navbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.border, backgroundColor: theme.colors.background },
-  navLogo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  navBrand: { fontSize: 16, fontWeight: '800', color: theme.colors.text },
-  navTagline: { fontSize: 9, color: theme.colors.textSecondary },
-  navLinks: { flexDirection: 'row', alignItems: 'center', gap: 18 },
-  navLink: { fontSize: 13, color: theme.colors.text, fontWeight: '500' },
+  root: { 
+    flex: 1, 
+    backgroundColor: theme.colors.background,
+    margin: 12
+  },
+  navbar: { 
+    flexDirection: 'row', alignItems: 'center', 
+    justifyContent: 'space-between', paddingHorizontal: 20, 
+    paddingVertical: 14, borderBottomWidth: 1, 
+    borderBottomColor: theme.colors.border, 
+    backgroundColor: theme.colors.background },
+  navLogo: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8 },
+  navBrand: { 
+    fontSize: 16, 
+    fontWeight: '800', 
+    color: theme.colors.text 
+  },
+  navTagline: {
+     fontSize: 9, 
+     color: theme.colors.textSecondary,
+     
+  },
+  navLinks: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 18 },
+  navLink: { 
+    fontSize: 13, color: theme.colors.text, 
+    fontWeight: '500' },
   navActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   navLoginBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.primary },
   navLoginText: { fontSize: 13, color: theme.colors.primary, fontWeight: '700' },
