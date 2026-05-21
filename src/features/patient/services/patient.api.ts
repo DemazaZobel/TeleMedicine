@@ -11,10 +11,11 @@ export const patientApi = {
     return response.data;
   },
 
-  updateMedicalInfo: async (payload: PatientProfileUpdate) => {
+  updateMedicalInfo: async (payload: PatientProfileUpdate | FormData) => {
     const response = await apiClient.put<PatientProfile>(
       `${PATIENT_BASE}/me/medical-info/`,
-      payload
+      payload,
+      payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined
     );
     return response.data;
   },

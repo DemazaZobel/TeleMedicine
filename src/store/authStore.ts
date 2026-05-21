@@ -378,9 +378,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     } catch (error: any) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
+      const emailErr = axiosError?.response?.data?.email;
       const message =
         (axiosError?.response?.data?.detail as string) ||
-        (axiosError?.response?.data?.email as string) ||
+        (Array.isArray(emailErr) ? emailErr[0] : (emailErr as string)) ||
         'Failed to create linked patient account.';
       set({ isLoading: false, error: message });
       throw error;

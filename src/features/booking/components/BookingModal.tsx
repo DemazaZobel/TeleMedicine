@@ -13,6 +13,7 @@ import { Button, Input } from "../../../components/ui";
 import { ModalBase } from "../../../components/ui/ModalBase";
 import { useBookingStore } from "../../../store/booking.store";
 import { useDiscoveryStore } from "../../../store/discovery.store";
+import { useAuthStore } from "../../../store/authStore";
 import type { Theme } from "../../../theme";
 import { useTheme } from "../../../theme";
 import type { AppointmentMode } from "../types/bookingTypes";
@@ -51,6 +52,14 @@ export function BookingModal({
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
 
   const { doctors } = useDiscoveryStore();
+  const linkedAccount = useAuthStore((s) => s.linkedAccount);
+
+  // Check if trying to book themselves (linked account)
+  const isSelfBooking = useMemo(() => {
+    const doctor = doctors.find((d) => String(d.id) === String(doctorId));
+    if (!doctor || !linkedAccount) return false;
+    return String(doctor.user_id) === String(linkedAccount.id);
+  }, [doctors, doctorId, linkedAccount]);
 
   // Fetch real availability when modal opens
   useEffect(() => {
@@ -152,6 +161,10 @@ export function BookingModal({
       Alert.alert("Booking Exists", "You already have an active appointment with this doctor.");
       return;
     }
+    if (isSelfBooking) {
+      Alert.alert("Invalid Booking", "You cannot book an appointment with your own Doctor profile.");
+      return;
+    }
 
     try {
       const selectedSlot = activeDaySlots[selectedSlotIndex];
@@ -175,14 +188,21 @@ export function BookingModal({
       maxWidth={520}
     >
       <View style={styles.container}>
-        {hasActiveAppointment && (
+        {isSelfBooking ? (
+          <View style={[styles.warningBanner, { backgroundColor: theme.colors.error + '10', borderColor: theme.colors.error + '20' }]}>
+            <Ionicons name="alert-circle" size={20} color={theme.colors.error} />
+            <Text style={[styles.warningText, { color: theme.colors.error }]}>
+              You cannot book an appointment with your own Doctor profile.
+            </Text>
+          </View>
+        ) : hasActiveAppointment ? (
           <View style={styles.warningBanner}>
             <Ionicons name="information-circle" size={20} color={theme.colors.warning} />
             <Text style={styles.warningText}>
               You have an active booking with this doctor.
             </Text>
           </View>
-        )}
+        ) : null}
 
         {/* DATE STRIP */}
         <View style={styles.sectionHeader}>
@@ -291,7 +311,7 @@ export function BookingModal({
             title="Confirm Booking" 
             onPress={handleBook} 
             loading={isLoading}
-            disabled={isLoading || !reason || selectedSlotIndex === null}
+            disabled={isLoading || !reason || selectedSlotIndex === null || isSelfBooking}
             style={styles.footerBtn}
           />
         </View>

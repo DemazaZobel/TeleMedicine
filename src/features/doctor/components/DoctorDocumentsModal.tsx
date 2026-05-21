@@ -372,6 +372,13 @@ export function DoctorDocumentsModal({
                       </View>
                       {renderStatus(doc.status)}
                     </View>
+                    {doc.status === 'REJECTED' && doc.rejection_reason && (
+                      <View style={{ marginTop: 8, padding: 8, backgroundColor: theme.colors.error + '10', borderRadius: 8 }}>
+                        <Text style={{ fontSize: 12, color: theme.colors.error }}>
+                          <Text style={{ fontWeight: '600' }}>Reason:</Text> {doc.rejection_reason}
+                        </Text>
+                      </View>
+                    )}
                   </Card>
                 ))}
               </View>

@@ -192,32 +192,28 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
+      const currentRules = get().availabilityRules;
+      let newRulesList;
+      
       if (payload.id) {
-        // BACKEND WORKAROUND: Delete then Create
-        console.log('[BookingStore] Updating via Delete/Create for ID:', payload.id);
-        await bookingService.deleteAvailabilityRule(payload.id);
-        
-        // Remove from local state immediately to avoid UI flicker
-        set((state) => ({
-            availabilityRules: state.availabilityRules.filter(r => r.id !== payload.id)
-        }));
-
-        // Now create the updated version
-        const { id, ...createData } = payload;
-        const rule = await bookingService.createAvailabilityRule(createData as ProviderAvailabilityRuleCreatePayload);
-        
-        set((state) => ({
-          availabilityRules: [...state.availabilityRules, rule],
-          isLoading: false,
-        }));
+        // Edit existing rule
+        newRulesList = currentRules.map(rule => 
+          rule.id === payload.id ? { ...rule, ...payload } : rule
+        );
       } else {
-        // Standard create
-        const rule = await bookingService.createAvailabilityRule(payload);
-        set((state) => ({
-          availabilityRules: [...state.availabilityRules, rule],
-          isLoading: false,
-        }));
+        // Standard create - append to existing
+        newRulesList = [...currentRules, payload];
       }
+
+      // Convert local UI types back to payload types where necessary
+      const payloadList = newRulesList.map(({ id, ...rest }) => rest as ProviderAvailabilityRuleCreatePayload);
+      
+      const updatedRules = await bookingService.updateAvailabilityRules(payloadList);
+      
+      set({
+        availabilityRules: updatedRules,
+        isLoading: false,
+      });
     } catch (error: any) {
       set({
         isLoading: false,
@@ -227,17 +223,23 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     }
   },
 
-
   deleteAvailabilityRule: async (id: string | number) => {
     try {
       console.log('[BookingStore] Deleting availability rule:', id);
       set({ isLoading: true, error: null });
-      await bookingService.deleteAvailabilityRule(id);
+      
+      const currentRules = get().availabilityRules;
+      const newRulesList = currentRules.filter((r) => String(r.id) !== String(id));
+      
+      const payloadList = newRulesList.map(({ id, ...rest }) => rest as ProviderAvailabilityRuleCreatePayload);
+      
+      const updatedRules = await bookingService.updateAvailabilityRules(payloadList);
+      
       console.log('[BookingStore] Delete successful, updating state...');
-      set((state) => ({
-        availabilityRules: state.availabilityRules.filter((r) => String(r.id) !== String(id)),
+      set({
+        availabilityRules: updatedRules,
         isLoading: false,
-      }));
+      });
     } catch (error: any) {
       console.error('[BookingStore] Delete failed:', error);
       set({

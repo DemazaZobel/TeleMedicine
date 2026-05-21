@@ -50,7 +50,7 @@ export const SearchBar = React.memo(function SearchBar({ initialValue = '', onSe
       <Input
         value={value}
         onChangeText={setValue}
-        placeholder="Search doctors, hospitals..."
+        placeholder="Search by name, specialty, location..."
         returnKeyType="search"
         onSubmitEditing={handleSubmit}
         leftIcon={<Ionicons name="search" size={20} color={theme.colors.textSecondary} />}

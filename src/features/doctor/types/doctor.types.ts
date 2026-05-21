@@ -47,6 +47,7 @@ export interface DoctorDocument {
   license_number: string;
   file: string; // URL
   status: DocumentStatus;
+  rejection_reason?: string;
   uploaded_at: string;
 }
 
@@ -59,7 +60,7 @@ export interface ProviderSearchParams {
   min_fee?: number;
   max_fee?: number;
   min_rating?: number;
-  sort_by?: 'fee' | 'fee_asc' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance';
+  sort_by?: 'fee' | 'fee_asc' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | 'experience_desc';
   lat?: number;
   lng?: number;
   // Legacy/Frontend fields that can map to backend fields

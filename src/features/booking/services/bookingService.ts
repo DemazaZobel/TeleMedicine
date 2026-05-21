@@ -147,6 +147,17 @@ export const bookingService = {
     return data;
   },
 
+  /** PUT /api/appointments/availability/ (Overwrites with full array) */
+  updateAvailabilityRules: async (
+    payload: ProviderAvailabilityRuleCreatePayload[],
+  ): Promise<ProviderAvailabilityRuleDetail[]> => {
+    const { data } = await apiClient.put<ProviderAvailabilityRuleDetail[]>(
+      `${BASE_URL}/availability/`,
+      payload,
+    );
+    return data;
+  },
+
   /** DELETE /api/appointments/availability/ (Some backends take ID in body if pattern is flat) */
   deleteAvailabilityRule: async (id: string | number): Promise<void> => {
     // If the pattern in the 404 log is just 'availability/', then it might expect the ID in the body

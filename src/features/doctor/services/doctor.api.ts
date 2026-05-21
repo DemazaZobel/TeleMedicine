@@ -75,10 +75,15 @@ export const doctorApi = {
     return response.data;
   },
 
-  getSpecializations: async () => {
-    // This will be GET /providers/specializations/ in the future
-    // For now, returning a static list but through the API service layer
-    return ['General', 'Cardiology', 'Pediatrics', 'Dentistry', 'Neurology', 'Orthopedics', 'Dermatology'];
+  getSpecializations: async (): Promise<string[]> => {
+    try {
+      const response = await apiClient.get<string[]>(`${DOCTOR_BASE}/specializations/`);
+      return response.data;
+    } catch {
+      // Fallback to static list if endpoint is not yet deployed
+      console.warn('[DoctorApi] specializations endpoint unavailable, using fallback');
+      return ['General', 'Cardiology', 'Pediatrics', 'Dentistry', 'Neurology', 'Orthopedics', 'Dermatology'];
+    }
   },
 };
 

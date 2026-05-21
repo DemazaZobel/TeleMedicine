@@ -367,6 +367,20 @@ export function AppointmentCard({
           </View>
         )}
 
+        {isDoctor && appointment.patient_allergies && (
+          <View style={styles.infoSection}>
+            <Text style={styles.infoLabel}>ALLERGIES</Text>
+            <Text style={[styles.infoValue, { color: theme.colors.error }]} numberOfLines={2}>{appointment.patient_allergies}</Text>
+          </View>
+        )}
+
+        {isDoctor && appointment.patient_medical_history && (
+          <View style={styles.infoSection}>
+            <Text style={styles.infoLabel}>MEDICAL HISTORY</Text>
+            <Text style={styles.infoValue} numberOfLines={3}>{appointment.patient_medical_history}</Text>
+          </View>
+        )}
+
         {appointment.latest_change_request && appointment.latest_change_request.status === 'PENDING' && (
           <View style={styles.proposalCard}>
             <View style={styles.proposalTag}>
@@ -400,8 +414,7 @@ export function AppointmentCard({
 
       {!isFinalized && (
         <View style={styles.cardActions}>
-          {!isDoctor &&
-            ["REQUESTED", "CONFIRMED"].includes(
+          {["REQUESTED", "CONFIRMED"].includes(
               appointment.status?.toUpperCase() || "",
             ) &&
             !isPast && (
@@ -439,10 +452,6 @@ export function AppointmentCard({
                 )
               )
             )
-          )}
-
-          {isDoctor && appointment.status?.toUpperCase() === "CONFIRMED" && appointment.payment_status === "paid" && isPast && (
-            <Button title="Complete" size="sm" onPress={handleComplete} loading={localLoading} style={styles.mainBtn} />
           )}
 
           {isDoctor && appointment.status?.toUpperCase() === "REQUESTED" && (

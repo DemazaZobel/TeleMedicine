@@ -20,7 +20,7 @@ interface DiscoveryState {
   location: string | null;
   hospital: string | null;
   availability: 'any' | 'today' | 'this-week';
-  sortBy: 'fee' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | null;
+  sortBy: 'fee' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | 'experience_desc' | null;
 
   // Actions
   setSearchQuery: (query: string) => void;

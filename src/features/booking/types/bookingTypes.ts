@@ -40,6 +40,8 @@ export interface AppointmentDetail {
   payment_method_provider?: string;
   payment_method_account?: string;
   meeting_link?: string;
+  patient_allergies?: string;
+  patient_medical_history?: string;
   latest_change_request?: AppointmentChangeRequestDetail;
   created_at?: string;
   updated_at?: string;

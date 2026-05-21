@@ -104,19 +104,27 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
       }
     }
 
-    const payload: PatientProfileUpdate = {
-      date_of_birth: formattedDob,
-      gender: gender.trim(),
-      blood_type: bloodType.trim(),
-      medical_history: medicalHistory.trim() || null,
-      chronic_conditions: chronicConditions.trim(),
-      allergies: allergies.trim(),
-      address: address.trim(),
-      city: city.trim(),
-      country: country.trim(),
-    };
+    const formData = new FormData();
+    if (formattedDob) formData.append('date_of_birth', formattedDob);
+    formData.append('gender', gender.trim());
+    formData.append('blood_type', bloodType.trim());
+    formData.append('medical_history', medicalHistory.trim() || '');
+    formData.append('chronic_conditions', chronicConditions.trim());
+    formData.append('allergies', allergies.trim());
+    formData.append('address', address.trim());
+    formData.append('city', city.trim());
+    formData.append('country', country.trim());
+
+    documents.forEach((doc, index) => {
+      formData.append('medical_documents', {
+        uri: Platform.OS === 'ios' ? doc.uri.replace('file://', '') : doc.uri,
+        name: doc.name || `document_${index}`,
+        type: doc.mimeType || 'application/pdf',
+      } as any);
+    });
+
     try {
-      await updateMedicalInfo(payload);
+      await updateMedicalInfo(formData);
       setSaved(true);
       setTimeout(() => {
         onClose();
@@ -126,8 +134,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
     }
   }, [
     dateOfBirth, gender, bloodType, medicalHistory,
-    chronicConditions, allergies, address, city, country,
-    updateMedicalInfo, clearError, onClose
+    documents, updateMedicalInfo, clearError, onClose
   ]);
 
   return (

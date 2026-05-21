@@ -13,6 +13,7 @@ export interface PatientProfile {
   address: string;
   city: string;
   country: string;
+  medical_documents?: string[];
 }
 
-export type PatientProfileUpdate = Partial<Omit<PatientProfile, 'id'>>;
+export type PatientProfileUpdate = Partial<Omit<PatientProfile, 'id' | 'medical_documents'>>;

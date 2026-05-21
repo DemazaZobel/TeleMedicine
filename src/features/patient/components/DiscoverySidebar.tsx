@@ -12,11 +12,10 @@ const PRICE_RANGES = [
   { label: 'Above Br 1000', min: 1000, max: null },
 ];
 
-const SPECIALIZATIONS = [
-  'General', 'Cardiology', 'Pediatrics', 'Dentistry', 'Neurology', 'Orthopedics', 'Dermatology'
-];
 
-const SORT_OPTIONS: Array<{ label: string; value: 'fee' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | null }> = [
+
+const SORT_OPTIONS: { label: string; value: 'fee' | 'fee_desc' | 'rating' | 'rating_desc' | 'distance' | 'experience_desc' | null }[] = [
+  { label: 'Most Experienced', value: 'experience_desc' },
   { label: 'Highest Rated', value: 'rating_desc' },
   { label: 'Lowest Rated', value: 'rating' },
   { label: 'Lowest Fee', value: 'fee' },

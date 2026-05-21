@@ -50,6 +50,8 @@ export interface Appointment {
   status: AppointmentStatus;
   reason: string;
   meeting_link: string;
+  patient_allergies?: string;
+  patient_medical_history?: string;
   created_at: string;
   updated_at: string;
 }

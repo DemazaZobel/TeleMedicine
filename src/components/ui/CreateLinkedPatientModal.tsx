@@ -30,6 +30,7 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [created, setCreated] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; [key: string]: string | undefined }>({});
 
   const resetForm = () => {
     setEmail('');
@@ -38,6 +39,7 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
     setPassword('');
     setPhone('');
     setCreated(false);
+    setFieldErrors({});
     clearError();
   };
 
@@ -53,6 +55,7 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
     }
 
     try {
+      setFieldErrors({});
       await createLinkedPatient({
         email,
         first_name: firstName,
@@ -61,8 +64,16 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
         phone_number: phone || undefined,
       });
       setCreated(true);
-    } catch {
-      // Error is already set in the store
+    } catch (err: any) {
+      // Error is already set in the store globally, but we extract field errors here
+      if (err?.response?.data) {
+        const data = err.response.data;
+        const newErrors: any = {};
+        if (data.email) {
+          newErrors.email = Array.isArray(data.email) ? data.email[0] : data.email;
+        }
+        setFieldErrors(newErrors);
+      }
     }
   };
 
@@ -125,9 +136,13 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
             label="Email"
             placeholder="patient@example.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
+            error={fieldErrors.email}
           />
           <View style={styles.row}>
             <View style={styles.halfInput}>

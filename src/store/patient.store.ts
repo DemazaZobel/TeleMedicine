@@ -16,7 +16,7 @@ interface PatientState {
 // ─── Actions ─────────────────────────────────────────────
 interface PatientActions {
   fetchMedicalInfo: () => Promise<void>;
-  updateMedicalInfo: (data: PatientProfileUpdate) => Promise<void>;
+  updateMedicalInfo: (data: PatientProfileUpdate | FormData) => Promise<void>;
   clearError: () => void;
   reset: () => void;
 }
