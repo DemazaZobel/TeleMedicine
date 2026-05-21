@@ -1,19 +1,13 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { getAccess } from './tokenStorage';
 import type { ChatRoom, Message } from '../types/chat';
 
 const API_BASE = 'https://medlinkethiopia.pythonanywhere.com/api';
 
-// expo-secure-store doesn't work on web — fall back to localStorage
-const getAuthToken = async (): Promise<string | null> => {
-  if (Platform.OS === 'web') {
-    return localStorage.getItem('auth_token');
-  }
-  return SecureStore.getItemAsync('auth_token');
-};
-
 const getHeaders = async (): Promise<HeadersInit> => {
-  const token = await getAuthToken();
+  // Use the shared tokenStorage helper so the key is always consistent
+  const token = await getAccess();
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -130,7 +124,7 @@ export const uploadChatFile = async (
   conversationId: string,
   file: { uri: string; name: string; type: string }
 ): Promise<any> => {
-  const token = await getAuthToken();
+  const token = await getAccess();
   const formData = new FormData();
   formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
   const response = await fetch(
@@ -145,20 +139,4 @@ export const uploadChatFile = async (
     }
   );
   return checkResponse(response);
-};
-
-export const saveAuthToken = async (token: string): Promise<void> => {
-  if (Platform.OS === 'web') {
-    localStorage.setItem('auth_token', token);
-  } else {
-    await SecureStore.setItemAsync('auth_token', token);
-  }
-};
-
-export const clearAuthToken = async (): Promise<void> => {
-  if (Platform.OS === 'web') {
-    localStorage.removeItem('auth_token');
-  } else {
-    await SecureStore.deleteItemAsync('auth_token');
-  }
 };
