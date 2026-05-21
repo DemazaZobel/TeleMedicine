@@ -1,4 +1,3 @@
-// src/types/chat.ts
 export interface ChatRoom {
   id: string;
   participantId: string;
@@ -19,12 +18,4 @@ export interface Message {
   text: string;
   timestamp: string;
   isRead: boolean;
-}
-
-export interface ChatRoomResponse {
-  rooms: ChatRoom[];
-}
-
-export interface MessagesResponse {
-  messages: Message[];
 }
