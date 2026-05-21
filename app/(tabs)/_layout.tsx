@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, useWindowDimensions, View } from 'react-native';
-import { MobileWebNav, Navbar, NotificationsDrawer } from '../../src/components/ui';
+import { MobileWebNav, Sidebar, NotificationsDrawer } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
 import { useTheme } from '../../src/theme';
@@ -85,9 +85,9 @@ export default function TabsLayout() {
       <View style={{ flex: 1 }}>
         {isWeb ? (
           isDesktop ? (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
               {user && !isPendingDoctor && (
-                <Navbar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+                <Sidebar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
               )}
               <View style={{ flex: 1 }}>
                 {tabsElement}

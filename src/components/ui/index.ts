@@ -9,6 +9,7 @@ export { Loader } from './Loader';
 export { MobileWebNav } from './MobileWebNav';
 export { ModalBase } from './ModalBase';
 export { Navbar } from './Navbar';
+export { Sidebar } from './Sidebar';
 export { NotificationsDrawer } from './NotificationsDrawer';
 export { PageHeader } from './PageHeader';
 export { AccountSwitcher } from './AccountSwitcher';
