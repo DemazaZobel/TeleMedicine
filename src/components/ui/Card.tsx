@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Pressable, ViewStyle } from 'react-native';
+import { View, Pressable, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../theme';
 import { createCardStyles } from './Card.styles';
 
@@ -7,7 +7,7 @@ interface CardProps {
   children: React.ReactNode;
   bordered?: boolean;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const Card = React.memo(function Card({

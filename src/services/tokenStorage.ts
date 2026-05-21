@@ -1,8 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-const ACCESS = "access_token";
-const REFRESH = "refresh_token";
+const ACCESS = "medlink_access_token";
+const REFRESH = "medlink_refresh_token";
 
 // expo-secure-store does not work on web — fall back to localStorage
 const setItem = async (key: string, value: string): Promise<void> => {

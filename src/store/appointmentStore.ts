@@ -147,7 +147,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       const data = await svc.getNotifications();
       set({
         notifications: data,
-        unreadCount: data.filter((n) => !n.is_read).length,
+        unreadCount: data.filter((n: AppNotification) => !n.is_read).length,
       });
     } catch {
       // Silently fail for notifications
@@ -158,7 +158,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     try {
       await svc.markNotificationRead(id);
       set((s) => {
-        const updated = s.notifications.map((n) =>
+        const updated = s.notifications.map((n: AppNotification) =>
           n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         );
         return {

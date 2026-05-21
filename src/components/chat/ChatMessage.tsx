@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { Message } from '../../types/chat';
-import { formatTime } from '../../utils/formatTime';
+import { formatTime } from '../../utils/index';
 
 interface Props {
   message: Message;

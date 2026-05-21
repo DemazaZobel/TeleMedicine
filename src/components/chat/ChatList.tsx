@@ -1,10 +1,15 @@
+import { formatTime } from '@/utils/index';
 import React from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
-  Image, StyleSheet, ListRenderItemInfo,
+  FlatList,
+  Image,
+  ListRenderItemInfo,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import type { ChatRoom } from '../../types/chat';
-import { formatTime } from '../../utils/formatTime';
 
 interface Props {
   rooms: ChatRoom[];

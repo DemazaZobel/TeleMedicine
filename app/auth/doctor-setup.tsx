@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS, RADII, SPACING } from '../../src/constants/theme';
-import { providerService } from '../../src/services/api';
+import { doctorApi } from '../../src/features/doctor/services/doctor.api';
 
 export default function DoctorSetupScreen() {
   const router = useRouter();
@@ -30,10 +30,10 @@ export default function DoctorSetupScreen() {
 
     try {
       // 1. Update Profile info first (FR7)
-      await providerService.updateProfile({
+      await doctorApi.updateDoctorProfile({
         specialization: spec,
         years_of_experience: parseInt(exp),
-        consultation_fee: fee,
+        consultation_fee: parseFloat(fee),
       });
 
       // 2. Prepare Multipart Form Data (FR2)
@@ -47,7 +47,7 @@ export default function DoctorSetupScreen() {
         type: file.mimeType,
       });
 
-      await providerService.uploadDocument(formData);
+      await doctorApi.uploadDoctorDocument(formData);
 
       Alert.alert("Submitted", "Your profile is now under review by MedLink Admin.");
       router.replace('/doctor/pending' as any);

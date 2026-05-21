@@ -1,13 +1,13 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { getAccess } from './tokenStorage';
+import { STORAGE_KEYS } from './api';
+import * as Storage from './storage';
 import type { ChatRoom, Message } from '../types/chat';
 
 const API_BASE = 'https://medlinkethiopia.pythonanywhere.com/api';
 
 const getHeaders = async (): Promise<HeadersInit> => {
-  // Use the shared tokenStorage helper so the key is always consistent
-  const token = await getAccess();
+  const token = await Storage.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -124,7 +124,7 @@ export const uploadChatFile = async (
   conversationId: string,
   file: { uri: string; name: string; type: string }
 ): Promise<any> => {
-  const token = await getAccess();
+  const token = await Storage.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
   const formData = new FormData();
   formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
   const response = await fetch(

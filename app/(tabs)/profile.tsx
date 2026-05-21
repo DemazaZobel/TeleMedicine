@@ -170,7 +170,7 @@ export default function ProfileScreen() {
               <MenuItem
                 icon="calendar-outline"
                 label="Set Availability"
-                onPress={() => router.push('/doctor/availability')}
+                onPress={() => router.push('/(doctor)/availability')}
                 theme={theme}
               />
             </>
