@@ -1,10 +1,19 @@
-﻿import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import type { ChatRoom, Message } from '../types/chat';
 
 const API_BASE = 'https://medlinkethiopia.pythonanywhere.com/api';
 
+// expo-secure-store doesn't work on web — fall back to localStorage
+const getAuthToken = async (): Promise<string | null> => {
+  if (Platform.OS === 'web') {
+    return localStorage.getItem('auth_token');
+  }
+  return SecureStore.getItemAsync('auth_token');
+};
+
 const getHeaders = async (): Promise<HeadersInit> => {
-  const token = await SecureStore.getItemAsync('auth_token');
+  const token = await getAuthToken();
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -121,7 +130,7 @@ export const uploadChatFile = async (
   conversationId: string,
   file: { uri: string; name: string; type: string }
 ): Promise<any> => {
-  const token = await SecureStore.getItemAsync('auth_token');
+  const token = await getAuthToken();
   const formData = new FormData();
   formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
   const response = await fetch(
