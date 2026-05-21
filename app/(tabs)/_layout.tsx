@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, useWindowDimensions, View } from 'react-native';
-import { MobileWebNav, NotificationsDrawer, Sidebar } from '../../src/components/ui';
+import { MobileWebNav, Navbar, NotificationsDrawer } from '../../src/components/ui';
 import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
 import { useTheme } from '../../src/theme';
@@ -28,14 +28,16 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.tabActive,
         tabBarInactiveTintColor: theme.colors.tabInactive,
-        tabBarStyle: hideTabBar ? { display: 'none' } : {
-          backgroundColor: theme.colors.tabBar,
-          borderTopColor: theme.colors.tabBarBorder,
-          borderTopWidth: 1,
-          height: 88,
-          paddingTop: 8,
-          paddingBottom: 28,
-        },
+        tabBarStyle: hideTabBar
+          ? { display: 'none' }
+          : {
+              backgroundColor: theme.colors.tabBar,
+              borderTopColor: theme.colors.tabBarBorder,
+              borderTopWidth: 1,
+              height: 88,
+              paddingTop: 8,
+              paddingBottom: 28,
+            },
         tabBarLabelStyle: {
           ...theme.typography.caption,
           fontWeight: '600',
@@ -83,9 +85,9 @@ export default function TabsLayout() {
       <View style={{ flex: 1 }}>
         {isWeb ? (
           isDesktop ? (
-            <View style={{ flex: 1, flexDirection: 'row' }}>
-              {isDesktop && user && !isPendingDoctor && (
-                <Sidebar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
+            <View style={{ flex: 1 }}>
+              {user && !isPendingDoctor && (
+                <Navbar onNotificationsPress={() => setIsNotificationsDrawerOpen(true)} />
               )}
               <View style={{ flex: 1 }}>
                 {tabsElement}

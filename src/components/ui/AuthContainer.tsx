@@ -5,18 +5,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
   View,
-  StyleSheet,
+  ImageBackground,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../theme';
 import type { Theme } from '../../theme';
+import { useTheme } from '../../theme';
 
 interface AuthContainerProps {
   children: React.ReactNode;
-  illustration?: any; // kept for backward compat but no longer rendered
+  illustration?: any;
   darkIllustration?: any;
   showBackButton?: boolean;
   onBack?: () => void;
@@ -34,35 +35,28 @@ export const AuthContainer = React.memo(function AuthContainer({
 
   const isDesktop = width > 768;
 
-  // Background pattern using decorative corner nodes
   const renderDecorativeNodes = () => {
-    if (Platform.OS !== 'web') return null;
-    const nodeColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
-    const lineColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {/* Corner decorative rectangles */}
-        <View style={[styles.cornerNode, { top: 60, left: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        <View style={[styles.cornerNode, { top: 60, right: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        <View style={[styles.cornerNode, { bottom: 60, left: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        <View style={[styles.cornerNode, { bottom: 60, right: 100, backgroundColor: nodeColor, borderColor: lineColor }]} />
-        {/* Subtle grid lines */}
-        <View style={[styles.gridLine, { top: '20%', left: 0, right: 0, height: 1, backgroundColor: lineColor }]} />
-        <View style={[styles.gridLine, { top: '80%', left: 0, right: 0, height: 1, backgroundColor: lineColor }]} />
-        <View style={[styles.gridLine, { left: '20%', top: 0, bottom: 0, width: 1, backgroundColor: lineColor }]} />
-        <View style={[styles.gridLine, { right: '20%', top: 0, bottom: 0, width: 1, backgroundColor: lineColor }]} />
+        <View style={[styles.glowBlob, styles.glowBlobTopRight]} />
+        <View style={[styles.glowBlob, styles.glowBlobBottomLeft]} />
+
+        {Platform.OS === 'web' && (
+          <>
+            <View style={[styles.gridLine, { top: '20%', left: 0, right: 0, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+            <View style={[styles.gridLine, { top: '80%', left: 0, right: 0, height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+            <View style={[styles.gridLine, { left: '20%', top: 0, bottom: 0, width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+            <View style={[styles.gridLine, { right: '20%', top: 0, bottom: 0, width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]} />
+          </>
+        )}
       </View>
     );
   };
 
   const themeToggle = (
     <TouchableOpacity
-      style={[
-        styles.themeToggle,
-        { top: isDesktop ? 24 : insets.top + 12 },
-      ]}
+      style={[styles.themeToggle, { top: isDesktop ? 24 : insets.top + 12 }]}
       onPress={toggleTheme}
-      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
     >
       <Ionicons
         name={isDark ? 'sunny' : 'moon'}
@@ -74,25 +68,41 @@ export const AuthContainer = React.memo(function AuthContainer({
 
   const backButton = showBackButton ? (
     <TouchableOpacity
-      style={[
-        styles.backBtn,
-        { top: isDesktop ? 24 : insets.top + 12 },
-      ]}
+      style={[styles.backBtn, { top: isDesktop ? 24 : insets.top + 12 }]}
       onPress={onBack}
-      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
     >
       <Ionicons name="arrow-back" size={22} color={theme.colors.textSecondary} />
     </TouchableOpacity>
   ) : null;
 
+  const BackgroundWrapper = ({ children }: { children: React.ReactNode }) => (
+    <ImageBackground
+      source={require('../../../assets/images/auth-bg.jpeg')} 
+      style={styles.outerContainer}
+      resizeMode="cover"
+    >
+      {/* overlay for readability */}
+      <View
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: isDark
+            ? 'rgba(0,0,0,0.55)'
+            : 'rgba(255,255,255,0.35)',
+        }}
+      />
+      {children}
+    </ImageBackground>
+  );
+
   if (isDesktop) {
     return (
       <>
-        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor="transparent" translucent />
-        <View style={styles.outerContainer}>
+        <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+        <BackgroundWrapper>
           {renderDecorativeNodes()}
           {themeToggle}
           {backButton}
+
           <View style={styles.desktopCard}>
             <ScrollView
               contentContainerStyle={styles.scrollContent}
@@ -102,18 +112,18 @@ export const AuthContainer = React.memo(function AuthContainer({
               {children}
             </ScrollView>
           </View>
-        </View>
+        </BackgroundWrapper>
       </>
     );
   }
 
-  // Mobile layout
   return (
     <>
-      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor="transparent" translucent />
-      <View style={styles.outerContainer}>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent />
+      <BackgroundWrapper>
         {themeToggle}
         {backButton}
+
         <KeyboardAvoidingView
           style={{ flex: 1, width: '100%' }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -122,91 +132,98 @@ export const AuthContainer = React.memo(function AuthContainer({
             contentContainerStyle={styles.mobileScrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            bounces={true}
           >
-            <View style={styles.mobileCard}>
-              {children}
-            </View>
+            <View style={styles.mobileCard}>{children}</View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </View>
+      </BackgroundWrapper>
     </>
   );
 });
 
 const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) => {
   const isDesktop = windowWidth > 768;
-  const bgColor = theme.dark ? '#0D1117' : '#F0F2F5';
+  const bgColor = theme.dark ? '#0a0d14' : '#F4FCF7';
 
   return StyleSheet.create({
     outerContainer: {
       flex: 1,
+      width: '100%',
+      height: '100%',
       backgroundColor: bgColor,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    // Desktop card
+
     desktopCard: {
       width: '100%',
-      maxWidth: 460,
+      maxWidth: 680,           // ← wider (was 460)
       maxHeight: windowHeight - 80,
-      backgroundColor: theme.dark ? 'rgba(22, 27, 34, 0.95)' : 'rgba(255, 255, 255, 0.97)',
-      borderRadius: 24,
+      backgroundColor: theme.dark
+        ? 'rgba(20, 24, 32, 0.9)'
+        : 'rgba(255, 255, 255, 0.95)',
+      borderRadius: 32,
       borderWidth: 1,
-      borderColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+      borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
       overflow: 'hidden',
+      transform: [{ translateX: 300 }],   // ← moves card left
       ...Platform.select({
         web: {
           boxShadow: theme.dark
-            ? '0 24px 80px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.05)'
-            : '0 24px 80px rgba(0,0,0,0.1), 0 0 1px rgba(0,0,0,0.08)',
-          backdropFilter: 'blur(20px)',
+            ? '0 32px 80px rgba(0,0,0,0.6)'
+            : '0 32px 80px rgba(0,100,80,0.08)',
+          backdropFilter: 'blur(30px)',
         },
         default: {
           elevation: 24,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.3,
-          shadowRadius: 24,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 16 },
+          shadowOpacity: theme.dark ? 0.2 : 0.08,
+          shadowRadius: 32,
         },
       }),
     },
+
     scrollContent: {
       paddingHorizontal: 40,
       paddingVertical: 44,
     },
-    // Mobile
+
     mobileScrollContent: {
       flexGrow: 1,
       justifyContent: 'center',
       paddingHorizontal: 24,
       paddingVertical: 60,
     },
+
     mobileCard: {
       width: '100%',
       maxWidth: 420,
       alignSelf: 'center',
-      backgroundColor: theme.dark ? 'rgba(22, 27, 34, 0.95)' : 'rgba(255, 255, 255, 0.97)',
-      borderRadius: 24,
+      backgroundColor: theme.dark
+        ? 'rgba(20, 24, 32, 0.9)'
+        : 'rgba(255, 255, 255, 0.95)',
+      borderRadius: 32,
       padding: 28,
       borderWidth: 1,
-      borderColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+      borderColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
       ...Platform.select({
         web: {
           boxShadow: theme.dark
             ? '0 16px 48px rgba(0,0,0,0.4)'
-            : '0 16px 48px rgba(0,0,0,0.08)',
+            : '0 16px 48px rgba(0,100,80,0.06)',
+          backdropFilter: 'blur(20px)',
         },
         default: {
           elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 16,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: theme.dark ? 0.2 : 0.08,
+          shadowRadius: 24,
         },
       }),
     },
-    // Theme toggle
+
     themeToggle: {
       position: 'absolute',
       right: isDesktop ? 32 : 20,
@@ -214,11 +231,13 @@ const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) =
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      backgroundColor: theme.dark
+        ? 'rgba(255,255,255,0.06)'
+        : 'rgba(0,0,0,0.04)',
       justifyContent: 'center',
       alignItems: 'center',
     },
-    // Back button
+
     backBtn: {
       position: 'absolute',
       left: isDesktop ? 32 : 20,
@@ -226,18 +245,34 @@ const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) =
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      backgroundColor: theme.dark
+        ? 'rgba(255,255,255,0.06)'
+        : 'rgba(0,0,0,0.04)',
       justifyContent: 'center',
       alignItems: 'center',
     },
-    // Decorative elements
-    cornerNode: {
+
+    glowBlob: {
       position: 'absolute',
-      width: 80,
-      height: 32,
-      borderRadius: 6,
-      borderWidth: 1,
+      width: windowWidth * 0.8,
+      height: windowWidth * 0.8,
+      borderRadius: windowWidth * 0.4,
+      opacity: theme.dark ? 0.15 : 0.08,
+      filter: 'blur(80px)' as any,
     },
+
+    glowBlobTopRight: {
+      top: -windowHeight * 0.2,
+      right: -windowWidth * 0.2,
+      backgroundColor: theme.colors.primary,
+    },
+
+    glowBlobBottomLeft: {
+      bottom: -windowHeight * 0.2,
+      left: -windowWidth * 0.2,
+      backgroundColor: theme.colors.secondary || '#34d399',
+    },
+
     gridLine: {
       position: 'absolute',
     },

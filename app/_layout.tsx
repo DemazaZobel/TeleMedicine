@@ -1,8 +1,8 @@
 import { useFonts } from 'expo-font';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import '../global.css';
 import React, { useEffect } from 'react';
+import '../global.css';
 import { Loader } from '../src/components/ui';
 import { useAuthStore } from '../src/store/authStore';
 import { ThemeProvider, useTheme } from '../src/theme';
@@ -13,21 +13,43 @@ SplashScreen.preventAutoHideAsync().catch(() => { });
 function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, isBootstrapping } = useAuthStore();
+  const { isAuthenticated, isBootstrapping, user } = useAuthStore();
 
   useEffect(() => {
     if (isBootstrapping) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inPublicGroup = segments[0] === '(public)';
+    const inTabsGroup = segments[0] === '(tabs)';
+    const inDoctorGroup = segments[0] === '(doctor)';
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if user is not authenticated
-      router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to tabs if user is authenticated but in auth group
-      router.replace('/(tabs)');
+    if (!isAuthenticated) {
+      if (!inPublicGroup && !inAuthGroup) {
+        router.replace('/(public)');
+      }
+      return;
     }
-  }, [isAuthenticated, isBootstrapping, segments]);
+
+    if (isAuthenticated && inAuthGroup) {
+      if (user?.role === 'DOCTOR') {
+        router.replace('(doctor)');
+      } else {
+        router.replace('/(tabs)');
+      }
+      return;
+    }
+
+    if (isAuthenticated && user?.role === 'DOCTOR' && inTabsGroup) {
+      router.replace('(doctor)');
+      return;
+    }
+
+    if (isAuthenticated && user?.role === 'PATIENT' && inDoctorGroup) {
+      router.replace('/(tabs)');
+      return;
+    }
+
+  }, [isAuthenticated, isBootstrapping, segments, router, user?.role]);
 
   if (isBootstrapping) {
     return <Loader message="Starting MedLink..." />;
