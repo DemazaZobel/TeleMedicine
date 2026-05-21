@@ -32,7 +32,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
     if (isAuthenticated && inAuthGroup) {
       if (user?.role === 'DOCTOR') {
-        router.replace('(doctor)');
+        router.replace('/(doctor)');
       } else {
         router.replace('/(tabs)');
       }
@@ -40,7 +40,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
 
     if (isAuthenticated && user?.role === 'DOCTOR' && inTabsGroup) {
-      router.replace('(doctor)');
+      router.replace('/(doctor)');
       return;
     }
 
