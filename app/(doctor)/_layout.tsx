@@ -36,7 +36,6 @@ export default function DoctorLayout() {
       <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
       <Stack.Screen name="documents" options={{ title: 'Secure Documents' }} />
       <Stack.Screen name="pending-approval" options={{ title: 'Verification', headerShown: !isWeb }} />
-      <Stack.Screen name="pending-profile" options={{ title: 'Complete Profile' }} />
     </Stack>
   );
 }

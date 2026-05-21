@@ -100,7 +100,7 @@ function HeroSection({ isMobile, theme, isDark, onGetStarted, onLogin }: any) {
           Quality Healthcare,{'\n'}Closer Than You Think
         </Text>
         <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24, textAlign: 'center' }}>
-          Medlink connects you with trusted doctors across Ethiopia <br></br> for appointments, consultations, and better healthcare.{' '}<br></br>
+          {`Medlink connects you with trusted doctors across Ethiopia\nfor appointments, consultations, and better healthcare.\n`}
           <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Anytime. Anywhere.</Text>
         </Text>
         <View style={{ flexDirection: 'row', gap: 32, alignItems: 'center', justifyContent: 'center', padding: 22 }}>

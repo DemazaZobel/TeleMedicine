@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, Button } from './index';
+import { ScreenContainer } from './ScreenContainer';
+import { Button } from './Button';
 import { useTheme } from '../../theme';
 import { createComingSoonStyles } from './ComingSoon.styles';
 

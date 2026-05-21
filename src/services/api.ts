@@ -116,7 +116,13 @@ apiClient.interceptors.response.use(
       );
 
       if (!refreshToken) {
-        throw new Error('No refresh token available');
+        console.warn('[API] No refresh token available. User needs to re-authenticate.');
+        processQueue(new Error('No refresh token'), null);
+        await Storage.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+        await Storage.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+        await Storage.deleteItemAsync(STORAGE_KEYS.USER);
+        isRefreshing = false;
+        return Promise.reject(error);
       }
 
       console.log('[API] Attempting token refresh...');
@@ -137,7 +143,7 @@ apiClient.interceptors.response.use(
       console.log('[API] Token refresh successful. Retrying original request.');
       return apiClient(originalRequest);
     } catch (refreshError) {
-      console.error('[API] Token refresh failed:', refreshError);
+      console.warn('[API] Token refresh failed:', refreshError instanceof Error ? refreshError.message : refreshError);
       processQueue(refreshError, null);
 
       // Clear stored tokens on refresh failure

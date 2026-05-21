@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { EmptyState, RightDrawer } from '../../components/ui';
+import { EmptyState } from './EmptyState';
+import { RightDrawer } from './RightDrawer';
 import { useBookingStore } from '../../store/booking.store';
 import { Theme, useTheme } from '../../theme';
 import { formatRelativeTime, humanizeNotificationBody } from '../../utils';
