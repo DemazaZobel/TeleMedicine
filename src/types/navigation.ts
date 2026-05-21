@@ -32,6 +32,12 @@ export const TAB_CONFIGS: TabConfig[] = [
     roles: ['PATIENT'],
   },
   {
+    name: 'chat',
+    title: 'Messages',
+    icon: 'chatbubbles',
+    roles: ['PATIENT', 'DOCTOR'],
+  },
+  {
     name: 'availability',
     title: 'Schedule',
     icon: 'time',

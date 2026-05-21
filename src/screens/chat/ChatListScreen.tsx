@@ -38,10 +38,10 @@ const ChatListScreen: React.FC = () => {
     loadRooms();
   };
 
-  // ✅ Updated: matches your (features)/chat/[id].tsx route
+  // ✅ Updated: matches the /chat/[id].tsx route
   const handleRoomPress = (room: ChatRoom) => {
     router.push({
-      pathname: '/(features)/chat/[id]',
+      pathname: '/chat/[id]',
       params: { id: room.id, roomName: room.participantName },
     });
   };
