@@ -148,9 +148,17 @@ export const uploadChatFile = async (
 };
 
 export const saveAuthToken = async (token: string): Promise<void> => {
-  await SecureStore.setItemAsync('auth_token', token);
+  if (Platform.OS === 'web') {
+    localStorage.setItem('auth_token', token);
+  } else {
+    await SecureStore.setItemAsync('auth_token', token);
+  }
 };
 
 export const clearAuthToken = async (): Promise<void> => {
-  await SecureStore.deleteItemAsync('auth_token');
+  if (Platform.OS === 'web') {
+    localStorage.removeItem('auth_token');
+  } else {
+    await SecureStore.deleteItemAsync('auth_token');
+  }
 };

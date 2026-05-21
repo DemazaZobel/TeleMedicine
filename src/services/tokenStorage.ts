@@ -1,17 +1,42 @@
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const ACCESS = "access_token";
 const REFRESH = "refresh_token";
 
-export const saveTokens = async (access: string, refresh: string) => {
-  await SecureStore.setItemAsync(ACCESS, access);
-  await SecureStore.setItemAsync(REFRESH, refresh);
+// expo-secure-store does not work on web — fall back to localStorage
+const setItem = async (key: string, value: string): Promise<void> => {
+  if (Platform.OS === "web") {
+    localStorage.setItem(key, value);
+    return;
+  }
+  await SecureStore.setItemAsync(key, value);
 };
 
-export const getAccess = () => SecureStore.getItemAsync(ACCESS);
-export const getRefresh = () => SecureStore.getItemAsync(REFRESH);
+const getItem = async (key: string): Promise<string | null> => {
+  if (Platform.OS === "web") {
+    return localStorage.getItem(key);
+  }
+  return SecureStore.getItemAsync(key);
+};
+
+const removeItem = async (key: string): Promise<void> => {
+  if (Platform.OS === "web") {
+    localStorage.removeItem(key);
+    return;
+  }
+  await SecureStore.deleteItemAsync(key);
+};
+
+export const saveTokens = async (access: string, refresh: string) => {
+  await setItem(ACCESS, access);
+  await setItem(REFRESH, refresh);
+};
+
+export const getAccess = () => getItem(ACCESS);
+export const getRefresh = () => getItem(REFRESH);
 
 export const clearTokens = async () => {
-  await SecureStore.deleteItemAsync(ACCESS);
-  await SecureStore.deleteItemAsync(REFRESH);
+  await removeItem(ACCESS);
+  await removeItem(REFRESH);
 };
