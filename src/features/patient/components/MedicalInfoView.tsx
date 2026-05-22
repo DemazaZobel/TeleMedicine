@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, ScreenContainer } from '../../../components/ui';
+import { Button, Card, ScreenContainer, PageHeader, EmptyState } from '../../../components/ui';
 import { usePatientStore } from '../../../store/patient.store';
 import type { Theme } from '../../../theme';
 import { useTheme } from '../../../theme';
@@ -49,41 +49,26 @@ export function MedicalInfoView() {
   );
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable constrained>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Health Record</Text>
-            <Text style={styles.subtitle}>Your medical information at a glance</Text>
-          </View>
-          <Button
-            title="Edit"
-            variant="outline"
-            size="sm"
-            onPress={() => setIsModalVisible(true)}
-            style={{ minWidth: 70 }}
-          />
-        </View>
+        <PageHeader
+          title="Health Record"
+          subtitle="Your medical information at a glance"
+          action={hasData ? {
+            label: "Edit",
+            onPress: () => setIsModalVisible(true)
+          } : undefined}
+        />
 
         {!hasData && !isLoadingInfo ? (
-          /* Empty State */
-          <Card style={styles.emptyCard}>
-            <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-              <Ionicons name="heart-outline" size={56} color={theme.colors.primary} />
-              <Text style={{ ...theme.typography.h4, color: theme.colors.text, marginTop: 16, fontWeight: '600' }}>
-                No Medical Info Yet
-              </Text>
-              <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary, textAlign: 'center', marginTop: 8, maxWidth: 260 }}>
-                Add your medical details so doctors can serve you better.
-              </Text>
-              <Button
-                title="Add Medical Info"
-                onPress={() => setIsModalVisible(true)}
-                style={{ marginTop: 24 }}
-              />
-            </View>
-          </Card>
+          <EmptyState
+            icon="heart-outline"
+            title="No Medical Info Yet"
+            description="Add your medical details so doctors can serve you better."
+            actionLabel="Add Medical Info"
+            onAction={() => setIsModalVisible(true)}
+          />
         ) : (
           <View style={styles.mainContent}>
             {/* Vitals Section */}
@@ -199,27 +184,8 @@ export function MedicalInfoView() {
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
-      width: '100%',
-      alignSelf: 'center',
-      paddingHorizontal: theme.spacing['2xl'],
-      paddingTop: theme.spacing['2xl'],
+      flex: 1,
       paddingBottom: theme.spacing['4xl'],
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: theme.spacing['2xl'],
-    },
-    title: {
-      ...theme.typography.h2,
-      color: theme.colors.text,
-      fontWeight: '700',
-    },
-    subtitle: {
-      ...theme.typography.body,
-      color: theme.colors.textSecondary,
-      marginTop: 4,
     },
     mainContent: {
       backgroundColor: theme.colors.surface,
@@ -230,9 +196,6 @@ const createStyles = (theme: Theme) =>
       shadowOpacity: 0.05,
       shadowRadius: 12,
       elevation: 2,
-    },
-    emptyCard: {
-      marginTop: theme.spacing.xl,
     },
     section: {
       paddingVertical: theme.spacing.md,

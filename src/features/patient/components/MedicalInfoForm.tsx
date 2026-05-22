@@ -39,6 +39,7 @@ export function MedicalInfoForm() {
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
   const [saved, setSaved] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   // ── Fetch on mount ──
   useEffect(() => {
@@ -63,6 +64,7 @@ export function MedicalInfoForm() {
   const handleSave = useCallback(async () => {
     setSaved(false);
     clearError();
+    setLocalError(null);
 
     // Ensure the date of birth is properly formatted to YYYY-MM-DD
     let formattedDob = dateOfBirth.trim() || null;
@@ -74,6 +76,31 @@ export function MedicalInfoForm() {
         const month = dateParts[1].padStart(2, '0');
         const day = dateParts[2].padStart(2, '0');
         formattedDob = `${year}-${month}-${day}`;
+      }
+
+      // Timezone-safe validation for Date of Birth in the past
+      const parts = formattedDob.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // JS month is 0-indexed
+        const day = parseInt(parts[2], 10);
+        
+        const dobDate = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (isNaN(dobDate.getTime())) {
+          setLocalError('Please enter a valid date of birth.');
+          return;
+        }
+        
+        if (dobDate >= today) {
+          setLocalError('Date of Birth must be in the past.');
+          return;
+        }
+      } else {
+        setLocalError('Please enter a valid date of birth (YYYY-MM-DD).');
+        return;
       }
     }
 
@@ -103,6 +130,7 @@ export function MedicalInfoForm() {
   const clear = useCallback(() => {
     clearError();
     setSaved(false);
+    setLocalError(null);
   }, [clearError]);
 
   return (
@@ -124,7 +152,7 @@ export function MedicalInfoForm() {
           Keep your medical record up to date so doctors can serve you better.
         </Text>
 
-        {error && <Banner variant="error" message={error} />}
+        {(error || localError) && <Banner variant="error" message={(localError || error) ?? ''} />}
         {saved && <Banner variant="success" message="Medical info updated successfully." />}
 
         {/* ── Personal Details ── */}

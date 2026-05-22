@@ -119,9 +119,8 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
                 onHoverIn={() => setHovered(tab.name)}
                 onHoverOut={() => setHovered(null)}
                 onPress={() => {
-                  router.push(
-                    `/(tabs)/${tab.name === "index" ? "" : tab.name}` as any,
-                  );
+                  const base = userRole === 'DOCTOR' ? '/(doctor)' : '/(tabs)';
+                  router.push(`${base}/${tab.name === "index" ? "" : tab.name}` as any);
                   onNavigate?.();
                 }}
                 className={cn(
@@ -177,8 +176,8 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
       <View>
         {/* Account Switcher */}
         <View className="mb-2">
-          <AccountSwitcher 
-            isCollapsed={isCollapsed} 
+          <AccountSwitcher
+            isCollapsed={isCollapsed}
             onCreatePatient={() => setIsCreatePatientVisible(true)}
             onLinkExisting={() => setIsLinkAccountVisible(true)}
           />

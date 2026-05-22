@@ -43,6 +43,16 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
   const [saved, setSaved] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [documents, setDocuments] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const { maxDate, maxDateString } = useMemo(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return {
+      maxDate: yesterday,
+      maxDateString: yesterday.toISOString().split('T')[0],
+    };
+  }, []);
 
   const onChangeDate = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS until confirmed
@@ -50,6 +60,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
       setDateOfBirth(selectedDate.toISOString().split('T')[0]);
       setSaved(false);
       clearError();
+      setLocalError(null);
     }
   };
 
@@ -92,6 +103,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
   const handleSave = useCallback(async () => {
     setSaved(false);
     clearError();
+    setLocalError(null);
 
     let formattedDob = dateOfBirth.trim() || null;
     if (formattedDob) {
@@ -101,6 +113,31 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
         const month = dateParts[1].padStart(2, '0');
         const day = dateParts[2].padStart(2, '0');
         formattedDob = `${year}-${month}-${day}`;
+      }
+
+      // Timezone-safe validation for Date of Birth in the past
+      const parts = formattedDob.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // JS month is 0-indexed
+        const day = parseInt(parts[2], 10);
+        
+        const dobDate = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (isNaN(dobDate.getTime())) {
+          setLocalError('Please enter a valid date of birth.');
+          return;
+        }
+        
+        if (dobDate >= today) {
+          setLocalError('Date of Birth must be in the past.');
+          return;
+        }
+      } else {
+        setLocalError('Please enter a valid date of birth (YYYY-MM-DD).');
+        return;
       }
     }
 
@@ -145,7 +182,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
       subtitle="Update your health profile and history."
     >
       <View style={styles.container}>
-        {error && <Banner variant="error" message={error} />}
+        {(error || localError) && <Banner variant="error" message={(localError || error) ?? ''} />}
         {saved && <Banner variant="success" message="Medical information updated." />}
 
         {/* ── Basic Info Section ── */}
@@ -161,7 +198,13 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
               <input 
                 type="date" 
                 value={dateOfBirth} 
-                onChange={(e) => { setDateOfBirth(e.target.value); clearError(); setSaved(false); }}
+                max={maxDateString}
+                onChange={(e) => { 
+                  setDateOfBirth(e.target.value); 
+                  clearError(); 
+                  setLocalError(null);
+                  setSaved(false); 
+                }}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -188,11 +231,11 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
               </Pressable>
               {showDatePicker && (
                 <DateTimePicker
-                  value={dateOfBirth ? new Date(dateOfBirth) : new Date()}
+                  value={dateOfBirth ? new Date(dateOfBirth) : maxDate}
                   mode="date"
                   display="default"
                   onChange={onChangeDate}
-                  maximumDate={new Date()}
+                  maximumDate={maxDate}
                 />
               )}
             </View>

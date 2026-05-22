@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../../theme';
-import type { Theme } from '../../../theme';
-import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
+import React, { useMemo } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { StarRating } from '../../../components/ui';
+import type { Theme } from '../../../theme';
+import { useTheme } from '../../../theme';
+import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
 
 interface DoctorCardProps {
   doctor: ProviderSearchResult;
@@ -23,7 +23,6 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
       accessibilityLabel={`Open profile for Dr. ${doctor.first_name} ${doctor.last_name}`}
     >
       <View style={styles.backgroundGlow} />
-      <View style={styles.containerAccent} />
       <View style={styles.mainContent}>
         <View style={styles.avatarContainer}>
           <Image
@@ -36,7 +35,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
             </View>
           )}
         </View>
-        
+
         <View style={styles.infoContainer}>
           <View style={styles.topRow}>
             <View style={{ flex: 1 }}>
@@ -94,16 +93,8 @@ const createStyles = (theme: Theme) =>
       borderRadius: 70,
       right: -40,
       top: -55,
-      backgroundColor: theme.colors.primary + '0F',
     },
-    containerAccent: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 4,
-      backgroundColor: theme.colors.primary,
-    },
+
     mainContent: {
       flexDirection: 'row',
       alignItems: 'center',

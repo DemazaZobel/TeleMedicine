@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, SafeAreaView, ActivityIndicator,
+  View, Text, ActivityIndicator,
   StyleSheet, RefreshControl, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ScreenContainer, PageHeader, EmptyState } from '../../components/ui';
 import ChatList from '../../components/chat/ChatList';
 import { getChatRooms } from '../../services/chatService';
 import type { ChatRoom } from '../../types/chat';
@@ -48,15 +49,15 @@ const ChatListScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <ScreenContainer centered>
         <ActivityIndicator size="large" color="#007AFF" />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.center}>
+      <ScreenContainer scrollable>
         <ScrollView
           contentContainerStyle={styles.center}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
@@ -64,26 +65,27 @@ const ChatListScreen: React.FC = () => {
           <Text style={styles.errorText}>⚠️ {error}</Text>
           <Text style={styles.errorHint}>Pull down to retry</Text>
         </ScrollView>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>Messages</Text>
-        {rooms.length > 0 && (
-          <Text style={styles.subtitle}>{rooms.length} conversations</Text>
-        )}
-      </View>
+    <ScreenContainer scrollable={false} constrained>
+      <PageHeader 
+        title="Messages" 
+        subtitle={rooms.length > 0 ? `${rooms.length} conversations` : undefined} 
+      />
       {rooms.length === 0 ? (
         <ScrollView
-          contentContainerStyle={styles.empty}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         >
-          <Text style={styles.emptyIcon}>💬</Text>
-          <Text style={styles.emptyText}>No conversations yet</Text>
-          <Text style={styles.emptyHint}>Your chats with doctors will appear here</Text>
+          <EmptyState
+            icon="chatbubble-ellipses-outline"
+            title="No conversations yet"
+            description="Your chats with doctors will appear here"
+          />
         </ScrollView>
       ) : (
         <ChatList
@@ -91,28 +93,14 @@ const ChatListScreen: React.FC = () => {
           onRoomPress={handleRoomPress}
         />
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  titleRow: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
-  },
-  title: { fontSize: 28, fontWeight: '700', color: '#1C1C1E' },
-  subtitle: { fontSize: 14, color: '#8E8E93', marginTop: 2 },
   errorText: { fontSize: 16, color: '#FF3B30', textAlign: 'center', marginBottom: 8 },
   errorHint: { fontSize: 14, color: '#8E8E93' },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyIcon: { fontSize: 48, marginBottom: 16 },
-  emptyText: { fontSize: 18, fontWeight: '600', color: '#1C1C1E', marginBottom: 8 },
-  emptyHint: { fontSize: 15, color: '#8E8E93', textAlign: 'center' },
 });
 
 export default ChatListScreen;

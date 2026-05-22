@@ -12,6 +12,7 @@ interface EmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   style?: ViewStyle;
+  children?: React.ReactNode;
 }
 
 export const EmptyState = React.memo(function EmptyState({
@@ -21,6 +22,7 @@ export const EmptyState = React.memo(function EmptyState({
   actionLabel,
   onAction,
   style,
+  children,
 }: EmptyStateProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -39,6 +41,7 @@ export const EmptyState = React.memo(function EmptyState({
           style={styles.button}
         />
       )}
+      {children}
     </View>
   );
 });

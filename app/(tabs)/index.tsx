@@ -17,12 +17,12 @@ export default function HomeScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
-  
+
   // Discovery Store
-  const { 
-    doctors, 
-    isLoading, 
-    searchQuery, 
+  const {
+    doctors,
+    isLoading,
+    searchQuery,
     selectedSpecialization,
     minFee,
     maxFee,
@@ -41,19 +41,19 @@ export default function HomeScreen() {
 
   // Doctor Store
   const { profile, isLoadingProfile, fetchProfile } = useDoctorStore();
-  
+
   // Booking & Notifications
-  const { 
-    appointments, 
-    notifications, 
-    setIsNotificationsDrawerOpen, 
+  const {
+    appointments,
+    notifications,
+    setIsNotificationsDrawerOpen,
     fetchMyAppointments,
     fetchNotifications
   } = useBookingStore();
 
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const isDesktop = width > 992;
   const numColumns = isDesktop ? (isSidebarCollapsed ? 3 : 2) : 1;
@@ -83,39 +83,39 @@ export default function HomeScreen() {
   const activeFilters = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
     if (selectedSpecialization) {
-      chips.push({ 
-        key: 'spec', 
-        label: selectedSpecialization, 
-        onClear: () => setSelectedSpecialization(null) 
+      chips.push({
+        key: 'spec',
+        label: selectedSpecialization,
+        onClear: () => setSelectedSpecialization(null)
       });
     }
     if (minFee !== null || maxFee !== null) {
       const label = minFee === null ? `Under Br ${maxFee}` : maxFee === null ? `Above Br ${minFee}` : `Br ${minFee}-${maxFee}`;
-      chips.push({ 
-        key: 'price', 
-        label, 
-        onClear: () => setAdvancedFilters({ minFee: null, maxFee: null }) 
+      chips.push({
+        key: 'price',
+        label,
+        onClear: () => setAdvancedFilters({ minFee: null, maxFee: null })
       });
     }
     if (minRating) {
-      chips.push({ 
-        key: 'rating', 
-        label: `${minRating}+ Stars`, 
-        onClear: () => setAdvancedFilters({ minRating: null }) 
+      chips.push({
+        key: 'rating',
+        label: `${minRating}+ Stars`,
+        onClear: () => setAdvancedFilters({ minRating: null })
       });
     }
     if (locationFilter) {
-      chips.push({ 
-        key: 'location', 
-        label: locationFilter, 
-        onClear: () => setAdvancedFilters({ location: null }) 
+      chips.push({
+        key: 'location',
+        label: locationFilter,
+        onClear: () => setAdvancedFilters({ location: null })
       });
     }
     if (availability !== 'any') {
-      chips.push({ 
-        key: 'availability', 
-        label: availability === 'today' ? 'Today' : 'This Week', 
-        onClear: () => setAdvancedFilters({ availability: 'any' }) 
+      chips.push({
+        key: 'availability',
+        label: availability === 'today' ? 'Today' : 'This Week',
+        onClear: () => setAdvancedFilters({ availability: 'any' })
       });
     }
     return chips;
@@ -197,17 +197,17 @@ export default function HomeScreen() {
             <SearchBar initialValue={searchQuery} onSearch={handleSearch} />
           </View>
           {!isDesktop && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.filterBtn, 
+                styles.filterBtn,
                 activeFilters.length > 0 && styles.filterBtnActive
-              ]} 
+              ]}
               onPress={() => setFilterModalVisible(true)}
             >
-              <Ionicons 
-                name="options-outline" 
-                size={24} 
-                color={activeFilters.length > 0 ? theme.colors.primary : theme.colors.textSecondary} 
+              <Ionicons
+                name="options-outline"
+                size={24}
+                color={activeFilters.length > 0 ? theme.colors.primary : theme.colors.textSecondary}
               />
               {activeFilters.length > 0 && (
                 <View style={styles.filterDot} />
@@ -279,17 +279,17 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScreenContainer scrollable={false} padded={false}>
+    <ScreenContainer scrollable={false} fullWidth padded={false}>
       {renderHeader()}
       <View style={styles.mainLayout}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <FlatList
             key={`grid-${numColumns}`}
             data={doctors}
             numColumns={numColumns}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={[styles.cardWrapper, { flex: 1, maxWidth: `${100 / numColumns}%` }]}>
+              <View style={[styles.cardWrapper, { flex: 1 / numColumns }]}>
                 <DoctorCard
                   doctor={item}
                   onPress={() => router.push(`/doctor-profile/${item.id}` as any)}
@@ -305,9 +305,9 @@ export default function HomeScreen() {
           />
         </View>
         {isDesktop && (
-          <DiscoverySidebar 
-            isCollapsed={isSidebarCollapsed} 
-            onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          <DiscoverySidebar
+            isCollapsed={isSidebarCollapsed}
+            onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           />
         )}
       </View>
@@ -319,6 +319,10 @@ const createStyles = (theme: Theme, isDesktop: boolean) =>
   StyleSheet.create({
     patientHeaderContainer: {
       backgroundColor: theme.colors.background,
+      paddingHorizontal: theme.spacing.xl,
+      paddingBottom: theme.spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
     },
     bell: {
       padding: theme.spacing.sm,
@@ -365,6 +369,7 @@ const createStyles = (theme: Theme, isDesktop: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
+      marginTop: theme.spacing.md,
       marginBottom: theme.spacing.sm,
     },
     filterBtn: {
@@ -395,10 +400,11 @@ const createStyles = (theme: Theme, isDesktop: boolean) =>
     },
     listContent: {
       flexGrow: 1,
-      paddingBottom: 100, // accommodate bottom tab bar
+      padding: theme.spacing.md,
+      paddingBottom: 100,
     },
     cardWrapper: {
-      paddingHorizontal: theme.spacing.xl,
+      padding: theme.spacing.sm,
     },
     // Doctor specific styles
     cardTitle: {
@@ -435,6 +441,7 @@ const createStyles = (theme: Theme, isDesktop: boolean) =>
     mainLayout: {
       flex: 1,
       flexDirection: 'row',
+      overflow: 'hidden',
     },
     activeFilterRow: {
       flexDirection: 'row',
@@ -462,4 +469,5 @@ const createStyles = (theme: Theme, isDesktop: boolean) =>
       paddingVertical: theme.spacing.xl,
       alignItems: 'center',
     },
+
   });

@@ -4,12 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import { useDiscoveryStore } from "../../store/discovery.store";
 import { useDoctorStore } from "../../store/doctor.store";
 import { useTheme } from "../../theme";
 import { TAB_CONFIGS } from "../../types/navigation";
-import { cn } from "../../lib/utils";
 
 interface NavbarProps {
   onNavigate?: () => void;
@@ -50,13 +50,14 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
 
   const handleSearchSubmit = () => {
     setSearchQuery(search);
-    router.push("/(tabs)" as any);
+    const base = userRole === 'DOCTOR' ? '/(doctor)' : '/(tabs)';
+    router.push(base as any);
     onNavigate?.();
   };
 
   return (
     <View className="bg-background border-b border-border px-6 h-14 flex-row items-center justify-between w-full">
-      
+
       {/* LEFT: Logo */}
       <View className="flex-row items-center gap-2">
         <Ionicons name="medical" size={20} className="text-primary" />
@@ -75,9 +76,8 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
               onHoverIn={() => setHovered(tab.name)}
               onHoverOut={() => setHovered(null)}
               onPress={() => {
-                router.push(
-                  `/(tabs)/${tab.name === "index" ? "" : tab.name}` as any
-                );
+                const base = userRole === 'DOCTOR' ? '/(doctor)' : '/(tabs)';
+                router.push(`${base}/${tab.name === "index" ? "" : tab.name}` as any);
                 onNavigate?.();
               }}
               className={cn(

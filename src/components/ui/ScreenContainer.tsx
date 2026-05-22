@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { View, ScrollView, ViewStyle, Platform, KeyboardAvoidingView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import React, { useMemo } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, View, ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme';
 import { createScreenContainerStyles } from './ScreenContainer.styles';
 
@@ -10,6 +10,8 @@ interface ScreenContainerProps {
   scrollable?: boolean;
   centered?: boolean;
   padded?: boolean;
+  constrained?: boolean;
+  fullWidth?: boolean;
   style?: ViewStyle;
   safeArea?: boolean;
 }
@@ -19,11 +21,14 @@ export const ScreenContainer = React.memo(function ScreenContainer({
   scrollable = false,
   centered = false,
   padded = true,
+  constrained = false,
   style,
+  fullWidth = false,
   safeArea = true,
 }: ScreenContainerProps) {
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createScreenContainerStyles(theme), [theme]);
+
 
   const content = scrollable ? (
     <ScrollView
@@ -31,10 +36,11 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         styles.scrollContent,
         centered && styles.centered,
         !padded && { paddingHorizontal: 0 },
+        constrained && !fullWidth && styles.constrained,  // ← guard
         style,
       ]}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled" 
+      keyboardShouldPersistTaps="handled"
     >
       {children}
     </ScrollView>
@@ -44,6 +50,7 @@ export const ScreenContainer = React.memo(function ScreenContainer({
         styles.container,
         padded && styles.padded,
         centered && styles.centered,
+        constrained && !fullWidth && styles.constrained,  // ← guard
         style,
       ]}
     >

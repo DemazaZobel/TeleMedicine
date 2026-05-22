@@ -12,14 +12,19 @@ export const createScreenContainerStyles = (theme: Theme) =>
       backgroundColor: theme.colors.background,
     },
     padded: {
-      paddingHorizontal: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.xl,
     },
     scrollContent: {
       flexGrow: 1,
-      paddingHorizontal: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.xl,
     },
     centered: {
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    constrained: {
+      width: '100%',
+      maxWidth: 1100,
+      alignSelf: 'center',
     },
   });

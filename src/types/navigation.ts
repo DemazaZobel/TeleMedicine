@@ -55,4 +55,5 @@ export const TAB_CONFIGS: TabConfig[] = [
     icon: 'person',
     roles: ['PATIENT', 'DOCTOR', 'ADMIN'],
   },
+
 ];

@@ -55,7 +55,6 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      paddingHorizontal: theme.spacing.xl,
       paddingTop: theme.spacing['3xl'],
       paddingBottom: theme.spacing.xl,
       backgroundColor: theme.colors.background,
