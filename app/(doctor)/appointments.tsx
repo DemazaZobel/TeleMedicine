@@ -39,7 +39,7 @@ export default function DoctorAppointmentsScreen() {
     doctorDecision,
   } = useBookingStore();
 
-  const [activeTab, setActiveTab] = useState<DoctorFilter>("requests");
+  const [activeTab, setActiveTab] = useState<DoctorFilter>("all");
   const [refreshing, setRefreshing] = useState(false);
   const [actingOn, setActingOn] = useState<string | null>(null);
 
