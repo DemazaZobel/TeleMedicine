@@ -59,7 +59,7 @@ export function AppointmentCard({
 
   const getStatus = () => {
     const status = appointment.status?.toUpperCase() || "UNKNOWN";
-    
+
     // Virtual status override for expired appointments
     if (isPast && !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(status)) {
       return { label: "Expired", color: theme.colors.textTertiary };
@@ -121,92 +121,139 @@ export function AppointmentCard({
 
   const handlePay = async () => {
     try {
+      setLocalLoading(true);
+
       const {
         fetchPaymentMethods,
         initiatePayment,
         addPaymentMethod,
         verifyPaymentMethod,
-        verifyPayment,
       } = useBookingStore.getState();
+
       await fetchPaymentMethods();
+
       let { paymentMethods } = useBookingStore.getState();
 
+      // Try existing verified method first
       let methodToUse =
-        paymentMethods.find((m) => m.is_verified) || paymentMethods[0];
+        paymentMethods?.find((m: any) => m.is_verified) || null;
+
+      // Create TELEBIRR method if none exists
       if (!methodToUse) {
-        try {
-          methodToUse = await addPaymentMethod({
-            payment_type: "chapa",
-            provider: "chapa",
-          });
-          methodToUse = await verifyPaymentMethod(methodToUse.id, "1234");
-        } catch (err) {
-          Alert.alert(
-            "No Payment Method",
-            "Please add a payment method in your profile settings first.",
-          );
-          return;
-        }
-      } else if (!methodToUse.is_verified) {
-        try {
-          methodToUse = await verifyPaymentMethod(methodToUse.id, "1234");
-        } catch (err) {
-          Alert.alert(
-            "Verification Failed",
-            "Could not verify the existing payment method.",
-          );
-          return;
+        methodToUse = await addPaymentMethod({
+          provider: "TELEBIRR",
+          account_number: "0912345678",
+        });
+
+        // Verify if backend requires verification
+        if (methodToUse && !methodToUse.is_verified) {
+          try {
+            methodToUse = await verifyPaymentMethod(
+              methodToUse.id,
+              "1234"
+            );
+          } catch (err) {
+            Alert.alert(
+              "Verification Failed",
+              "Could not verify payment method."
+            );
+            return;
+          }
         }
       }
 
-      const checkoutUrl = await initiatePayment(appointment.id, methodToUse.id);
+      if (!methodToUse) {
+        Alert.alert(
+          "Payment Error",
+          "Unable to create payment method."
+        );
+        return;
+      }
+
+      // Initiate Chapa payment through backend
+      const checkoutUrl = await initiatePayment(
+        appointment.id,
+        methodToUse.id
+      );
+
+      if (!checkoutUrl) {
+        Alert.alert(
+          "Payment Error",
+          "No checkout URL returned."
+        );
+        return;
+      }
+
+      // Open Chapa checkout
       await WebBrowser.openBrowserAsync(checkoutUrl);
 
-      // Backend team requirement: call verification immediately to trigger status change
-      try {
-        setLocalLoading(true);
-        const { verifyPayment } = useBookingStore.getState();
-        await verifyPayment(appointment.id);
-      } catch (e) {
-        console.log("Immediate verification check failed:", e);
-      } finally {
-        setLocalLoading(false);
+      // Start verification polling
+      let attempts = 0;
+      const maxAttempts = 12;
+
+      const poll = async () => {
+        try {
+          if (attempts >= maxAttempts) return;
+
+          attempts++;
+
+          const { verifyPayment } = useBookingStore.getState();
+
+          await verifyPayment(appointment.id);
+
+          const updated = useBookingStore
+            .getState()
+            .appointments.find(
+              (a) => a.id === appointment.id
+            );
+
+          if (
+            updated &&
+            updated.payment_status === "paid"
+          ) {
+            Alert.alert(
+              "Payment Successful",
+              "Your payment has been confirmed."
+            );
+            return;
+          }
+
+          setTimeout(poll, 5000);
+        } catch (e) {
+          console.log("Polling error:", e);
+        }
+      };
+
+      setTimeout(poll, 3000);
+    } catch (error: any) {
+      console.log("FULL ERROR", error?.response?.data);
+
+      const backendError = error?.response?.data;
+
+      let errorMessage =
+        backendError?.detail ||
+        backendError?.message ||
+        error?.message ||
+        "Failed to initiate payment.";
+
+      // Handle DRF validation errors nicely
+      if (
+        backendError &&
+        typeof backendError === "object"
+      ) {
+        const firstKey = Object.keys(backendError)[0];
+
+        if (
+          firstKey &&
+          Array.isArray(backendError[firstKey])
+        ) {
+          errorMessage = backendError[firstKey][0];
+        }
       }
 
-      // Poll for payment status after browser closes (webhook may take time)
-      let attempts = 0;
-      const maxAttempts = 12; // 12 × 5s = 60 seconds
-      const poll = async () => {
-        if (attempts >= maxAttempts) return;
-        attempts++;
-        const { verifyPayment } = useBookingStore.getState();
-        await verifyPayment(appointment.id);
-        const updated = useBookingStore
-          .getState()
-          .appointments.find((a) => a.id === appointment.id);
-        if (updated && updated.payment_status === "paid") {
-          return; // Payment confirmed, stop polling
-        }
-        setTimeout(poll, 5000);
-      };
-      setTimeout(poll, 3000); // First check after 3s
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.detail ||
-        JSON.stringify(error.response?.data) ||
-        error.message ||
-        "Failed to initiate payment.";
-      if (
-        errorMessage.includes("already been initiated") ||
-        errorMessage.includes("charge_pending")
-      ) {
-        Alert.alert(
-          "Payment In Progress",
-          'Your payment is being verified. Tap "Refresh Status" to check for updates.',
-        );
-      } else {
-        Alert.alert("Payment Error", errorMessage);
-      }
+      Alert.alert("Payment Error", errorMessage);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -258,11 +305,11 @@ export function AppointmentCard({
         Platform.OS === "web"
           ? window.confirm(msg)
           : await new Promise((resolve) => {
-              Alert.alert("Review Reschedule", msg, [
-                { text: "No", style: "cancel", onPress: () => resolve(false) },
-                { text: "Yes", style: "default", onPress: () => resolve(true) },
-              ]);
-            });
+            Alert.alert("Review Reschedule", msg, [
+              { text: "No", style: "cancel", onPress: () => resolve(false) },
+              { text: "Yes", style: "default", onPress: () => resolve(true) },
+            ]);
+          });
 
       if (!confirmed) return;
 
@@ -283,7 +330,7 @@ export function AppointmentCard({
       setLocalLoading(true);
       const result = await cancelAppointment(appointment.id, { confirm: true });
       setCancelVisible(false);
-      
+
       if (result.late_cancellation) {
         Alert.alert("Late Cancellation", result.message);
       } else {
@@ -293,9 +340,9 @@ export function AppointmentCard({
       Alert.alert(
         "Cancel Error",
         err.response?.data?.detail ||
-          JSON.stringify(err.response?.data) ||
-          err.message ||
-          "Failed to cancel appointment.",
+        JSON.stringify(err.response?.data) ||
+        err.message ||
+        "Failed to cancel appointment.",
       );
     } finally {
       setLocalLoading(false);
@@ -331,10 +378,10 @@ export function AppointmentCard({
           <View>
             <Text style={styles.name} numberOfLines={1}>{displayName}</Text>
             <View style={styles.modeRow}>
-              <Ionicons 
-                name={appointment.mode === "ONLINE" ? "videocam-outline" : "business-outline"} 
-                size={12} 
-                color={theme.colors.textTertiary} 
+              <Ionicons
+                name={appointment.mode === "ONLINE" ? "videocam-outline" : "business-outline"}
+                size={12}
+                color={theme.colors.textTertiary}
               />
               <Text style={styles.modeText}>
                 {appointment.mode === "ONLINE" ? "Online" : "In-Person"}
@@ -390,24 +437,24 @@ export function AppointmentCard({
             <Text style={styles.proposalDetails}>
               {new Date(appointment.latest_change_request.proposed_start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} @ {new Date(appointment.latest_change_request.proposed_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
-            
-            {((!isDoctor && appointment.latest_change_request.requested_by?.role === 'DOCTOR') || 
+
+            {((!isDoctor && appointment.latest_change_request.requested_by?.role === 'DOCTOR') ||
               (isDoctor && appointment.latest_change_request.requested_by?.role === 'PATIENT')) && (
-              <View style={styles.proposalActions}>
-                <TouchableOpacity 
-                  style={styles.proposalBtnReject} 
-                  onPress={() => handleRespondChange('reject')}
-                >
-                  <Text style={styles.proposalBtnRejectText}>Decline</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.proposalBtnAccept} 
-                  onPress={() => handleRespondChange('accept')}
-                >
-                  <Text style={styles.proposalBtnAcceptText}>Accept</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                <View style={styles.proposalActions}>
+                  <TouchableOpacity
+                    style={styles.proposalBtnReject}
+                    onPress={() => handleRespondChange('reject')}
+                  >
+                    <Text style={styles.proposalBtnRejectText}>Decline</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.proposalBtnAccept}
+                    onPress={() => handleRespondChange('accept')}
+                  >
+                    <Text style={styles.proposalBtnAcceptText}>Accept</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
           </View>
         )}
       </View>
@@ -415,8 +462,8 @@ export function AppointmentCard({
       {!isFinalized && (
         <View style={styles.cardActions}>
           {["REQUESTED", "CONFIRMED"].includes(
-              appointment.status?.toUpperCase() || "",
-            ) &&
+            appointment.status?.toUpperCase() || "",
+          ) &&
             !isPast && (
               <Button
                 title="Cancel"
@@ -442,21 +489,53 @@ export function AppointmentCard({
 
           {appointment.status?.toUpperCase() === "CONFIRMED" && (
             appointment.payment_status === "paid" ? (
-              <Button title="Join" size="sm" onPress={handleJoin} loading={localLoading} style={styles.mainBtn} />
+              appointment.mode === "ONLINE" ? (
+                <Button
+                  title="Join"
+                  size="sm"
+                  onPress={handleJoin}
+                  loading={localLoading}
+                  style={styles.mainBtn}
+                />
+              ) : (
+                <View style={styles.inPersonBadge}>
+                  <Ionicons
+                    name="location-outline"
+                    size={14}
+                    color={theme.colors.primary}
+                  />
+                  <Text style={styles.inPersonText}>
+                    In-Person Visit
+                  </Text>
+                </View>
+              )
             ) : (
               !isDoctor && (
                 appointment.payment_status === "charge_pending" ? (
-                  <Button title="Verifying..." size="sm" onPress={handleRefresh} loading={localLoading} style={styles.mainBtn} />
+                  <Button
+                    title="Verifying..."
+                    size="sm"
+                    onPress={handleRefresh}
+                    loading={localLoading}
+                    style={styles.mainBtn}
+                  />
                 ) : (
-                  <Button title="Pay Now" size="sm" variant="secondary" onPress={handlePay} loading={localLoading} style={styles.payBtn} />
+                  <Button
+                    title="Pay Now"
+                    size="sm"
+                    variant="primary"
+                    onPress={handlePay}
+                    loading={localLoading}
+                    style={styles.payBtn}
+                  />
                 )
               )
             )
           )}
 
           {isDoctor && appointment.status?.toUpperCase() === "REQUESTED" && (
-            <Button 
-              title="Accept" 
+            <Button
+              title="Accept"
               size="sm"
               onPress={async () => {
                 try {
@@ -465,9 +544,9 @@ export function AppointmentCard({
                 } finally {
                   setLocalLoading(false);
                 }
-              }} 
-              loading={localLoading} 
-              style={styles.mainBtn} 
+              }}
+              loading={localLoading}
+              style={styles.mainBtn}
             />
           )}
         </View>
@@ -686,5 +765,20 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 20,
       borderRadius: 18,
       minWidth: 90,
+    },
+    inPersonBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: theme.colors.primary + "12",
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 12,
+    },
+
+    inPersonText: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: theme.colors.primary,
     },
   });

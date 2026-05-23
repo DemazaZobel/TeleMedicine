@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -17,12 +16,12 @@ import { useDoctorStore } from "../../src/store/doctor.store";
 import type { Theme } from "../../src/theme";
 import { useTheme } from "../../src/theme";
 
-type DoctorFilter = "requests" | "confirmed" | "all";
+type DoctorFilter = "all" | "requests" | "confirmed";
 
 const FILTERS: { key: DoctorFilter; label: string }[] = [
+  { key: "all", label: "All" },
   { key: "requests", label: "Pending" },
   { key: "confirmed", label: "Confirmed" },
-  { key: "all", label: "All" },
 ];
 
 export default function DoctorAppointmentsScreen() {
@@ -64,6 +63,13 @@ export default function DoctorAppointmentsScreen() {
     } finally {
       setActingOn(null);
     }
+  };
+
+  const handleViewDetails = (id: string | number) => {
+    router.push({
+      pathname: "/appointment/[id]",
+      params: { id },
+    } as any);
   };
 
   if (!isVerified) return <PendingApproval />;
@@ -147,41 +153,9 @@ export default function DoctorAppointmentsScreen() {
                 <AppointmentCard
                   appointment={item}
                   isDoctor
-                  onAccept={handleAccept}
-                  onCancel={() => { }}
+                  onAccept={() => handleAccept(item.id)}
+                  onCancel={() => handleViewDetails(item.id)} // Maps clean interaction logic safely inside the primary container layout
                 />
-                {/* Quick accept for pending */}
-                {item.status === "REQUESTED" && (
-                  <View style={styles.quickActions}>
-                    <TouchableOpacity
-                      style={styles.quickAccept}
-                      onPress={() => handleAccept(item.id)}
-                      disabled={actingOn === String(item.id)}
-                    >
-                      {actingOn === String(item.id) ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                      ) : (
-                        <>
-                          <Ionicons name="checkmark" size={16} color="#fff" />
-                          <Text style={styles.quickAcceptText}>Accept</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.quickView}
-                      onPress={() =>
-                        router.push({
-                          pathname: "/appointment/[id]",
-                          params: { id: item.id },
-                        } as any)
-                      }
-                    >
-                      <Ionicons name="eye-outline" size={16} color={theme.colors.primary} />
-                      <Text style={styles.quickViewText}>View Details</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
             )}
             ListEmptyComponent={renderEmpty}
@@ -211,7 +185,6 @@ const createStyles = (theme: Theme) =>
     },
     filterRow: {
       flexDirection: "row",
-      paddingHorizontal: theme.spacing.xl,
       marginBottom: theme.spacing.md,
       gap: theme.spacing.sm,
     },
@@ -247,41 +220,6 @@ const createStyles = (theme: Theme) =>
     cardContainer: {
       flex: 1,
       marginBottom: theme.spacing.md,
-    },
-    quickActions: {
-      flexDirection: "row",
-      gap: theme.spacing.sm,
-      marginTop: -theme.spacing.sm,
-      marginBottom: theme.spacing.md,
-      paddingHorizontal: theme.spacing.xs,
-    },
-    quickAccept: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      backgroundColor: theme.colors.success,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.radius.sm,
-    },
-    quickAcceptText: {
-      color: "#fff",
-      fontSize: 13,
-      fontWeight: "700",
-    },
-    quickView: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      backgroundColor: theme.colors.primary + "14",
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-      borderRadius: theme.radius.sm,
-    },
-    quickViewText: {
-      color: theme.colors.primary,
-      fontSize: 13,
-      fontWeight: "600",
     },
     countBadge: {
       backgroundColor: theme.colors.warning + "20",
