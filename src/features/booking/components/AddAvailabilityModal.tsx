@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { Alert, Platform, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
-import { useTheme, Theme } from '../../../theme';
+import { Theme, useTheme } from '../../../theme';
+
+// JS weekday (Sun=0…Sat=6) → Python weekday (Mon=0…Sun=6)
+const JS_TO_PYTHON_WEEKDAY = [6, 0, 1, 2, 3, 4, 5];
+// Python weekday (Mon=0…Sun=6) → JS weekday (Sun=0…Sat=6)
+const PYTHON_TO_JS_WEEKDAY = [1, 2, 3, 4, 5, 6, 0];
 
 const DAYS = [
   { full: "Sunday", short: "Sun" },
@@ -19,18 +24,18 @@ const DAYS = [
 interface AddAvailabilityModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (payload: { 
+  onConfirm: (payload: {
     id?: string | number;
-    weekday?: number; 
-    specific_date?: string; 
-    start_time: string; 
-    end_time: string; 
-    is_active: boolean 
+    weekday?: number;
+    specific_date?: string;
+    start_time: string;
+    end_time: string;
+    is_active: boolean;
   }) => Promise<void>;
   isLoading: boolean;
   initialData?: {
     id: string | number;
-    weekday?: number;
+    weekday?: number;      // Python weekday from backend
     specific_date?: string;
     start_time: string;
     end_time: string;
@@ -38,27 +43,37 @@ interface AddAvailabilityModalProps {
   } | null;
 }
 
-export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, initialData }: AddAvailabilityModalProps) {
+export function AddAvailabilityModal({
+  visible, onClose, onConfirm, isLoading, initialData
+}: AddAvailabilityModalProps) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
   const [isRecurring, setIsRecurring] = useState(true);
-  const [weekday, setWeekday] = useState(1);
+  const [weekday, setWeekday] = useState(1); // JS weekday index for UI (1=Mon in JS)
   const [specificDate, setSpecificDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
 
+  const dateInputRef = React.useRef<any>(null);
+
   React.useEffect(() => {
-    if (initialData && visible) {
+    if (!visible) return;
+
+    if (initialData) {
       setIsRecurring(!initialData.specific_date);
-      if (initialData.weekday !== undefined) setWeekday(initialData.weekday);
-      if (initialData.specific_date) setSpecificDate(new Date(initialData.specific_date));
+      if (initialData.weekday !== undefined) {
+        // Backend sends Python weekday → convert to JS index for the UI picker
+        setWeekday(PYTHON_TO_JS_WEEKDAY[initialData.weekday]);
+      }
+      if (initialData.specific_date) {
+        setSpecificDate(new Date(initialData.specific_date));
+      }
       setStartTime(initialData.start_time.slice(0, 5));
       setEndTime(initialData.end_time.slice(0, 5));
-    } else if (visible) {
-      // Reset for new entry
+    } else {
+      // Reset for new entry — default to Monday (JS index 1)
       setIsRecurring(true);
       setWeekday(1);
       setSpecificDate(new Date());
@@ -70,52 +85,58 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
   const handleAdd = async () => {
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-      Alert.alert("Invalid Time", "Please use the HH:MM format (e.g., 09:30)");
+      Alert.alert("Invalid Time", "Please use 24-hour format (e.g., 09:30 or 15:00)");
       return;
     }
 
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
-    
+
     if (startH > endH || (startH === endH && startM >= endM)) {
       Alert.alert("Invalid Range", "End time must be after start time");
       return;
     }
-    
+
     try {
       await onConfirm({
         id: initialData?.id,
-        weekday: isRecurring ? weekday : undefined,
-        specific_date: !isRecurring ? specificDate.toISOString().split('T')[0] : undefined,
+        // ✅ Convert JS weekday → Python weekday before saving
+        weekday: isRecurring ? JS_TO_PYTHON_WEEKDAY[weekday] : undefined,
+        specific_date: !isRecurring
+          ? specificDate.toISOString().split('T')[0]
+          : undefined,
         start_time: startTime + ":00",
         end_time: endTime + ":00",
         is_active: true,
       });
       onClose();
-    } catch (error) {
+    } catch {
       // Error handled by store
     }
   };
-
-  const dateInputRef = React.useRef<any>(null);
 
   return (
     <ModalBase
       visible={visible}
       onClose={onClose}
       title={initialData ? "Edit Working Hours" : "Add Working Hours"}
-      subtitle={initialData ? "Modify your existing schedule block." : "Define when patients can book your time."}
+      subtitle={initialData
+        ? "Modify your existing schedule block."
+        : "Define when patients can book your time."}
       maxWidth={500}
     >
       <View style={styles.container}>
-        {/* RECURRING TOGGLE */}
+
+        {/* ── Recurring toggle ── */}
         <View style={styles.recurringSection}>
           <View style={{ flex: 1 }}>
             <Text style={styles.recurringTitle}>Repeat Weekly</Text>
-            <Text style={styles.recurringSubtitle}>Make these hours available every week</Text>
+            <Text style={styles.recurringSubtitle}>
+              Make these hours available every week
+            </Text>
           </View>
-          <Switch 
-            value={isRecurring} 
+          <Switch
+            value={isRecurring}
             onValueChange={setIsRecurring}
             trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
             thumbColor="#FFF"
@@ -124,6 +145,7 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
 
         <View style={styles.divider} />
 
+        {/* ── Day / date picker ── */}
         {isRecurring ? (
           <View style={styles.section}>
             <Text style={styles.label}>Select Day</Text>
@@ -147,11 +169,12 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
         ) : (
           <View style={styles.section}>
             <Text style={styles.label}>Select Specific Date</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.datePickerBtn}
               onPress={() => {
                 if (Platform.OS === 'web') {
-                  dateInputRef.current?.showPicker?.() || dateInputRef.current?.click();
+                  dateInputRef.current?.showPicker?.() ||
+                    dateInputRef.current?.click();
                 } else {
                   setShowDatePicker(true);
                 }
@@ -162,19 +185,12 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
                 {specificDate.toLocaleDateString(undefined, { dateStyle: 'long' })}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
-              
+
               {Platform.OS === 'web' && (
                 <input
                   ref={dateInputRef}
                   type="date"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: 0,
-                    height: 0,
-                    opacity: 0,
-                  }}
+                  style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, opacity: 0 }}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => {
                     if (e.target.value) setSpecificDate(new Date(e.target.value));
@@ -196,45 +212,70 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
               />
             )}
             {Platform.OS === 'ios' && showDatePicker && (
-              <Button title="Done" size="sm" onPress={() => setShowDatePicker(false)} style={{ marginTop: 10 }} />
+              <Button
+                title="Done"
+                size="sm"
+                onPress={() => setShowDatePicker(false)}
+                style={{ marginTop: 10 }}
+              />
             )}
           </View>
         )}
 
+        {/* ── Time inputs ── */}
         <View style={styles.timeRow}>
           <View style={styles.timeField}>
-            <Text style={styles.fieldLabel}>Start Time</Text>
+            <Text style={styles.fieldLabel}>
+              Start Time{" "}
+              <Text style={styles.fieldHint}>(24h)</Text>
+            </Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="time-outline" size={18} color={theme.colors.textTertiary} style={styles.inputIcon} />
+              <Ionicons
+                name="time-outline"
+                size={18}
+                color={theme.colors.textTertiary}
+                style={styles.inputIcon}
+              />
               <TextInput
                 value={startTime}
                 onChangeText={setStartTime}
                 placeholder="09:00"
                 style={styles.cleanInput}
                 placeholderTextColor={theme.colors.textTertiary}
+                keyboardType="numbers-and-punctuation"
               />
             </View>
           </View>
 
           <View style={styles.timeDivider}>
-             <View style={styles.dividerLine} />
+            <View style={styles.dividerLine} />
           </View>
 
           <View style={styles.timeField}>
-            <Text style={styles.fieldLabel}>End Time</Text>
+            <Text style={styles.fieldLabel}>
+              End Time{" "}
+              <Text style={styles.fieldHint}>(24h)</Text>
+            </Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="time" size={18} color={theme.colors.textTertiary} style={styles.inputIcon} />
+              <Ionicons
+                name="time"
+                size={18}
+                color={theme.colors.textTertiary}
+                style={styles.inputIcon}
+              />
               <TextInput
                 value={endTime}
                 onChangeText={setEndTime}
                 placeholder="17:00"
                 style={styles.cleanInput}
                 placeholderTextColor={theme.colors.textTertiary}
+                keyboardType="numbers-and-punctuation"
               />
             </View>
           </View>
         </View>
 
+        {/* ── Actions ── */}
         <View style={styles.actions}>
           <Button
             title="Cancel"
@@ -350,6 +391,11 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: 8,
   },
+  fieldHint: {
+    fontSize: 11,
+    fontWeight: '400',
+    color: theme.colors.textTertiary,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -394,6 +440,3 @@ const createStyles = (theme: Theme) => StyleSheet.create({
     height: 48,
   },
 });
-
-
-
