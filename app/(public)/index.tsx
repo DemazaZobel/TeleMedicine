@@ -5,16 +5,17 @@ import {
   Alert,
   Animated,
   FlatList,
-  Modal,
+  Image,
+  ImageBackground,
+  Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
   View,
   useWindowDimensions,
-    ImageBackground,
-    Image,
 } from 'react-native';
 import { Card, ScreenContainer } from '../../src/components/ui';
 import type { ProviderSearchResult } from '../../src/features/doctor/types/doctor.types';
@@ -22,8 +23,21 @@ import { DoctorDetailsModal } from '../../src/features/patient';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
-import femaleDoc from "../../assets/images/femaleDoc.jpeg";
-import logo from "../../assets/images/logo.png";
+import logo from '../../assets/images/logo.png';
+import femaleDoc from '../../assets/images/femaleDoc.jpeg';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FAKE_DOCTORS = [
+  { id: '1', first_name: 'Samuel', last_name: 'Bekele', specialization: 'Cardiologist', average_rating: 4.9, years_of_experience: 12, is_verified: true, hospital: 'Zewditu Memorial Hospital' },
+  { id: '2', first_name: 'Lidiya', last_name: 'Tesfaye', specialization: 'Pediatrician', average_rating: 4.8, years_of_experience: 8, is_verified: true, hospital: 'Tikur Anbessa Hospital' },
+  { id: '3', first_name: 'Mulugeta', last_name: 'Alemu', specialization: 'Dermatologist', average_rating: 4.7, years_of_experience: 10, is_verified: true, hospital: "St. Paul's Hospital" },
+  { id: '4', first_name: 'Hana', last_name: 'Wondimu', specialization: 'Gynecologist', average_rating: 4.9, years_of_experience: 15, is_verified: true, hospital: 'Ayder Referral Hospital' },
+  { id: '5', first_name: 'Ermias', last_name: 'Getachew', specialization: 'General Practitioner', average_rating: 4.6, years_of_experience: 6, is_verified: true, hospital: 'Menelik II Hospital' },
+  { id: '6', first_name: 'Bethlehem', last_name: 'Haile', specialization: 'Cardiologist', average_rating: 4.8, years_of_experience: 11, is_verified: true, hospital: 'Black Lion Hospital' },
+  { id: '7', first_name: 'Dawit', last_name: 'Girma', specialization: 'Dermatologist', average_rating: 4.7, years_of_experience: 9, is_verified: true, hospital: 'Tikur Anbessa Hospital' },
+  { id: '8', first_name: 'Tigist', last_name: 'Mengistu', specialization: 'Pediatrician', average_rating: 4.9, years_of_experience: 13, is_verified: true, hospital: 'Yekatit 12 Hospital' },
+];
 
 const FEATURES = [
   { icon: 'calendar-outline', title: 'Easy Appointment Scheduling', desc: 'Book appointments quickly and easily.' },
@@ -38,188 +52,1192 @@ const TESTIMONIALS = [
   { id: 'tm-1', name: 'Hana T.', rating: 5, text: 'Booking appointments became very easy. I can now consult with my doctor without any hassle. Thank you, Medlink!' },
   { id: 'tm-2', name: 'Dawit M.', rating: 5, text: 'I found a specialist in minutes and got the care I needed. Medlink is a blessing!' },
   { id: 'tm-3', name: 'Selamawit K.', rating: 5, text: 'The reminders help me a lot. Great app for busy people like me.' },
+  { id: 'tm-4', name: 'Yonas A.', rating: 5, text: 'The best healthcare app in Ethiopia. Simple, fast, and reliable.' },
 ];
 
 const SPECIALTIES = ['All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Gynecologist', 'General'];
 
 const SPECIALTY_COLORS: Record<string, string> = {
-  'Cardiologist': '#EF4444',
-  'Dermatologist': '#8B5CF6',
-  'Pediatrician': '#F59E0B',
-  'Gynecologist': '#EC4899',
-  'General': '#10B981',
+  Cardiologist: '#EF4444',
+  Dermatologist: '#8B5CF6',
+  Pediatrician: '#F59E0B',
+  Gynecologist: '#EC4899',
+  General: '#10B981',
   'General Practitioner': '#10B981',
-  'default': '#3B82F6',
+  default: '#3B82F6',
 };
 
-function StarRating({ rating }: { rating: number }) {
+const SOCIAL_LINKS = [
+  { icon: 'logo-twitter', label: 'X' },
+  { icon: 'logo-instagram', label: 'Instagram' },
+  { icon: 'logo-tiktok', label: 'TikTok' },
+  { icon: 'logo-facebook', label: 'Facebook' },
+];
+
+// ─── Shared Types ─────────────────────────────────────────────────────────────
+
+interface SectionProps {
+  theme: Theme;
+  isDark: boolean;
+  isMobile: boolean;
+  width: number;
+}
+
+// ─── Star Rating ──────────────────────────────────────────────────────────────
+
+function StarRating({ rating, size = 12 }: { rating: number; size?: number }) {
   const { theme } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <Ionicons key={i} name="star" size={11} color={i < Math.floor(rating) ? '#F59E0B' : theme.colors.border} />
+        <Ionicons key={i} name="star" size={size} color={i < Math.floor(rating) ? '#F59E0B' : theme.colors.border} />
       ))}
-      <Text style={{ fontSize: 11, color: theme.colors.textSecondary, marginLeft: 3 }}>{rating}</Text>
+      <Text style={{ fontSize: size - 1, color: theme.colors.textSecondary, marginLeft: 3, fontWeight: '600' }}>{rating}</Text>
     </View>
   );
 }
 
-function HeroSection({ isMobile, theme, isDark, onGetStarted, onLogin }: any) {
+// ─── Navbar ───────────────────────────────────────────────────────────────────
+
+interface NavBarProps extends SectionProps {
+  menuOpen: boolean;
+  onToggleMenu: () => void;
+  onLogin: () => void;
+  onSignup: () => void;
+  menuAnim: Animated.Value;
+  navItems: { label: string; onPress: () => void }[];
+}
+
+function NavBar({ theme, isMobile, menuOpen, onToggleMenu, onLogin, onSignup, menuAnim, navItems }: NavBarProps) {
+  const menuOpacity = menuAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const menuTranslateY = menuAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] });
+
+  return (
+    <>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        paddingHorizontal: isMobile ? 16 : 32, paddingVertical: 12,
+        borderBottomWidth: 1, borderBottomColor: theme.colors.border,
+        backgroundColor: theme.colors.background, zIndex: 100,
+      }}>
+        <Image source={logo} style={{ width: 110, height: 36 }} resizeMode="contain" />
+
+        {!isMobile && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 28 }}>
+            {navItems.map((item) => (
+              <Pressable key={item.label} onPress={item.onPress}>
+                {({ pressed }) => (
+                  <Text style={{ fontSize: 13, color: pressed ? theme.colors.primary : theme.colors.text, fontWeight: '500' }}>
+                    {item.label}
+                  </Text>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {isMobile ? (
+            <Pressable onPress={onToggleMenu} style={{ width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }}>
+              <Ionicons name={menuOpen ? 'close' : 'menu'} size={22} color={theme.colors.text} />
+            </Pressable>
+          ) : (
+            <>
+              <Pressable style={({ pressed }) => [{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: theme.colors.primary }, pressed && { opacity: 0.8 }]} onPress={onLogin}>
+                <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '700' }}>Log In</Text>
+              </Pressable>
+              <Pressable style={({ pressed }) => [{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10, backgroundColor: theme.colors.primary }, pressed && { opacity: 0.8 }]} onPress={onSignup}>
+                <Text style={{ fontSize: 13, color: '#fff', fontWeight: '700' }}>Sign Up</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+
+      {menuOpen && (
+        <Animated.View style={{
+          backgroundColor: theme.colors.background,
+          borderBottomWidth: 1, borderBottomColor: theme.colors.border,
+          paddingHorizontal: 20, paddingVertical: 12, gap: 2, zIndex: 99,
+          opacity: menuOpacity, transform: [{ translateY: menuTranslateY }],
+        }}>
+          {navItems.map((item) => (
+            <Pressable key={item.label} onPress={item.onPress} style={({ pressed }) => [{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border + '55' }, pressed && { opacity: 0.7 }]}>
+              <Text style={{ fontSize: 15, fontWeight: '600', color: theme.colors.text }}>{item.label}</Text>
+            </Pressable>
+          ))}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+            <Pressable style={{ flex: 1, paddingVertical: 11, borderRadius: 10, borderWidth: 1.5, borderColor: theme.colors.primary, alignItems: 'center' }} onPress={onLogin}>
+              <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '700' }}>Log In</Text>
+            </Pressable>
+            <Pressable style={{ flex: 1, paddingVertical: 11, borderRadius: 10, backgroundColor: theme.colors.primary, alignItems: 'center' }} onPress={onSignup}>
+              <Text style={{ fontSize: 13, color: '#fff', fontWeight: '700' }}>Sign Up</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      )}
+    </>
+  );
+}
+
+// ─── Hero Section ─────────────────────────────────────────────────────────────
+
+function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: SectionProps & { onGetStarted: () => void; onLogin: () => void }) {
   const floatAnim1 = useRef(new Animated.Value(0)).current;
   const floatAnim2 = useRef(new Animated.Value(0)).current;
   const floatAnim3 = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
     const makeFloat = (anim: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, { toValue: -8, duration: 2000, delay, useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0, duration: 2000, useNativeDriver: true }),
-        ]),
-      ).start();
-
+      Animated.loop(Animated.sequence([
+        Animated.timing(anim, { toValue: -10, duration: 2200, delay, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0, duration: 2200, useNativeDriver: true }),
+      ])).start();
     makeFloat(floatAnim1, 0);
-    makeFloat(floatAnim2, 600);
-    makeFloat(floatAnim3, 1200);
-  }, [floatAnim1, floatAnim2, floatAnim3]);
+    makeFloat(floatAnim2, 700);
+    makeFloat(floatAnim3, 1400);
+  }, [fadeAnim, floatAnim1, floatAnim2, floatAnim3]);
 
+  if (isMobile) {
+    return (
+      <Animated.View style={{ opacity: fadeAnim }}>
+        {/* Full image background with center focus */}
+        <View style={{ height: 480, position: 'relative', overflow: 'hidden' }}>
+          <Image
+            source={femaleDoc}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              top: 0,
+              left: 0,
+            }}
+            resizeMode="cover"
+          />
+
+          {/* Top dark overlay for readability */}
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, backgroundColor: '#00000033' }} />
+
+          {/* Bottom gradient overlay — from transparent to background */}
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 320, justifyContent: 'flex-end' }}>
+            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.colors.background, opacity: 0.92 }} />
+
+            {/* Text content sitting on gradient */}
+            <View style={{ padding: 24, gap: 14, zIndex: 2 }}>
+              <Text style={{ fontSize: 28, fontWeight: '800', color: theme.colors.primary, lineHeight: 36, letterSpacing: -0.5 }}>
+                Quality Healthcare,{'\n'}Closer Than You Think
+              </Text>
+              <Text style={{ fontSize: 14, color: theme.colors.textSecondary, lineHeight: 22 }}>
+                Medlink connects you with trusted doctors across Ethiopia.{' '}
+                <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Anytime. Anywhere.</Text>
+              </Text>
+
+              {/* Buttons — visible and prominent on mobile */}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
+                <Pressable
+                  onPress={onGetStarted}
+                  style={({ pressed }) => [{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    backgroundColor: theme.colors.primary,
+                    paddingVertical: 15,
+                    borderRadius: 14,
+                    shadowColor: theme.colors.primary,
+                    shadowOpacity: 0.35,
+                    shadowRadius: 10,
+                    elevation: 5,
+                  }, pressed && { opacity: 0.85 }]}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Get Started</Text>
+                  <Ionicons name="arrow-forward" size={17} color="#fff" />
+                </Pressable>
+                <Pressable
+                  onPress={onLogin}
+                  style={({ pressed }) => [{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 15,
+                    borderRadius: 14,
+                    borderWidth: 2,
+                    borderColor: theme.colors.primary,
+                    backgroundColor: theme.colors.background,
+                  }, pressed && { opacity: 0.85 }]}
+                >
+                  <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 15 }}>Log In</Text>
+                </Pressable>
+              </View>
+
+              {/* Trust badges */}
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                {[
+                  { icon: 'shield-checkmark-outline', label: 'Trusted Doctors' },
+                  { icon: 'lock-closed-outline', label: 'Secure & Private' },
+                  { icon: 'location-outline', label: 'Across Ethiopia' },
+                ].map((item) => (
+                  <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: theme.colors.border }}>
+                    <Ionicons name={item.icon as any} size={11} color={theme.colors.primary} />
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: theme.colors.textSecondary }}>{item.label}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Stat badges */}
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: theme.colors.border }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#10B981' }} />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: theme.colors.text }}>2,000+ Patients</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: theme.colors.border }}>
+                  <Ionicons name="star" size={11} color="#F59E0B" />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: theme.colors.text }}>4.9 Rating</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: theme.colors.border }}>
+                  <Ionicons name="medical" size={11} color="#EF4444" />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: theme.colors.text }}>516+ Doctors</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  }
+
+  // Desktop hero
   return (
-    <View style={[{ padding: 62, alignItems: 'center' , margin: 4 }, !isMobile && { flexDirection: 'row' }]}>
-      <View style={{ width: isMobile ? '100%' : '50%', gap: 16, alignItems: 'center' }}>
-      <Image
-                source={logo} // adjust path
-                style={{
-                  width: 1100,
-                  height: 100,
-                  resizeMode: 'contain',
-                  
-                
-                }}
-              />     
-        <Text style={{ fontSize: 34, fontWeight: '800', color: theme.colors.primary, lineHeight: 42, letterSpacing: 0.5, textAlign: 'center', padding: 16 }}>
+    <Animated.View style={{ opacity: fadeAnim, flexDirection: 'row', minHeight: 580, overflow: 'hidden' }}>
+      {/* Left text — narrower, sits on top of image edge */}
+      <View style={{
+        width: '36%',
+        zIndex: 2,
+        paddingLeft: 58,
+        paddingRight: 0,
+        paddingVertical: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 24,
+        backgroundColor: theme.colors.background,
+      }}>
+        <Text style={{ fontSize: 42, fontWeight: '800', color: theme.colors.primary, lineHeight: 52, letterSpacing: -1, textAlign: 'center' }}>
           Quality Healthcare,{'\n'}Closer Than You Think
         </Text>
-        <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24, textAlign: 'center' }}>
-          {`Medlink connects you with trusted doctors across Ethiopia\nfor appointments, consultations, and better healthcare.\n`}
+        <Text style={{ fontSize: 16, color: theme.colors.textSecondary, lineHeight: 28, maxWidth: 400, textAlign: 'center' }}>
+          Medlink connects you with trusted doctors across Ethiopia for appointments, consultations, and better healthcare.{' '}
           <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Anytime. Anywhere.</Text>
         </Text>
-        <View style={{ flexDirection: 'row', gap: 32, alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', paddingRight: 22 }}>
           <Pressable
             onPress={onGetStarted}
-            style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 13, borderRadius: 20 }, pressed && { opacity: 0.85 }]}
+            style={({ pressed }) => [{
+              flexDirection: 'row', alignItems: 'center', gap: 10,
+              backgroundColor: theme.colors.primary,
+              paddingHorizontal: 20, paddingVertical: 16,
+              borderRadius: 14,
+              shadowColor: theme.colors.primary,
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+              elevation: 5,
+            }, pressed && { opacity: 0.85 }]}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Get Started</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
+            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>Get Started</Text>
+            <Ionicons name="arrow-forward" size={18} color="#fff" />
           </Pressable>
           <Pressable
             onPress={onLogin}
-            style={({ pressed }) => [{ paddingHorizontal: 44, paddingVertical: 13, borderRadius: 20, borderWidth: 1, borderColor: theme.colors.primary }, pressed && { opacity: 0.85 }]}
+            style={({ pressed }) => [{
+              paddingHorizontal: 48, paddingVertical: 16,
+              borderRadius: 14, borderWidth: 2,
+              borderColor: theme.colors.primary,
+            }, pressed && { opacity: 0.85 }]}
           >
-            <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 14 }}>Log In</Text>
+            <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 16 }}>Log In</Text>
           </Pressable>
         </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+        <View style={{ flexDirection: 'row', gap: 20, flexWrap: 'wrap' }}>
           {[
             { icon: 'shield-checkmark-outline', label: 'Trusted Doctors' },
             { icon: 'lock-closed-outline', label: 'Secure & Private' },
             { icon: 'location-outline', label: 'Available Across Ethiopia' },
           ].map((item) => (
-            <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Ionicons name={item.icon as any} size={14} color={theme.colors.primary} />
-              <Text style={{ fontSize: 12, color: theme.colors.textSecondary, fontWeight: '500' }}>{item.label}</Text>
+            <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name={item.icon as any} size={15} color={theme.colors.primary} />
+              <Text style={{ fontSize: 13, color: theme.colors.textSecondary, fontWeight: '500' }}>{item.label}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      <View style={{ width: isMobile ? '100%' : '55%', height: '110%', alignItems: 'center' }}>
-        <ImageBackground
+      {/* Right image — takes 58% width, bleeds to edge */}
+      <View style={{ width: '64%', position: 'relative' }}>
+        <Image
           source={femaleDoc}
+          style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
-          imageStyle={{ borderRadius: 24 }}
-          style={{
-            width: '100%',
-            height: 650,
-            borderRadius: 24,
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            position: 'relative',
-            borderWidth: 1,
-            borderColor: isDark ? theme.colors.border : '#caefe4',
-          }}
-        >
-    
-    {/* Everything below stays EXACTLY the same */}
+        />
 
-    <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: theme.colors.primary + '22', alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name="medical" size={40} color={theme.colors.primary} />
-    </View>
-
-    <Animated.View style={{ position: 'absolute', top: 20, left: 16, transform: [{ translateY: floatAnim1 }] }}>
-      <View style={{ backgroundColor: theme.colors.background, borderRadius: 12, padding: 10, borderWidth: 1, borderColor: theme.colors.border, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name="heart" size={14} color="#fff" />
+        {/* Left gradient fade — blends image into background */}
+        {/* Smooth left gradient fade — replace all the existing overlay Views */}
+        <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '15%', flexDirection: 'row' }} pointerEvents="none">
+          <View style={{ flex: 3, backgroundColor: theme.colors.background }} />
+          <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.85 }} />
+          <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.6 }} />
+          <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.35 }} />
+          <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.15 }} />
+          <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.05 }} />
         </View>
-        <View>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: theme.colors.text }}>516+ Doctors</Text>
-          <Text style={{ fontSize: 9, color: theme.colors.textSecondary }}>Verified specialists</Text>
+
+        {/* Floating badges */}
+        <Animated.View style={{ position: 'absolute', top: 40, left: '18%', transform: [{ translateY: floatAnim1 }] }}>
+          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="heart" size={17} color="#fff" />
+            </View>
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#111' }}>516+ Doctors</Text>
+              <Text style={{ fontSize: 10, color: '#666' }}>Verified specialists</Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View style={{ position: 'absolute', top: 40, right: 24, transform: [{ translateY: floatAnim2 }] }}>
+          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#F59E0B', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="star" size={17} color="#fff" />
+            </View>
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#111' }}>4.9 Rating</Text>
+              <Text style={{ fontSize: 10, color: '#666' }}>Average score</Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View style={{ position: 'absolute', bottom: 60, right: 24, transform: [{ translateY: floatAnim3 }] }}>
+          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: '#111' }}>Available Now</Text>
+          </View>
+        </Animated.View>
+
+        <View style={{ position: 'absolute', bottom: 60, left: '18%' }}>
+          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
+            <View style={{ flexDirection: 'row' }}>
+              {[0, 1, 2, 3].map((i) => (
+                <View key={i} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center', marginLeft: i === 0 ? 0 : -9, borderWidth: 2, borderColor: '#fff' }}>
+                  <Ionicons name="person" size={12} color="#fff" />
+                </View>
+              ))}
+            </View>
+            <View>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#111' }}>2,000+ Patients</Text>
+              <Text style={{ fontSize: 10, color: '#666' }}>Trust Medlink</Text>
+            </View>
+          </View>
         </View>
       </View>
     </Animated.View>
+  );
+}
 
-    <Animated.View style={{ position: 'absolute', top: 20, right: 16, transform: [{ translateY: floatAnim2 }] }}>
-      {/* unchanged */}
-    </Animated.View>
+// ─── Search Section ───────────────────────────────────────────────────────────
 
-    <Animated.View style={{ position: 'absolute', bottom: 20, right: 16, transform: [{ translateY: floatAnim3 }] }}>
-      {/* unchanged */}
-    </Animated.View>
-
-    <View style={{ position: 'absolute', bottom: 20, left: 16 }}>
-      {/* unchanged */}
-    </View>
-
-  </ImageBackground>
-     </View>
+function SearchSection({ theme, isMobile }: SectionProps) {
+  return (
+    <View style={{ paddingHorizontal: isMobile ? 16 : 32, marginTop: isMobile ? 20 : 32 }}>
+      <View style={{
+        backgroundColor: '#ecfdf5',
+        borderRadius: 20,
+        padding: isMobile ? 18 : 26,
+        borderWidth: 1,
+        borderColor: '#bbf7d0',
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 4,
+      }}>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: '#065f46', marginBottom: 4 }}>Find the Right Doctor</Text>
+        <Text style={{ fontSize: 13, color: '#047857', marginBottom: 18, lineHeight: 20 }}>
+          Search by specialty, location, or availability and book your appointment in minutes.
+        </Text>
+        <View style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff' }}>
+            <Ionicons name="search-outline" size={17} color="#047857" />
+            <TextInput
+              placeholder="Search doctors, specialties..."
+              placeholderTextColor="#6ee7b7"
+              style={{ flex: 1, fontSize: 14, color: '#065f46' }}
+            />
+          </View>
+          <View style={[{ gap: 10 }, !isMobile && { flexDirection: 'row', alignItems: 'center' }]}>
+            {[
+              { label: 'Specialty', value: 'All Specialties' },
+              { label: 'Location', value: 'All Locations' },
+              { label: 'Availability', value: 'Available Today' },
+            ].map((f) => (
+              <View key={f.label} style={{ flex: isMobile ? undefined : 1, borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#fff' }}>
+                <Text style={{ fontSize: 9, color: '#047857', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>{f.label}</Text>
+                <Text style={{ fontSize: 13, color: '#065f46', fontWeight: '600' }}>{f.value}</Text>
+              </View>
+            ))}
+            <Pressable style={({ pressed }) => [{ backgroundColor: '#065f46', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, pressed && { opacity: 0.85 }]}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Search</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
+
+// ─── Doctor Card ──────────────────────────────────────────────────────────────
+
+function DoctorCard({ doctor, index, theme, isDark, onPress, onBook }: {
+  doctor: any;
+  index: number;
+  theme: Theme;
+  isDark: boolean;
+  onPress: () => void;
+  onBook: () => void;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isWeb = Platform.OS === 'web';
+  const isAvailable = index % 3 !== 2;
+  const specKey = Object.keys(SPECIALTY_COLORS).find((k) =>
+    (doctor.specialization || '').toLowerCase().includes(k.toLowerCase()),
+  ) || 'default';
+  const specColor = SPECIALTY_COLORS[specKey];
+
+  const handleHoverIn = () => {
+    if (!isWeb) return;
+    Animated.spring(scaleAnim, { toValue: 1.03, useNativeDriver: true, tension: 200, friction: 10 }).start();
+  };
+  const handleHoverOut = () => {
+    if (!isWeb) return;
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }).start();
+  };
+
+  return (
+    <Pressable
+      onPress={onPress}
+      // @ts-ignore
+      onHoverIn={handleHoverIn}
+      onHoverOut={handleHoverOut}
+    >
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <View style={{
+          width: 200,
+          borderRadius: 20,
+          overflow: 'hidden',
+          backgroundColor: theme.colors.surface,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          shadowColor: '#000',
+          shadowOpacity: 0.07,
+          shadowRadius: 12,
+          elevation: 3,
+        }}>
+          {/* Image area — top half */}
+          <View style={{
+            width: '100%',
+            height: 180,
+            backgroundColor: isDark ? '#1a2e2a' : '#e9fbf4',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* Specialty color accent top bar */}
+            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, backgroundColor: specColor }} />
+
+            {/* Availability badge */}
+            <View style={{
+              position: 'absolute',
+              top: 14,
+              right: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              borderRadius: 999,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              backgroundColor: isAvailable ? '#D1FAE5' : '#FEF3C7',
+            }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isAvailable ? '#10B981' : '#F59E0B' }} />
+              <Text style={{ fontSize: 10, fontWeight: '700', color: isAvailable ? '#065F46' : '#92400E' }}>
+                {isAvailable ? 'Available' : 'Busy'}
+              </Text>
+            </View>
+
+            {/* Doctor avatar — large, sitting at bottom of image area */}
+            <View style={{
+              width: 130,
+              height: 160,
+              borderRadius: 12,
+              backgroundColor: specColor + '22',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              overflow: 'hidden',
+            }}>
+              {doctor.profile_image ? (
+                <Image
+                  source={{ uri: doctor.profile_image }}
+                  style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
+                />
+              ) : (
+                <Ionicons name="person" size={110} color={specColor + 'bb'} style={{ marginBottom: -10 }} />
+              )}
+            </View>
+          </View>
+
+          {/* Info area — bottom half */}
+          <View style={{ padding: 14, gap: 6, backgroundColor: theme.colors.background }}>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }} numberOfLines={1}>
+              Dr. {doctor.first_name} {doctor.last_name}
+            </Text>
+
+            {/* Specialty underline accent */}
+            <View style={{ alignItems: 'center', gap: 4 }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: specColor, textAlign: 'center' }} numberOfLines={1}>
+                {doctor.specialization || 'General Practitioner'}
+              </Text>
+              <View style={{ width: 32, height: 2, borderRadius: 1, backgroundColor: specColor }} />
+            </View>
+
+            <Text style={{ fontSize: 11, color: theme.colors.textSecondary, textAlign: 'center' }} numberOfLines={1}>
+              {doctor.hospital || 'Tikur Anbessa Hospital'}
+            </Text>
+
+            <Text style={{ fontSize: 11, color: theme.colors.textSecondary, textAlign: 'center' }}>
+              {doctor.years_of_experience || 8}+ years experience
+            </Text>
+
+            <View style={{ alignItems: 'center', marginVertical: 2 }}>
+              <StarRating rating={Number(doctor.average_rating || 4.7)} size={13} />
+            </View>
+
+            {/* Social icons row */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginVertical: 4 }}>
+              {(['logo-linkedin', 'logo-facebook', 'logo-twitter', 'logo-instagram'] as const).map((icon) => (
+                <Pressable key={icon} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+                  <Ionicons name={icon} size={16} color={theme.colors.textSecondary} />
+                </Pressable>
+              ))}
+            </View>
+
+            <Pressable
+              onPress={onBook}
+              style={({ pressed }) => [{
+                width: '100%',
+                backgroundColor: theme.colors.primary,
+                borderRadius: 10,
+                paddingVertical: 10,
+                alignItems: 'center',
+                marginTop: 4,
+              }, pressed && { opacity: 0.85 }]}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Book Appointment</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Doctors Section ──────────────────────────────────────────────────────────
+
+function DoctorsSection({ theme, isMobile, doctors, isLoading, selectedSpecialty, onSelectSpecialty, onSelectDoctor, onBook }: SectionProps & {
+  doctors: any[];
+  isLoading: boolean;
+  selectedSpecialty: string;
+  onSelectSpecialty: (s: string) => void;
+  onSelectDoctor: (d: any) => void;
+  onBook: () => void;
+}) {
+  return (
+    <View style={{ marginTop: isMobile ? 28 : 44, paddingHorizontal: isMobile ? 16 : 32 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Text style={{ fontSize: isMobile ? 20 : 24, fontWeight: '800', color: theme.colors.text }}>Available Doctors</Text>
+        <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '600' }}>View All</Text>
+          <Ionicons name="arrow-forward" size={13} color={theme.colors.primary} />
+        </Pressable>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 2 }}>
+          {SPECIALTIES.map((s) => (
+            <Pressable key={s} onPress={() => onSelectSpecialty(s)} style={[{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: selectedSpecialty === s ? theme.colors.primary : theme.colors.border, backgroundColor: selectedSpecialty === s ? theme.colors.primary : theme.colors.background }]}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: selectedSpecialty === s ? '#fff' : theme.colors.textSecondary }}>{s}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+
+      <FlatList
+        horizontal
+        data={isLoading ? Array.from({ length: 5 }) : doctors}
+        keyExtractor={(_, i) => String(i)}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 14, paddingVertical: 8, paddingRight: 16 }}
+        renderItem={({ item: doctor, index }) => {
+          if (isLoading || !doctor) {
+            return (
+              <Card style={{ width: 176, borderRadius: 18, padding: 16, alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: theme.colors.border, marginBottom: 4 }} />
+                <View style={{ height: 11, width: 130, borderRadius: 6, backgroundColor: theme.colors.border }} />
+                <View style={{ height: 9, width: 90, borderRadius: 5, backgroundColor: theme.colors.border }} />
+                <View style={{ height: 32, width: '100%', borderRadius: 10, backgroundColor: theme.colors.border, marginTop: 4 }} />
+              </Card>
+            );
+          }
+          return (
+
+             
+            <DoctorCard
+              doctor={doctor}
+              index={index}
+              theme={theme}
+              //isDark={isDark}
+              onPress={() => onSelectDoctor(doctor)}
+              onBook={onBook}
+            />
+
+            
+            
+       
+          );
+        }}
+      />
+    </View>
+  );
+}
+
+// ─── How It Works ─────────────────────────────────────────────────────────────
+
+function HowItWorksSection({ theme, isDark, isMobile }: SectionProps) {
+  const connectorAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(connectorAnim, { toValue: 1, duration: 1000, delay: 300, useNativeDriver: false }).start();
+  }, [connectorAnim]);
+
+  return (
+    <View style={{ marginTop: isMobile ? 40 : 60, paddingHorizontal: isMobile ? 16 : 32, alignItems: 'center' }}>
+      <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>How Medlink Works</Text>
+      <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary, marginTop: 10, marginBottom: 36 }} />
+      <View style={[{ width: '100%', gap: 32 }, !isMobile && { flexDirection: 'row', justifyContent: 'space-between' }]}>
+        {[
+          { num: '1', icon: 'search-outline', title: 'Search', desc: 'Find doctors by specialty, location, and availability.' },
+          { num: '2', icon: 'calendar-outline', title: 'Book', desc: 'Choose a date and time that works for you.' },
+          { num: '3', icon: 'videocam-outline', title: 'Consult', desc: 'Meet your doctor in person or online and get care.' },
+        ].map((step, idx) => (
+          <View key={step.num} style={{ alignItems: 'center', flex: isMobile ? undefined : 1, gap: 12, position: 'relative' }}>
+            <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: isDark ? theme.colors.surface : '#ecfdf5', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: isDark ? theme.colors.border : '#bbf7d0', position: 'relative' }}>
+              <View style={{ position: 'absolute', top: -6, right: -6, width: 26, height: 26, borderRadius: 13, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>{step.num}</Text>
+              </View>
+              <Ionicons name={step.icon as any} size={34} color={theme.colors.primary} />
+            </View>
+            {idx < 2 && !isMobile && (
+              <Animated.View style={{ position: 'absolute', left: '60%', top: 42, height: 2, backgroundColor: theme.colors.primary + '44', width: connectorAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 80] }) }} />
+            )}
+            <Text style={{ fontSize: 18, fontWeight: '700', color: theme.colors.text, textAlign: 'center' }}>{step.title}</Text>
+            <Text style={{ fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 220 }}>{step.desc}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ─── Features Section ─────────────────────────────────────────────────────────
+
+function FeaturesSection({ theme, isDark, isMobile }: SectionProps) {
+  return (
+    <View style={{ marginTop: isMobile ? 40 : 56, paddingHorizontal: isMobile ? 16 : 32 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'space-between' }}>
+        {FEATURES.map((f) => (
+          <Card key={f.title} style={{ width: isMobile ? '47%' : '31%', borderRadius: 16, padding: 18, gap: 10, marginBottom: 2 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: isDark ? theme.colors.surface : '#ecfdf5', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name={f.icon as any} size={22} color={theme.colors.primary} />
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: theme.colors.text, lineHeight: 19 }}>{f.title}</Text>
+            <Text style={{ fontSize: 12, color: theme.colors.textSecondary, lineHeight: 18 }}>{f.desc}</Text>
+          </Card>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ─── Testimonials Section ─────────────────────────────────────────────────────
+
+function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const cardWidth = isMobile ? width - 64 : Math.min(420, width * 0.32);
+  const gap = 16;
+
+  const slideTo = useCallback((idx: number) => {
+    Animated.spring(slideAnim, {
+      toValue: -idx * (cardWidth + gap),
+      useNativeDriver: true,
+      tension: 60,
+      friction: 10,
+    }).start();
+    setActiveIndex(idx);
+  }, [slideAnim, cardWidth, gap]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % TESTIMONIALS.length;
+        slideTo(next);
+        return next;
+      });
+    }, 3800);
+    return () => clearInterval(timer);
+  }, [slideTo]);
+
+  return (
+    <View style={{ marginTop: isMobile ? 48 : 64, alignItems: 'center' }}>
+      <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>What Our Patients Say</Text>
+      <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary, marginTop: 10, marginBottom: 32 }} />
+
+      <View style={{ width: '100%', overflow: 'hidden', paddingHorizontal: isMobile ? 16 : 32 }}>
+        <Animated.View style={{ flexDirection: 'row', gap, transform: [{ translateX: slideAnim }] }}>
+          {TESTIMONIALS.map((item, idx) => {
+            const isCenter = idx === activeIndex;
+            return (
+              <Animated.View key={item.id} style={{ width: cardWidth, transform: [{ scale: isCenter ? 1.04 : 0.95 }] }}>
+                <Card style={{
+                  borderRadius: 18, padding: 22, gap: 12,
+                  borderWidth: isCenter ? 1.5 : 1,
+                  borderColor: isCenter ? theme.colors.primary + '66' : theme.colors.border,
+                  shadowColor: isCenter ? theme.colors.primary : '#000',
+                  shadowOpacity: isCenter ? 0.12 : 0.04,
+                  shadowRadius: isCenter ? 16 : 4,
+                  elevation: isCenter ? 6 : 1,
+                }}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={28} color={theme.colors.primary + '55'} />
+                  <Text style={{ fontSize: isCenter ? 15 : 13, fontWeight: isCenter ? '600' : '400', color: isCenter ? theme.colors.text : theme.colors.textSecondary, lineHeight: isCenter ? 26 : 22, fontStyle: 'italic' }}>
+                    {item.text}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: isCenter ? theme.colors.primary : theme.colors.primary + '22', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: isCenter ? '#fff' : theme.colors.primary }}>{item.name.charAt(0)}</Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: isCenter ? '800' : '600', color: theme.colors.text }}>{item.name}</Text>
+                      <StarRating rating={item.rating} size={isCenter ? 13 : 11} />
+                    </View>
+                  </View>
+                </Card>
+              </Animated.View>
+            );
+          })}
+        </Animated.View>
+      </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+        {TESTIMONIALS.map((_, idx) => (
+          <Pressable key={idx} onPress={() => slideTo(idx)}>
+            <View style={{ width: idx === activeIndex ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: idx === activeIndex ? theme.colors.primary : theme.colors.border }} />
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+// ─── Contact us Section ─────────────────────────────────────────────────────
+function ContactSection({ theme, isDark, isMobile }: SectionProps) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSend = useCallback(async () => {
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      Alert.alert('Missing Fields', 'Please fill in your name, email, and message.');
+      return;
+    }
+    setSending(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    setSending(false);
+    setSent(true);
+    setName(''); setEmail(''); setSubject(''); setMessage('');
+    setTimeout(() => setSent(false), 4000);
+  }, [name, email, subject, message]);
+
+  return (
+    <View style={{ marginTop: isMobile ? 48 : 64, paddingHorizontal: isMobile ? 16 : 32 }}>
+      <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>Contact Us</Text>
+      <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary, marginTop: 10, marginBottom: 32, alignSelf: 'center' }} />
+
+      <View style={[{ gap: 24 }, !isMobile && { flexDirection: 'row', alignItems: 'flex-start' }]}>
+        {/* Left — contact info */}
+        
+
+        {/* Right — contact form */}
+        <View style={{ flex: 1, gap: 14 }}>
+          <View style={{ backgroundColor: theme.colors.surface, borderRadius: 20, padding: isMobile ? 20 : 28, borderWidth: 1, borderColor: theme.colors.border, gap: 14, margin: 56 }}>
+
+            {sent && (
+              <View style={{ backgroundColor: '#ecfdf5', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#bbf7d0' }}>
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                <Text style={{ fontSize: 14, color: '#065f46', fontWeight: '600' }}>Message sent! We'll get back to you soon.</Text>
+              </View>
+            )}
+
+            <View style={[{ gap: 14 }, !isMobile && { flexDirection: 'row' }]}>
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Full Name *</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Your full name"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }}
+                />
+              </View>
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Email Address *</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="your@email.com"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }}
+                />
+              </View>
+            </View>
+
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Subject</Text>
+              <TextInput
+                value={subject}
+                onChangeText={setSubject}
+                placeholder="What is this about?"
+                placeholderTextColor={theme.colors.textSecondary}
+                style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }}
+              />
+            </View>
+
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Message *</Text>
+              <TextInput
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Tell us how we can help..."
+                placeholderTextColor={theme.colors.textSecondary}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+                style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background, minHeight: 120 }}
+              />
+            </View>
+
+            <Pressable
+              onPress={handleSend}
+              style={({ pressed }) => [{
+                backgroundColor: sending ? theme.colors.primary + '88' : theme.colors.primary,
+                borderRadius: 12,
+                paddingVertical: 15,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 8,
+              }, pressed && { opacity: 0.85 }]}
+              disabled={sending}
+            >
+              {sending ? (
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Sending...</Text>
+              ) : (
+                <>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Send Message</Text>
+                  <Ionicons name="send" size={16} color="#fff" />
+                </>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ─── Download CTA Section ─────────────────────────────────────────────────────
+
+function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
+  const isNativeMobile = Platform.OS === 'ios' || Platform.OS === 'android';
+
+  const handleShare = useCallback(async () => {
+    try {
+      await Share.share({ message: 'Check out Medlink — Ethiopia\'s best healthcare app! Download it at https://medlink.et' });
+    } catch {}
+  }, []);
+
+  if (isNativeMobile) {
+    // Mobile app version — no download prompt
+    return (
+      <View style={{ margin: 16, borderRadius: 22, backgroundColor: isDark ? '#0a5c4e' : '#0d8b78', padding: 24, overflow: 'hidden', position: 'relative' }}>
+        <Ionicons name="heart" size={100} color="#ffffff0a" style={{ position: 'absolute', top: -20, right: 20 }} />
+        <Text style={{ fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 6 }}>Enjoying Medlink?</Text>
+        <Text style={{ fontSize: 13, color: '#dcfce7', lineHeight: 20, marginBottom: 20 }}>Help us reach more people and share your experience.</Text>
+
+        <View style={{ gap: 12 }}>
+          {/* Rate us */}
+          <Pressable style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#ffffff22', borderRadius: 14, padding: 14 }, pressed && { opacity: 0.8 }]}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F59E0B', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="star" size={20} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Rate Medlink</Text>
+              <Text style={{ color: '#dcfce7', fontSize: 12 }}>Your review helps us improve</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color="#dcfce7" />
+          </Pressable>
+
+          {/* Share with friend */}
+          <Pressable onPress={handleShare} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#ffffff22', borderRadius: 14, padding: 14 }, pressed && { opacity: 0.8 }]}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#3B82F6', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="share-social" size={20} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Share with a Friend</Text>
+              <Text style={{ color: '#dcfce7', fontSize: 12 }}>Spread the word about Medlink</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color="#dcfce7" />
+          </Pressable>
+
+          {/* Follow us */}
+          <View style={{ backgroundColor: '#ffffff11', borderRadius: 14, padding: 14 }}>
+            <Text style={{ color: '#dcfce7', fontSize: 12, fontWeight: '600', marginBottom: 10 }}>Follow us on social media</Text>
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+              {SOCIAL_LINKS.map((s) => (
+                <Pressable key={s.label} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ffffff22', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }, pressed && { opacity: 0.8 }]}>
+                  <Ionicons name={s.icon as any} size={16} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{s.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Web/desktop version — show download prompt
+  return (
+    <View style={{ margin: isMobile ? 16 : 24, borderRadius: 22, backgroundColor: isDark ? '#0a5c4e' : '#0d8b78', padding: isMobile ? 24 : 36, overflow: 'hidden', position: 'relative' }}>
+      <Ionicons name="heart" size={140} color="#ffffff08" style={{ position: 'absolute', top: -30, right: 30 }} />
+      <Ionicons name="medical" size={100} color="#ffffff06" style={{ position: 'absolute', bottom: -20, left: 10 }} />
+
+      <View style={[{ gap: 28 }, !isMobile && { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+        <View style={{ flex: 1, gap: 14, minWidth: 200 }}>
+          <Text style={{ fontSize: isMobile ? 22 : 28, fontWeight: '800', color: '#fff', lineHeight: isMobile ? 30 : 36 }}>Get the Medlink App</Text>
+          <Text style={{ fontSize: 14, color: '#dcfce7', lineHeight: 22 }}>Book appointments, consult doctors, and manage your health — all from your phone.</Text>
+          <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+            <Pressable style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 }, pressed && { opacity: 0.8 }]}>
+              <Ionicons name="logo-apple" size={22} color="#fff" />
+              <View>
+                <Text style={{ color: '#ffffff99', fontSize: 10 }}>Download on the</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>App Store</Text>
+              </View>
+            </Pressable>
+            <Pressable style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 }, pressed && { opacity: 0.8 }]}>
+              <Ionicons name="logo-google-playstore" size={22} color="#fff" />
+              <View>
+                <Text style={{ color: '#ffffff99', fontSize: 10 }}>Get it on</Text>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Google Play</Text>
+              </View>
+            </Pressable>
+          </View>
+          <View style={{ gap: 10 }}>
+            <Text style={{ color: '#dcfce7', fontSize: 13, fontWeight: '600' }}>Follow us on</Text>
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+              {SOCIAL_LINKS.map((s) => (
+                <Pressable key={s.label} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ffffff1a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 }, pressed && { opacity: 0.8 }]}>
+                  <Ionicons name={s.icon as any} size={17} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{s.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        {!isMobile && (
+          <View style={{ alignItems: 'center', gap: 10 }}>
+            <View style={{ width: 160, height: 300, borderRadius: 30, backgroundColor: isDark ? '#1a1a1a' : '#fff', borderWidth: 2, borderColor: '#ffffff44', padding: 14, alignItems: 'center' }}>
+              <View style={{ width: 60, height: 6, borderRadius: 3, backgroundColor: isDark ? '#333' : '#e2e8f0', marginBottom: 16 }} />
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Image source={logo} style={{ width: 110, height: 44, resizeMode: 'contain' }} />
+                <Text style={{ fontSize: 11, color: isDark ? '#aaa' : '#888', textAlign: 'center' }}>Your Health. Our Link.</Text>
+              </View>
+              <View style={{ height: 8, width: '85%', borderRadius: 4, backgroundColor: isDark ? '#2a2a2a' : '#f1f5f9', marginBottom: 8 }} />
+              <View style={{ height: 8, width: '60%', borderRadius: 4, backgroundColor: isDark ? '#2a2a2a' : '#f1f5f9', marginBottom: 10 }} />
+              <View style={{ height: 72, width: '100%', borderRadius: 14, backgroundColor: isDark ? '#222' : '#f8fafc', borderWidth: 1, borderColor: isDark ? '#333' : '#e2e8f0' }} />
+            </View>
+            <Text style={{ color: '#dcfce766', fontSize: 11 }}>Insert app screenshot here</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ─── CTA Banner ───────────────────────────────────────────────────────────────
+
+function CTABannerSection({ theme, isMobile, onSignup, onLogin }: SectionProps & { onSignup: () => void; onLogin: () => void }) {
+  return (
+    <View style={{ marginHorizontal: isMobile ? 16 : 24, marginTop: 8, marginBottom: 8, borderRadius: 22, backgroundColor: theme.colors.primary, padding: isMobile ? 28 : 36, overflow: 'hidden', position: 'relative' }}>
+      <Ionicons name="heart" size={140} color="#ffffff0f" style={{ position: 'absolute', top: -20, right: 40 }} />
+      <Ionicons name="medical" size={100} color="#ffffff08" style={{ position: 'absolute', bottom: -15, left: 10 }} />
+      <View style={[{ gap: 24 }, !isMobile && { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+        <View style={{ flex: 1, gap: 10, minWidth: 200 }}>
+          <Text style={{ fontSize: isMobile ? 24 : 30, fontWeight: '800', color: '#fff', lineHeight: isMobile ? 32 : 40 }}>Your Health Journey{'\n'}Starts Here</Text>
+          <Text style={{ fontSize: 14, color: '#dcfce7', lineHeight: 22 }}>Join thousands of patients across Ethiopia who trust Medlink for their healthcare needs.</Text>
+        </View>
+        <View style={{ gap: 12, minWidth: 160 }}>
+          <Pressable style={({ pressed }) => [{ backgroundColor: '#fff', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }, pressed && { opacity: 0.85 }]} onPress={onSignup}>
+            <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 15 }}>Sign Up</Text>
+          </Pressable>
+          <Pressable style={({ pressed }) => [{ backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#ffffff88', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }, pressed && { opacity: 0.85 }]} onPress={onLogin}>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Log In</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+
+function FooterSection({ theme, isDark, isMobile, onContactPress, onNavigate }: SectionProps & {
+  onContactPress: () => void;
+  onNavigate: (path: string) => void;
+}) {
+  return (
+    <View style={{ backgroundColor: isDark ? theme.colors.surface : '#f8faf9', borderTopWidth: 1, borderTopColor: theme.colors.border, marginTop: 8 }}>
+      <View style={[{ padding: isMobile ? 20 : 32, gap: 28 }, !isMobile && { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' }]}>
+        <View style={{ width: isMobile ? '100%' : '25%', gap: 12 }}>
+          <Image source={logo} style={{ width: 110, height: 38, resizeMode: 'contain' }} />
+          <Text style={{ fontSize: 11, color: theme.colors.textSecondary, fontStyle: 'italic' }}>Your Health. Our Link.</Text>
+          <Text style={{ fontSize: 12, color: theme.colors.textSecondary, lineHeight: 20 }}>Medlink connects you with trusted doctors and makes healthcare simple, accessible, and reliable.</Text>
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+            {SOCIAL_LINKS.map((s) => (
+              <Pressable key={s.label} style={({ pressed }) => [{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border }, pressed && { opacity: 0.7 }]}>
+                <Ionicons name={s.icon as any} size={15} color={theme.colors.textSecondary} />
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Company column — removed Careers and Blog, About navigates to about page, Contact scrolls */}
+        <View style={{ width: isMobile ? '45%' : '14%', gap: 10 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: theme.colors.text, marginBottom: 4 }}>Company</Text>
+          <Pressable onPress={() => onNavigate('/(public)/about')}>
+            <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>About Us</Text>
+          </Pressable>
+          <Pressable onPress={onContactPress}>
+            <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>Contact</Text>
+          </Pressable>
+        </View>
+
+        {/* Services column */}
+        <View style={{ width: isMobile ? '45%' : '14%', gap: 10 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: theme.colors.text, marginBottom: 4 }}>Services</Text>
+          {['Find Doctors', 'Book Appointment', 'Online Consultation', 'Health Packages'].map((link) => (
+            <Text key={link} style={{ fontSize: 12, color: theme.colors.textSecondary }}>{link}</Text>
+          ))}
+        </View>
+
+        {/* Support column — all navigate to their pages */}
+        <View style={{ width: isMobile ? '45%' : '14%', gap: 10 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: theme.colors.text, marginBottom: 4 }}>Support</Text>
+          {[
+            { label: 'Help Center', path: '/(public)/help' },
+            { label: 'FAQ', path: '/(public)/faq' },
+            { label: 'Privacy Policy', path: '/(public)/privacy' },
+            { label: 'Terms of Service', path: '/(public)/terms' },
+          ].map((item) => (
+            <Pressable key={item.label} onPress={() => onNavigate(item.path)}>
+              <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={{ width: isMobile ? '100%' : '20%', gap: 10 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: theme.colors.text, marginBottom: 4 }}>Contact Us</Text>
+          {[
+            { icon: 'call-outline', text: '+251 911 234 567' },
+            { icon: 'mail-outline', text: 'support@medlink.et' },
+            { icon: 'location-outline', text: 'Addis Ababa, Ethiopia' },
+          ].map((c) => (
+            <View key={c.text} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name={c.icon as any} size={14} color={theme.colors.primary} />
+              <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{c.text}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+      <View style={{ borderTopWidth: 1, borderTopColor: theme.colors.border, paddingVertical: 16, alignItems: 'center' }}>
+        <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>© 2026 MedLink. All rights reserved.</Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function PublicHomeScreen() {
   const { theme, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
-  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const { doctors, isLoading, fetchDoctors } = useDiscoveryStore();
   const [selectedDoctor, setSelectedDoctor] = useState<ProviderSearchResult | null>(null);
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
-  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
-  const testimonialRef = useRef<FlatList<(typeof TESTIMONIALS)[number]>>(null);
-  const connectorAnim = useRef(new Animated.Value(0)).current;
+
+  const scrollViewRef = useRef<ScrollView>(null);
   const menuAnim = useRef(new Animated.Value(0)).current;
 
+  const heroY = useRef(0);
+  const doctorsY = useRef(0);
+  const howItWorksY = useRef(0);
+  const testimonialsY = useRef(0);
+  const contactY = useRef(0);
+
   const isMobile = width < 768;
-  const testimonialCardWidth = Math.min(460, width * 0.78);
+  const sectionProps: SectionProps = { theme, isDark, isMobile, width };
 
   useEffect(() => { fetchDoctors(); }, [fetchDoctors]);
 
-  useEffect(() => {
-    Animated.timing(connectorAnim, { toValue: 1, duration: 900, delay: 400, useNativeDriver: false }).start();
-  }, [connectorAnim]);
+  // Use fake doctors until backend is connected
+  const displayDoctors = useMemo(() => {
+    const source = doctors.length > 0 ? doctors : FAKE_DOCTORS;
+    if (selectedSpecialty === 'All') return source;
+    return source.filter((d: any) =>
+      (d.specialization || '').toLowerCase().includes(selectedSpecialty.toLowerCase()),
+    );
+  }, [doctors, selectedSpecialty]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonialIndex((prev) => {
-        const next = (prev + 1) % TESTIMONIALS.length;
-        testimonialRef.current?.scrollToIndex({ index: next, animated: true });
-        return next;
-      });
-    }, 4200);
-    return () => clearInterval(timer);
-  }, []);
+  const scrollToSection = useCallback((yRef: React.MutableRefObject<number>) => {
+    scrollViewRef.current?.scrollTo({ y: yRef.current, animated: true });
+    setMenuOpen(false);
+    Animated.timing(menuAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  }, [menuAnim]);
 
   const toggleMenu = useCallback(() => {
     const toValue = menuOpen ? 0 : 1;
@@ -239,450 +1257,69 @@ export default function PublicHomeScreen() {
     );
   }, [router]);
 
-  const filteredDoctors = useMemo(() => {
-    if (selectedSpecialty === 'All') return doctors;
-    return doctors.filter((d) =>
-      (d.specialization || '').toLowerCase().includes(selectedSpecialty.toLowerCase()),
-    );
-  }, [doctors, selectedSpecialty]);
-
-  const menuTranslateY = menuAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] });
-  const menuOpacity = menuAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const NAV_ITEMS = [
+    { label: 'Home', onPress: () => scrollToSection(heroY) },
+    { label: 'Find Doctors', onPress: () => scrollToSection(doctorsY) },
+    { label: 'How It Works', onPress: () => scrollToSection(howItWorksY) },
+    { label: 'Testimonials', onPress: () => scrollToSection(testimonialsY) },
+  ];
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      <ScrollView style={styles.root} showsVerticalScrollIndicator={false}>
+      <NavBar
+        {...sectionProps}
+        menuOpen={menuOpen}
+        onToggleMenu={toggleMenu}
+        onLogin={() => router.push('/(auth)/login')}
+        onSignup={() => router.push('/(auth)/register')}
+        menuAnim={menuAnim}
+        navItems={NAV_ITEMS}
+      />
 
-        {/* Navbar */}
-        <View style={styles.navbar}>
-          <View style={styles.navLogo}>
- {/* LOGO */}
-            <Image
-                source={logo} // adjust path
-                style={{
-                  width: 130,
-                  height: 40,
-                
-                }}
-              />            
-              <View>
-            </View>
-          </View>
-          {!isMobile ? (
-            <View style={styles.navLinks}>
-              {['Home', 'Find Doctors', 'How It Works', 'Services', 'About Us', 'Contact'].map((item) => (
-                <Text key={item} style={styles.navLink}>{item}</Text>
-              ))}
-            </View>
-          ) : null}
-          <View style={styles.navActions}>
-            {isMobile ? (
-              <Pressable onPress={toggleMenu} style={styles.hamburger}>
-                <Ionicons name={menuOpen ? 'close' : 'menu'} size={22} color={theme.colors.text} />
-              </Pressable>
-            ) : (
-              <>
-                <Pressable style={({ pressed }) => [styles.navLoginBtn, pressed && { opacity: 0.8 }]} onPress={() => router.push('/(auth)/login')}>
-                  <Text style={styles.navLoginText}>Log In</Text>
-                </Pressable>
-                <Pressable style={({ pressed }) => [styles.navSignupBtn, pressed && { opacity: 0.8 }]} onPress={() => router.push('/(auth)/register')}>
-                  <Text style={styles.navSignupText}>Sign Up</Text>
-                </Pressable>
-              </>
-            )}
-          </View>
+      <ScrollView ref={scrollViewRef} style={{ flex: 1, backgroundColor: theme.colors.background }} showsVerticalScrollIndicator={false}>
+        <View onLayout={(e) => { heroY.current = e.nativeEvent.layout.y; }}>
+          <HeroSection {...sectionProps} onGetStarted={() => router.push('/(auth)/register')} onLogin={() => router.push('/(auth)/login')} />
         </View>
 
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <Animated.View style={[styles.mobileMenu, { opacity: menuOpacity, transform: [{ translateY: menuTranslateY }] }]}>
-            {['Home', 'Find Doctors', 'How It Works', 'Services', 'Contact'].map((item) => (
-              <Text key={item} style={styles.mobileMenuItem}>{item}</Text>
-            ))}
-            <View style={styles.mobileMenuActions}>
-              <Pressable style={styles.mobileLoginBtn} onPress={() => { setMenuOpen(false); router.push('/(auth)/login'); }}>
-                <Text style={styles.navLoginText}>Log In</Text>
-              </Pressable>
-              <Pressable style={styles.mobileSignupBtn} onPress={() => { setMenuOpen(false); router.push('/(auth)/register'); }}>
-                <Text style={styles.navSignupText}>Sign Up</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
-        )}
+        <SearchSection {...sectionProps} />
 
-        {/* Hero */}
-        <HeroSection
-          isMobile={isMobile}
-          theme={theme}
-          isDark={isDark}
-          onGetStarted={() => router.push('/(auth)/register')}
-          onLogin={() => router.push('/(auth)/login')}
-        />
-
-        {/* Search */}
-        <View style={styles.searchOuter}>
-          <View style={styles.searchCard}>
-            <Text style={styles.searchTitle}>Find the Right Doctor</Text>
-            <Text style={styles.searchSubtitle}>Search by specialty, location, or availability and book your appointment in minutes.</Text>
-            <View style={[styles.searchRow, { flexDirection: isMobile ? 'column' : 'row' }]}>
-              <View style={styles.searchInputWrap}>
-                <Ionicons name="search-outline" size={16} color={theme.colors.textSecondary} />
-                <TextInput placeholder="Search doctors, specialties..." placeholderTextColor={theme.colors.textSecondary} style={styles.searchInput} />
-              </View>
-              <View style={[styles.filtersRow, { flexDirection: isMobile ? 'column' : 'row' }]}>
-                {[
-                  { label: 'Specialty', value: 'All Specialties' },
-                  { label: 'Location', value: 'All Locations' },
-                  { label: 'Availability', value: 'Available Today' },
-                ].map((f) => (
-                  <View key={f.label} style={styles.filterPill}>
-                    <Text style={styles.filterLabel}>{f.label}</Text>
-                    <Text style={styles.filterValue}>{f.value}</Text>
-                  </View>
-                ))}
-                <Pressable style={({ pressed }) => [styles.searchBtn, pressed && { opacity: 0.85 }]}>
-                  <Text style={styles.searchBtnText}>Search</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Doctors */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Available Doctors</Text>
-            <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '600' }}>View All Doctors</Text>
-              <Ionicons name="arrow-forward" size={13} color={theme.colors.primary} />
-            </Pressable>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-            {SPECIALTIES.map((s) => (
-              <Pressable key={s} onPress={() => setSelectedSpecialty(s)} style={[styles.specialtyChip, selectedSpecialty === s && styles.specialtyChipActive]}>
-                <Text style={[styles.specialtyChipText, selectedSpecialty === s && { color: '#fff' }]}>{s}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <FlatList
-            horizontal
-            data={isLoading ? Array.from({ length: 5 }) : filteredDoctors.slice(0, 10)}
-            keyExtractor={(_, i) => String(i)}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 20, gap: 12, paddingVertical: 8 }}
-            renderItem={({ item: doctor, index }) => {
-              if (isLoading || !doctor) {
-                return (
-                  <Card style={styles.doctorCard}>
-                    <View style={{ height: 4, borderRadius: 4, backgroundColor: theme.colors.border, marginBottom: 10 }} />
-                    <View style={styles.skeletonAvatar} />
-                    <View style={styles.skeletonLine} />
-                    <View style={[styles.skeletonLine, { width: 80 }]} />
-                    <View style={styles.skeletonBtn} />
-                  </Card>
-                );
-              }
-              const d = doctor as ProviderSearchResult;
-              const rating = Number(d.average_rating || 4.7);
-              const isAvailable = index % 3 !== 2;
-              const specKey = Object.keys(SPECIALTY_COLORS).find((k) => (d.specialization || '').toLowerCase().includes(k.toLowerCase())) || 'default';
-              const specColor = SPECIALTY_COLORS[specKey];
-              return (
-                <Pressable onPress={() => setSelectedDoctor(d)}>
-                  <Card style={styles.doctorCard}>
-                    <View style={[styles.doctorCardTopBar, { backgroundColor: specColor }]} />
-                    <View style={[styles.availabilityBadge, { backgroundColor: isAvailable ? '#D1FAE5' : '#FEF3C7' }]}>
-                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isAvailable ? '#10B981' : '#F59E0B' }} />
-                      <Text style={[styles.availabilityText, { color: isAvailable ? '#065F46' : '#92400E' }]}>
-                        {isAvailable ? 'Available Now' : 'Busy'}
-                      </Text>
-                    </View>
-                    <View style={[styles.doctorAvatar, { backgroundColor: specColor }]}>
-                      <Ionicons name="person" size={26} color="#fff" />
-                    </View>
-                    <Text style={styles.doctorName} numberOfLines={1}>Dr. {d.first_name} {d.last_name}</Text>
-                    <Text style={[styles.doctorSpec, { color: specColor }]} numberOfLines={1}>{d.specialization || 'General Practitioner'}</Text>
-                    <Text style={styles.doctorHospital} numberOfLines={1}>Tikur Anbessa Hospital</Text>
-                    <StarRating rating={rating} />
-                    <Pressable onPress={promptAuth} style={({ pressed }) => [styles.bookBtn, pressed && { opacity: 0.85 }]}>
-                      <Text style={styles.bookBtnText}>Book Appointment</Text>
-                    </Pressable>
-                  </Card>
-                </Pressable>
-              );
-            }}
+        <View onLayout={(e) => { doctorsY.current = e.nativeEvent.layout.y; }}>
+          <DoctorsSection
+            {...sectionProps}
+            doctors={displayDoctors}
+            isLoading={isLoading && doctors.length === 0}
+            selectedSpecialty={selectedSpecialty}
+            onSelectSpecialty={setSelectedSpecialty}
+            onSelectDoctor={(d) => setSelectedDoctor(d)}
+            onBook={promptAuth}
           />
         </View>
 
-        {/* How It Works */}
-        <View style={[styles.section, { alignItems: 'center' }]}>
-          <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>How Medlink Works</Text>
-          <View style={styles.divider} />
-          <View style={[styles.stepsRow, { flexDirection: isMobile ? 'column' : 'row' }]}>
-            {[
-              { num: '1', icon: 'search-outline', title: 'Search', desc: 'Find doctors by specialty, location, and availability.' },
-              { num: '2', icon: 'calendar-outline', title: 'Book', desc: 'Choose a date and time that works for you.' },
-              { num: '3', icon: 'videocam-outline', title: 'Consult', desc: 'Meet your doctor in person or online and get care.' },
-            ].map((step, idx) => (
-              <View key={step.num} style={{ alignItems: 'center', width: isMobile ? '100%' : '30%', gap: 10, position: 'relative' }}>
-                <View style={styles.stepCircle}>
-                  <View style={styles.stepNumBadge}>
-                    <Text style={styles.stepNumText}>{step.num}</Text>
-                  </View>
-                  <Ionicons name={step.icon as any} size={30} color={theme.colors.primary} />
-                </View>
-                {idx < 2 && !isMobile && (
-                  <Animated.View style={[styles.stepConnector, { width: connectorAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }) }]} />
-                )}
-                <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDesc}>{step.desc}</Text>
-              </View>
-            ))}
-          </View>
+        <View onLayout={(e) => { howItWorksY.current = e.nativeEvent.layout.y; }}>
+          <HowItWorksSection {...sectionProps} />
         </View>
 
-        {/* Features */}
-        <View style={styles.section}>
-          <View style={[styles.featuresGrid, { flexWrap: 'wrap', flexDirection: 'row' }]}>
-            {FEATURES.map((f) => (
-              <Card key={f.title} style={[styles.featureCard, { width: isMobile ? '48%' : '31%' }]}>
-                <View style={styles.featureIconWrap}>
-                  <Ionicons name={f.icon as any} size={20} color={theme.colors.primary} />
-                </View>
-                <Text style={styles.featureTitle}>{f.title}</Text>
-                <Text style={styles.featureDesc}>{f.desc}</Text>
-              </Card>
-            ))}
-          </View>
+        <FeaturesSection {...sectionProps} />
+
+        <View onLayout={(e) => { testimonialsY.current = e.nativeEvent.layout.y; }}>
+          <TestimonialsSection {...sectionProps} />
+        </View>
+        <View onLayout={(e) => { contactY.current = e.nativeEvent.layout.y; }}>
+          <ContactSection {...sectionProps} />
         </View>
 
-        {/* Testimonials */}
-        <View style={[styles.section, { alignItems: 'center' }]}>
-          <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>What Our Patients Say</Text>
-          <View style={styles.divider} />
-          <FlatList
-            ref={testimonialRef}
-            horizontal
-            data={TESTIMONIALS}
-            keyExtractor={(item) => item.id}
-            decelerationRate="fast"
-            snapToInterval={testimonialCardWidth + 16}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: (width - testimonialCardWidth) / 2 - 20 }}
-            onMomentumScrollEnd={(e) => {
-              setActiveTestimonialIndex(Math.round(e.nativeEvent.contentOffset.x / (testimonialCardWidth + 16)));
-            }}
-            renderItem={({ item }) => (
-              <Card style={[styles.testimonialCard, { width: testimonialCardWidth, marginRight: 16 }]}>
-                <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.colors.primary + '55'} />
-                <Text style={styles.testimonialText}>{item.text}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                  <View style={styles.testimonialAvatar}>
-                    <Text style={styles.testimonialAvatarText}>{item.name.charAt(0)}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.testimonialName}>{item.name}</Text>
-                    <StarRating rating={item.rating} />
-                  </View>
-                </View>
-              </Card>
-            )}
-          />
-          <View style={styles.dots}>
-            {TESTIMONIALS.map((_, idx) => (
-              <View key={idx} style={[styles.dot, idx === activeTestimonialIndex && styles.dotActive]} />
-            ))}
-          </View>
-        </View>
+        <DownloadCTASection {...sectionProps} />
 
-        {/* CTA Banner */}
-        <View style={[styles.ctaBanner, { flexDirection: isMobile ? 'column' : 'row' }]}>
-          <Ionicons name="heart" size={120} color="#ffffff11" style={{ position: 'absolute', top: -20, right: 60 }} />
-          <Ionicons name="medical" size={80} color="#ffffff0d" style={{ position: 'absolute', bottom: -10, left: 20 }} />
-          <Ionicons name="add-circle" size={60} color="#ffffff0d" style={{ position: 'absolute', top: 10, left: 160 }} />
-          <View style={{ flex: 1, gap: 8, minWidth: 200 }}>
-            <Text style={styles.ctaTitle}>Your Health Journey{'\n'}Starts Here</Text>
-            <Text style={styles.ctaSubtitle}>Join thousands of patients across Ethiopia who trust Medlink for their healthcare needs.</Text>
-          </View>
-          <View style={{ gap: 10, minWidth: 160 }}>
-            <Pressable style={({ pressed }) => [styles.ctaSignup, pressed && { opacity: 0.85 }]} onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.ctaSignupText}>Sign Up</Text>
-            </Pressable>
-            <Pressable style={({ pressed }) => [styles.ctaLogin, pressed && { opacity: 0.85 }]} onPress={() => router.push('/(auth)/login')}>
-              <Text style={styles.ctaLoginText}>Log In</Text>
-            </Pressable>
-          </View>
-        </View>
+        <CTABannerSection {...sectionProps} onSignup={() => router.push('/(auth)/register')} onLogin={() => router.push('/(auth)/login')} />
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={[{ padding: 24, gap: 24 }, !isMobile && { flexDirection: 'row', flexWrap: 'wrap' }]}>
-            <View style={{ width: isMobile ? '100%' : '26%', gap: 10 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="heart" size={16} color={theme.colors.primary} />
-                <Text style={styles.footerBrand}>Medlink</Text>
-              </View>
-              <Text style={{ fontSize: 10, color: theme.colors.textSecondary, fontStyle: 'italic' }}>Your Health. Our Link.</Text>
-              <Text style={{ fontSize: 12, color: theme.colors.textSecondary, lineHeight: 18 }}>Medlink connects you with trusted doctors and makes healthcare simple, accessible, and reliable.</Text>
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-                {(['logo-facebook', 'logo-twitter', 'logo-instagram', 'logo-linkedin'] as const).map((icon) => (
-                  <View key={icon} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border }}>
-                    <Ionicons name={icon} size={13} color={theme.colors.textSecondary} />
-                  </View>
-                ))}
-              </View>
-            </View>
-            {[
-              { title: 'Company', links: ['About Us', 'Careers', 'Blog', 'Contact'] },
-              { title: 'Services', links: ['Find Doctors', 'Book Appointment', 'Online Consultation', 'Health Packages'] },
-              { title: 'Support', links: ['Help Center', 'FAQ', 'Privacy Policy', 'Terms of Service'] },
-            ].map((col) => (
-              <View key={col.title} style={{ width: isMobile ? '45%' : '15%', gap: 8 }}>
-                <Text style={styles.footerColTitle}>{col.title}</Text>
-                {col.links.map((link) => (
-                  <Text key={link} style={{ fontSize: 12, color: theme.colors.textSecondary }}>{link}</Text>
-                ))}
-              </View>
-            ))}
-            <View style={{ width: isMobile ? '100%' : '20%', gap: 8 }}>
-              <Text style={styles.footerColTitle}>Contact Us</Text>
-              {[
-                { icon: 'call-outline', text: '+251 911 234 567' },
-                { icon: 'mail-outline', text: 'support@medlink.et' },
-                { icon: 'location-outline', text: 'Addis Ababa, Ethiopia' },
-              ].map((c) => (
-                <View key={c.text} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Ionicons name={c.icon as any} size={13} color={theme.colors.textSecondary} />
-                  <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{c.text}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-          <View style={styles.footerBottom}>
-            <Text style={styles.footerBottomText}>© 2026 MedLink. All rights reserved.</Text>
-          </View>
-        </View>
-
+        <FooterSection
+        {...sectionProps}
+        onContactPress={() => scrollToSection(contactY)}
+        onNavigate={(path) => router.push(path as any)}
+      />
       </ScrollView>
+
       <DoctorDetailsModal visible={!!selectedDoctor} onClose={() => setSelectedDoctor(null)} doctor={selectedDoctor} />
     </ScreenContainer>
   );
 }
-
-const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
-  root: { 
-    flex: 1, 
-    backgroundColor: theme.colors.background,
-    margin: 12
-  },
-  navbar: { 
-    flexDirection: 'row', alignItems: 'center', 
-    justifyContent: 'space-between', paddingHorizontal: 20, 
-    paddingVertical: 14, borderBottomWidth: 1, 
-    borderBottomColor: theme.colors.border, 
-    backgroundColor: theme.colors.background },
-  navLogo: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 8 },
-  navBrand: { 
-    fontSize: 16, 
-    fontWeight: '800', 
-    color: theme.colors.text 
-  },
-  navTagline: {
-     fontSize: 9, 
-     color: theme.colors.textSecondary,
-     
-  },
-  navLinks: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 18 },
-  navLink: { 
-    fontSize: 13, color: theme.colors.text, 
-    fontWeight: '500' },
-  navActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  navLoginBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.primary },
-  navLoginText: { fontSize: 13, color: theme.colors.primary, fontWeight: '700' },
-  navSignupBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: theme.colors.primary },
-  navSignupText: { fontSize: 13, color: '#fff', fontWeight: '700' },
-  hamburger: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
-  mobileMenu: { backgroundColor: theme.colors.background, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingHorizontal: 20, paddingVertical: 16, gap: 14 },
-  mobileMenuItem: { fontSize: 15, fontWeight: '600', color: theme.colors.text, paddingVertical: 4 },
-  mobileMenuActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  mobileLoginBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.primary, alignItems: 'center' },
-  mobileSignupBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.colors.primary, alignItems: 'center' },
-
-  searchOuter: { paddingHorizontal: 20, marginTop: 8 },
-  searchCard: { backgroundColor: theme.colors.surface, borderRadius: 18, padding: 20, borderWidth: 1, borderColor: theme.colors.border, shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 4 },
-  searchTitle: { fontSize: 16, fontWeight: '800', color: theme.colors.text, marginBottom: 4 },
-  searchSubtitle: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 14, lineHeight: 18 },
-  searchRow: { gap: 10 },
-  searchInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: theme.colors.background, flex: 1 },
-  searchInput: { flex: 1, fontSize: 13, color: theme.colors.text },
-  filtersRow: { gap: 8, flex: 1, alignItems: 'center', flexWrap: 'wrap' },
-  filterPill: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: theme.colors.background },
-  filterLabel: { fontSize: 9, color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  filterValue: { fontSize: 12, color: theme.colors.text, fontWeight: '600' },
-  searchBtn: { backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 },
-  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-
-  section: { marginTop: 36, paddingHorizontal: 20 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: theme.colors.text },
-  divider: { width: 44, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary, marginTop: 10, marginBottom: 24, alignSelf: 'center' },
-  specialtyChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, borderWidth: 1, borderColor: theme.colors.border, marginRight: 8, backgroundColor: theme.colors.background },
-  specialtyChipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  specialtyChipText: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: '600' },
-  doctorCard: { width: 168, borderRadius: 16, padding: 14, alignItems: 'center', gap: 6, overflow: 'hidden' },
-  doctorCardTopBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
-  availabilityBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 4 },
-  availabilityText: { fontSize: 10, fontWeight: '700' },
-  doctorAvatar: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  doctorName: { fontSize: 13, fontWeight: '700', color: theme.colors.text, textAlign: 'center' },
-  doctorSpec: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  doctorHospital: { fontSize: 10, color: theme.colors.textSecondary, textAlign: 'center' },
-  bookBtn: { width: '100%', backgroundColor: theme.colors.primary, borderRadius: 8, paddingVertical: 9, alignItems: 'center', marginTop: 4 },
-  bookBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  skeletonAvatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.border, marginBottom: 6 },
-  skeletonLine: { height: 10, width: 120, borderRadius: 5, backgroundColor: theme.colors.border, marginBottom: 4 },
-  skeletonBtn: { width: '100%', height: 32, borderRadius: 8, backgroundColor: theme.colors.border, marginTop: 4 },
-
-  stepsRow: { width: '100%', justifyContent: 'space-between', gap: 28 },
-  stepCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: isDark ? theme.colors.surface : '#e9fbf4', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border, position: 'relative' },
-  stepNumBadge: { position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  stepNumText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  stepConnector: { position: 'absolute', right: -78, top: 38, height: 2, backgroundColor: theme.colors.primary + '55' },
-  stepTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.text, textAlign: 'center' },
-  stepDesc: { fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 200 },
-
-  featuresGrid: { gap: 12, justifyContent: 'space-between' },
-  featureCard: { borderRadius: 14, padding: 16, gap: 8, marginBottom: 4 },
-  featureIconWrap: { width: 40, height: 40, borderRadius: 10, backgroundColor: isDark ? theme.colors.surface : '#e9fbf4', alignItems: 'center', justifyContent: 'center' },
-  featureTitle: { fontSize: 13, fontWeight: '700', color: theme.colors.text },
-  featureDesc: { fontSize: 12, color: theme.colors.textSecondary, lineHeight: 18 },
-
-  testimonialCard: { borderRadius: 16, padding: 20, gap: 8 },
-  testimonialText: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 22, fontStyle: 'italic' },
-  testimonialAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary + '22', alignItems: 'center', justifyContent: 'center' },
-  testimonialAvatarText: { fontSize: 14, fontWeight: '800', color: theme.colors.primary },
-  testimonialName: { fontSize: 13, fontWeight: '700', color: theme.colors.text },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 16 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.border },
-  dotActive: { width: 20, backgroundColor: theme.colors.primary },
-
-  ctaBanner: { margin: 20, borderRadius: 20, backgroundColor: theme.colors.primary, padding: 28, alignItems: 'center', justifyContent: 'space-between', gap: 20, overflow: 'hidden', position: 'relative' },
-  ctaTitle: { fontSize: 22, fontWeight: '800', color: '#fff', lineHeight: 30 },
-  ctaSubtitle: { fontSize: 13, color: '#dcfce7', lineHeight: 20 },
-  ctaSignup: { backgroundColor: '#fff', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  ctaSignupText: { color: theme.colors.primary, fontWeight: '800', fontSize: 14 },
-  ctaLogin: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#ffffff88', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  ctaLoginText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-
-  footer: { backgroundColor: isDark ? theme.colors.surface : '#f8faf9', borderTopWidth: 1, borderTopColor: theme.colors.border, marginTop: 16 },
-  footerBrand: { fontSize: 16, fontWeight: '800', color: theme.colors.text },
-  footerColTitle: { fontSize: 13, fontWeight: '700', color: theme.colors.text, marginBottom: 4 },
-  footerBottom: { borderTopWidth: 1, borderTopColor: theme.colors.border, padding: 16, alignItems: 'center' },
-  footerBottomText: { fontSize: 12, color: theme.colors.textSecondary },
-});
