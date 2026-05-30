@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
-import { useTranslation } from '../../../i18n';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
-import { Alert, Platform, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Platform,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useTranslation } from '../../../i18n';
 import { Button } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { Theme, useTheme } from '../../../theme';

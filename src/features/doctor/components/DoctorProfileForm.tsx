@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from '../../../i18n';
-import { Image, Text, View } from "react-native";
+import { Image, Text, useWindowDimensions, View } from "react-native";
 import {
   Button,
   Card,
@@ -246,6 +246,7 @@ export function DoctorProfileForm() {
             keyboardType="url"
           />
         </Card>
+        </View>
 
         <Button
           title={t("patient:saveProfile")}

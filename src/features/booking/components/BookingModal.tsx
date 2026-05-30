@@ -37,6 +37,7 @@ interface BookingModalProps {
 export function BookingModal({
   visible,
   doctorId,
+  initialSlotIndex,
   onClose,
   onSuccess,
 }: BookingModalProps) {

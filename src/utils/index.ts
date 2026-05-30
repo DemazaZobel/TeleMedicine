@@ -1,4 +1,62 @@
 /**
+ * Format education/experience fields for display (string, JSON, or structured arrays).
+ */
+export function formatDisplayValue(value: unknown): string {
+  if (value == null || value === "") return "";
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === "[object Object]") return "";
+    if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+      try {
+        return formatDisplayValue(JSON.parse(trimmed));
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => formatDisplayEntry(item))
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (typeof value === "object") {
+    return formatDisplayEntry(value);
+  }
+
+  const text = String(value).trim();
+  return text === "[object Object]" ? "" : text;
+}
+
+function formatDisplayEntry(item: unknown): string {
+  if (item == null) return "";
+  if (typeof item === "string") {
+    const trimmed = item.trim();
+    return trimmed === "[object Object]" ? "" : trimmed;
+  }
+  if (typeof item !== "object") return String(item);
+
+  const record = item as Record<string, unknown>;
+  const title = String(record.role ?? record.degree ?? record.title ?? "").trim();
+  const subtitle = String(
+    record.hospital ?? record.institution ?? record.school ?? record.company ?? "",
+  ).trim();
+
+  if (title && subtitle) return `${title} at ${subtitle}`;
+  if (title) return title;
+  if (subtitle) return subtitle;
+
+  return Object.values(record)
+    .filter((v) => v != null && v !== "")
+    .map(String)
+    .join(", ");
+}
+
+/**
  * Format a date string for display in the app.
  */
 export function formatDate(dateString: string): string {
