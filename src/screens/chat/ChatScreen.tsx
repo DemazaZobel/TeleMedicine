@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslation } from '../../i18n';
 import {
   View, FlatList, KeyboardAvoidingView,
   Platform, SafeAreaView, StyleSheet,
@@ -13,6 +14,7 @@ import type { Message } from '../../types/chat';
 const CURRENT_USER_ROLE: 'doctor' | 'patient' = 'doctor'; // change to your auth store value
 
 const ChatScreen: React.FC = () => {
+  const { t } = useTranslation();
   // ✅ Updated: reads 'id' and 'roomName' from params
   const { id: roomId, roomName } = useLocalSearchParams<{ id: string; roomName: string }>();
   const navigation = useNavigation();
@@ -87,7 +89,7 @@ const ChatScreen: React.FC = () => {
       <SafeAreaView style={styles.center}>
         <Text style={styles.errorText}>⚠️ {error}</Text>
         <TouchableOpacity onPress={() => loadMessages(true)} style={styles.retryButton}>
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t("common:retry")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -114,8 +116,8 @@ const ChatScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No messages yet.</Text>
-              <Text style={styles.emptyHint}>Send a message to start the conversation.</Text>
+              <Text style={styles.emptyText}>{t("patient:noMessagesYet")}</Text>
+              <Text style={styles.emptyHint}>{t("patient:startConversationInstructions")}</Text>
             </View>
           }
         />

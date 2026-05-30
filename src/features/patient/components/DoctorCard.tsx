@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { StarRating } from '../../../components/ui';
@@ -12,6 +13,7 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: DoctorCardProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -61,7 +63,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
             <View style={styles.dot} />
             <View style={styles.statItem}>
               <Ionicons name="checkmark-circle-outline" size={14} color={theme.colors.success} />
-              <Text style={styles.statLabel}>Available</Text>
+              <Text style={styles.statLabel}>{t("doctor:available")}</Text>
             </View>
           </View>
         </View>

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
@@ -29,6 +30,7 @@ export function RescheduleModal({
   onConfirm,
   isLoading,
 }: RescheduleModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { fetchDoctorAvailability, doctorAvailabilityRules } = useBookingStore();
@@ -137,8 +139,8 @@ export function RescheduleModal({
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Propose Reschedule"
-      subtitle="Suggest a new time and mode for this appointment."
+      title={t("appointment:proposeReschedule")}
+      subtitle={t("appointment:proposeChangeInstructions")}
       maxWidth={520}
     >
       <View style={styles.container}>
@@ -205,7 +207,7 @@ export function RescheduleModal({
         ) : (
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={32} color={theme.colors.textTertiary} />
-            <Text style={styles.emptyText}>No available slots on this day.</Text>
+            <Text style={styles.emptyText}>{t("doctor:noSlotsOnDay")}</Text>
           </View>
         )}
 
@@ -217,20 +219,20 @@ export function RescheduleModal({
             onPress={() => setMode('ONLINE')}
           >
             <Ionicons name="videocam" size={18} color={mode === 'ONLINE' ? theme.colors.primary : theme.colors.textTertiary} />
-            <Text style={[styles.modeLabel, mode === 'ONLINE' && { color: theme.colors.primary }]}>Online</Text>
+            <Text style={[styles.modeLabel, mode === 'ONLINE' && { color: theme.colors.primary }]}>{t("appointment:online")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.modeOption, mode === 'IN_PERSON' && styles.modeOptionActive]}
             onPress={() => setMode('IN_PERSON')}
           >
             <Ionicons name="people" size={18} color={mode === 'IN_PERSON' ? theme.colors.primary : theme.colors.textTertiary} />
-            <Text style={[styles.modeLabel, mode === 'IN_PERSON' && { color: theme.colors.primary }]}>In Person</Text>
+            <Text style={[styles.modeLabel, mode === 'IN_PERSON' && { color: theme.colors.primary }]}>{t("appointment:inPerson")}</Text>
           </TouchableOpacity>
         </View>
 
         <Input
-          label="Reason for Change"
-          placeholder="E.g., I have a conflicting meeting..."
+          label={t("appointment:reasonForChange")}
+          placeholder={t("appointment:rescheduleReasonPlaceholder")}
           value={notes}
           onChangeText={setNotes}
           containerStyle={styles.reasonInput}
@@ -239,7 +241,7 @@ export function RescheduleModal({
         <View style={styles.footer}>
           <Button title="Cancel" variant="outline" onPress={onClose} disabled={isLoading} style={styles.footerBtn} />
           <Button 
-            title="Propose" 
+            title={t("common:propose")} 
             onPress={handleConfirm} 
             loading={isLoading}
             disabled={isLoading || allSlots.length === 0 || selectedSlotIndex === null}

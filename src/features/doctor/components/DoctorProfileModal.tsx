@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -59,6 +60,7 @@ export function DoctorProfileModal({
   visible,
   onClose,
 }: DoctorProfileModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -306,8 +308,8 @@ export function DoctorProfileModal({
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Doctor Profile"
-      subtitle="Complete your professional profile details."
+      title={t("doctor:doctorProfile")}
+      subtitle={t("doctor:completeProfileDesc")}
     >
       <View style={styles.container}>
         <View style={styles.header}>
@@ -339,7 +341,7 @@ export function DoctorProfileModal({
         <Card style={styles.card}>
           <Input
             label="Specialization"
-            placeholder="e.g. Cardiology"
+            placeholder={t("doctor:egCardiology")}
             value={specialization}
             onChangeText={(t) => {
               setSpecialization(t);
@@ -351,7 +353,7 @@ export function DoctorProfileModal({
           <View style={styles.row}>
             <Input
               label="Location"
-              placeholder="e.g. Addis Ababa"
+              placeholder={t("common:egAddisAbaba")}
               value={location}
               onChangeText={(t) => {
                 setLocation(t);
@@ -361,8 +363,8 @@ export function DoctorProfileModal({
               containerStyle={styles.halfField}
             />
             <Input
-              label="Current Hospital/Clinic"
-              placeholder="e.g. Tikur Anbessa"
+              label={t("doctor:currentHospitalClinic")}
+              placeholder={t("doctor:egHospital")}
               value={hospital}
               onChangeText={(t) => {
                 setHospital(t);
@@ -374,8 +376,8 @@ export function DoctorProfileModal({
           </View>
 
           <Input
-            label="Biography"
-            placeholder="Tell patients about your medical background..."
+            label={t("doctor:biography")}
+            placeholder={t("doctor:biographyPlaceholder")}
             value={biography}
             onChangeText={(t) => {
               setBiography(t);
@@ -389,7 +391,7 @@ export function DoctorProfileModal({
 
           {/* Education Section */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Education</Text>
+            <Text style={styles.sectionTitle}>{t("doctor:education")}</Text>
             <TouchableOpacity
               onPress={handleAddEducation}
               style={styles.addBtn}
@@ -399,7 +401,7 @@ export function DoctorProfileModal({
                 size={20}
                 color={theme.colors.primary}
               />
-              <Text style={styles.addBtnText}>Add</Text>
+              <Text style={styles.addBtnText}>{t("common:add")}</Text>
             </TouchableOpacity>
           </View>
           {educationList.map((edu, index) => {
@@ -452,8 +454,8 @@ export function DoctorProfileModal({
                 {edu.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
-                      label="Medical School/University*"
-                      placeholder="Ex: Addis Ababa University"
+                      label={t("errors:medicalSchoolRequired")}
+                      placeholder={t("doctor:exAAU")}
                       value={edu.institution}
                       onChangeText={(t) =>
                         updateEducation(edu.id, "institution", t)
@@ -461,15 +463,15 @@ export function DoctorProfileModal({
                       containerStyle={styles.dynamicInputMargin}
                     />
                     <Input
-                      label="Medical Degree*"
-                      placeholder="Ex: MD, MBBS, PhD"
+                      label={t("errors:medicalDegreeRequired")}
+                      placeholder={t("doctor:exDegree")}
                       value={edu.degree}
                       onChangeText={(t) => updateEducation(edu.id, "degree", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
                     <Input
-                      label="Specialization Field"
-                      placeholder="Ex: Neurosurgery"
+                      label={t("doctor:specializationField")}
+                      placeholder={t("doctor:exSpecialty")}
                       value={edu.fieldOfStudy || ""}
                       onChangeText={(t) =>
                         updateEducation(edu.id, "fieldOfStudy", t)
@@ -479,8 +481,8 @@ export function DoctorProfileModal({
 
                     <View style={styles.row}>
                       <Input
-                        label="Start Year"
-                        placeholder="Ex: 2018"
+                        label={t("doctor:startYear")}
+                        placeholder={t("doctor:ex2018")}
                         value={edu.startYear || ""}
                         onChangeText={(t) =>
                           updateEducation(
@@ -493,8 +495,8 @@ export function DoctorProfileModal({
                         containerStyle={styles.halfField}
                       />
                       <Input
-                        label="End Year (or expected)*"
-                        placeholder="Ex: 2022"
+                        label={t("doctor:endYearExpected")}
+                        placeholder={t("doctor:ex2022")}
                         value={edu.endYear || ""}
                         onChangeText={(t) =>
                           updateEducation(
@@ -509,16 +511,16 @@ export function DoctorProfileModal({
                     </View>
 
                     <Input
-                      label="Academic Honors/Grade"
-                      placeholder="Ex: With Great Distinction"
+                      label={t("doctor:academicGrade")}
+                      placeholder={t("doctor:exGrade")}
                       value={edu.grade || ""}
                       onChangeText={(t) => updateEducation(edu.id, "grade", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
 
                     <Input
-                      label="Additional Academic Info"
-                      placeholder="Awards, research topics, or societies..."
+                      label={t("doctor:additionalAcademicInfo")}
+                      placeholder={t("doctor:awardsPlaceholder")}
                       value={edu.description || ""}
                       onChangeText={(t) =>
                         updateEducation(edu.id, "description", t)
@@ -569,7 +571,7 @@ export function DoctorProfileModal({
                 size={20}
                 color={theme.colors.primary}
               />
-              <Text style={styles.addBtnText}>Add</Text>
+              <Text style={styles.addBtnText}>{t("common:add")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -624,14 +626,14 @@ export function DoctorProfileModal({
                 {exp.isEditing ? (
                   <View style={styles.inputStack}>
                     <Input
-                      label="Medical Role"
-                      placeholder="Ex: Senior Surgeon, General Practitioner"
+                      label={t("doctor:medicalRole")}
+                      placeholder={t("doctor:exRole")}
                       value={exp.role}
                       onChangeText={(t) => updateExperience(exp.id, "role", t)}
                       containerStyle={styles.dynamicInputMargin}
                     />
 
-                    <Text style={styles.dateLabel}>Practice type</Text>
+                    <Text style={styles.dateLabel}>{t("doctor:practiceType")}</Text>
 
                     <ScrollView
                       horizontal
@@ -663,8 +665,8 @@ export function DoctorProfileModal({
                     </ScrollView>
 
                     <Input
-                      label="Hospital/Clinic Name"
-                      placeholder="Ex: Tikur Anbessa Hospital"
+                      label={t("doctor:hospitalClinicNameShort")}
+                      placeholder={t("doctor:exHospital")}
                       value={exp.hospital}
                       onChangeText={(t) =>
                         updateExperience(exp.id, "hospital", t)
@@ -674,7 +676,7 @@ export function DoctorProfileModal({
 
                     <Input
                       label="Location"
-                      placeholder="Ex: Addis Ababa, Ethiopia"
+                      placeholder={t("doctor:exAAE")}
                       value={exp.location || ""}
                       onChangeText={(t) =>
                         updateExperience(exp.id, "location", t)
@@ -684,8 +686,8 @@ export function DoctorProfileModal({
 
                     <View style={styles.row}>
                       <Input
-                        label="Start Year"
-                        placeholder="Ex: 2018"
+                        label={t("doctor:startYear")}
+                        placeholder={t("doctor:ex2018")}
                         value={exp.startYear || ""}
                         onChangeText={(t) =>
                           updateExperience(
@@ -700,8 +702,8 @@ export function DoctorProfileModal({
 
                       {!exp.isCurrent && (
                         <Input
-                          label="End Year*"
-                          placeholder="Ex: 2023"
+                          label={t("errors:endYearRequired")}
+                          placeholder={t("doctor:ex2023")}
                           value={exp.endYear || ""}
                           onChangeText={(t) =>
                             updateExperience(
@@ -734,8 +736,8 @@ export function DoctorProfileModal({
                     </View>
 
                     <Input
-                      label="Role Description & Responsibilities"
-                      placeholder="Describe your clinical duties, specific cases handled, etc."
+                      label={t("doctor:roleResponsibilities")}
+                      placeholder={t("doctor:clinicalDutiesPlaceholder")}
                       value={exp.description || ""}
                       onChangeText={(t) =>
                         updateExperience(exp.id, "description", t)
@@ -777,8 +779,8 @@ export function DoctorProfileModal({
 
           <View style={styles.row}>
             <Input
-              label="YouTube Link (Optional)"
-              placeholder="https://youtube.com/..."
+              label={t("patient:youtubeLinkOptional")}
+              placeholder={t("patient:youtubePlaceholder")}
               value={youtube}
               onChangeText={(t) => {
                 setYoutube(t);
@@ -790,8 +792,8 @@ export function DoctorProfileModal({
               autoCapitalize="none"
             />
             <Input
-              label="LinkedIn (Optional)"
-              placeholder="https://linkedin.com/in/..."
+              label={t("patient:linkedinOptional")}
+              placeholder={t("patient:linkedinPlaceholder")}
               value={linkedin}
               onChangeText={(t) => {
                 setLinkedin(t);
@@ -825,7 +827,7 @@ export function DoctorProfileModal({
         </Card>
 
         <Button
-          title="Save Profile"
+          title={t("patient:saveProfile")}
           onPress={handleSave}
           loading={isUpdatingProfile || isLoadingProfile}
           fullWidth

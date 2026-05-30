@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from '../../i18n';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
@@ -14,6 +15,7 @@ interface CreateLinkedPatientModalProps {
 }
 
 export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatientModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -50,7 +52,7 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
 
   const handleCreate = async () => {
     if (!email || !firstName || !lastName || !password) {
-      Alert.alert('Missing Fields', 'Please fill in all required fields.');
+      Alert.alert(t('errors:missingFields'), t('errors:fillRequiredFieldsWarning'));
       return;
     }
 
@@ -111,13 +113,13 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
 
           <View style={styles.successActions}>
             <Button
-              title="Switch to Patient Now"
+              title={t("patient:switchToPatientNow")}
               onPress={handleSwitchNow}
               variant="primary"
               style={styles.primaryBtn}
             />
             <Button
-              title="Stay as Doctor"
+              title={t("patient:stayAsDoctor")}
               onPress={handleClose}
               variant="outline"
               style={styles.secondaryBtn}
@@ -134,7 +136,7 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
 
           <Input
             label="Email"
-            placeholder="patient@example.com"
+            placeholder={t("patient:patientPlaceholder")}
             value={email}
             onChangeText={(text) => {
               setEmail(text);
@@ -164,13 +166,13 @@ export function CreateLinkedPatientModal({ visible, onClose }: CreateLinkedPatie
           </View>
           <Input
             label="Password"
-            placeholder="Create a password"
+            placeholder={t("auth:createPasswordPlaceholder")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
           <Input
-            label="Phone (optional)"
+            label={t("patient:phoneOptional")}
             placeholder="+251..."
             value={phone}
             onChangeText={setPhone}

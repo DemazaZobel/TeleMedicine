@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../i18n';
 import React, { useState } from 'react';
 import { Image, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { useTheme } from '../../theme';
@@ -9,6 +10,7 @@ interface MobileWebNavProps {
 }
 
 export function MobileWebNav({ onNotificationsPress }: MobileWebNavProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 

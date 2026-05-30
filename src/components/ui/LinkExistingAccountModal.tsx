@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from '../../i18n';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
@@ -16,6 +17,7 @@ interface LinkExistingAccountModalProps {
 type Step = 'email' | 'otp' | 'success';
 
 export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccountModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -50,7 +52,7 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
 
   const handleSendRequest = async () => {
     if (!targetEmail.trim()) {
-      Alert.alert('Missing Email', 'Please enter the email of the account you want to link.');
+      Alert.alert(t('errors:missingEmail'), t('errors:validationEmailRequired'));
       return;
     }
 
@@ -66,7 +68,7 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
 
   const handleConfirm = async () => {
     if (!myCode.trim() || !theirCode.trim()) {
-      Alert.alert('Missing Codes', 'Please enter both verification codes.');
+      Alert.alert(t('errors:missingCodes'), t('errors:validationCodesRequired'));
       return;
     }
 
@@ -130,8 +132,8 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
           </View>
 
           <Input
-            label="Account Email to Link"
-            placeholder="other-account@example.com"
+            label={t("patient:accountEmailToLink")}
+            placeholder={t("patient:otherAccountPlaceholder")}
             value={targetEmail}
             onChangeText={setTargetEmail}
             keyboardType="email-address"
@@ -162,7 +164,7 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
               <Text style={styles.otpLabel}>Your Code ({user?.email})</Text>
             </View>
             <Input
-              placeholder="Enter code sent to your email"
+              placeholder={t("patient:enterOwnCode")}
               value={myCode}
               onChangeText={setMyCode}
               keyboardType="number-pad"
@@ -176,7 +178,7 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
               <Text style={styles.otpLabel}>Their Code ({targetEmail})</Text>
             </View>
             <Input
-              placeholder="Enter code sent to their email"
+              placeholder={t("patient:enterLinkedCode")}
               value={theirCode}
               onChangeText={setTheirCode}
               keyboardType="number-pad"
@@ -186,7 +188,7 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
 
           <View style={styles.timerRow}>
             <Ionicons name="time-outline" size={14} color={theme.colors.textTertiary} />
-            <Text style={styles.timerText}>Codes expire in 10 minutes</Text>
+            <Text style={styles.timerText}>{t("errors:codeExpiryWarning")}</Text>
           </View>
 
           <View style={styles.otpActions}>
@@ -221,7 +223,7 @@ export function LinkExistingAccountModal({ visible, onClose }: LinkExistingAccou
 
           <View style={styles.successActions}>
             <Button
-              title="Switch Account Now"
+              title={t("patient:switchAccountNow")}
               onPress={handleSwitchNow}
               variant="primary"
               style={styles.primaryBtn}

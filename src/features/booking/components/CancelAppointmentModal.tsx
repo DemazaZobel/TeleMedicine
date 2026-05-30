@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../../../i18n';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -18,6 +19,7 @@ export function CancelAppointmentModal({
   onConfirm,
   isLoading
 }: CancelAppointmentModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const [reason, setReason] = useState('');
 
@@ -30,13 +32,13 @@ export function CancelAppointmentModal({
       visible={visible}
       onClose={onClose}
       title="Cancel Appointment"
-      subtitle="Please provide a reason for cancelling your appointment."
+      subtitle={t("errors:cancelReasonRequired")}
       maxWidth={450}
     >
       <View style={styles.container}>
         <Input
-          label="Cancellation Reason"
-          placeholder="E.g., I have a personal emergency..."
+          label={t("appointment:cancellationReason")}
+          placeholder={t("appointment:cancelReasonPlaceholder")}
           value={reason}
           onChangeText={setReason}
           multiline
@@ -46,14 +48,14 @@ export function CancelAppointmentModal({
 
         <View style={styles.actions}>
           <Button
-            title="Keep Appointment"
+            title={t("appointment:keepAppointment")}
             variant="outline"
             onPress={onClose}
             style={styles.button}
             disabled={isLoading}
           />
           <Button
-            title="Yes, Cancel"
+            title={t("appointment:yesCancel")}
             variant="danger"
             onPress={handleConfirm}
             style={styles.button}

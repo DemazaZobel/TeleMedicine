@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useTranslation } from '../../src/i18n';
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +18,7 @@ import { COLORS, RADII, SPACING } from "../../src/constants/theme";
 import { forgotPassword } from "../../src/services/authService";
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -55,7 +57,7 @@ export default function ForgotPasswordScreen() {
 
         <View style={styles.header}>
           <Text style={styles.title}>Reset Password</Text>
-          <Text style={styles.subtitle}>Enter your email address and we'll send you a code to reset your password.</Text>
+          <Text style={styles.subtitle}>{t("auth:forgotPasswordInstructions")}</Text>
         </View>
 
         <View style={styles.form}>
@@ -63,7 +65,7 @@ export default function ForgotPasswordScreen() {
             <Text style={styles.label}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your email"
+              placeholder={t("auth:enterYourEmail")}
               placeholderTextColor={COLORS.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -80,7 +82,7 @@ export default function ForgotPasswordScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Send Code</Text>
+              <Text style={styles.btnText}>{t("auth:sendCode")}</Text>
             )}
           </TouchableOpacity>
         </View>

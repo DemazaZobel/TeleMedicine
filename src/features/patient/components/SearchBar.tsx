@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { useTranslation } from '../../../i18n';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../../components/ui/Input';
@@ -11,6 +12,7 @@ interface SearchBarProps {
 }
 
 export const SearchBar = React.memo(function SearchBar({ initialValue = '', onSearch }: SearchBarProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [value, setValue] = useState(initialValue);
@@ -50,7 +52,7 @@ export const SearchBar = React.memo(function SearchBar({ initialValue = '', onSe
       <Input
         value={value}
         onChangeText={setValue}
-        placeholder="Search by name, specialty, location..."
+        placeholder={t("patient:searchPlaceholderAdvanced")}
         returnKeyType="search"
         onSubmitEditing={handleSubmit}
         leftIcon={<Ionicons name="search" size={20} color={theme.colors.textSecondary} />}

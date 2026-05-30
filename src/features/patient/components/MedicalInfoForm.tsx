@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from '../../../i18n';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +14,7 @@ const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENDER_OPTIONS = ['Male', 'Female'];
 
 export function MedicalInfoForm() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const router = useRouter();
@@ -143,25 +145,25 @@ export function MedicalInfoForm() {
             style={styles.breadcrumb}
           >
             <Ionicons name="arrow-back" size={18} color={theme.colors.primary} />
-            <Text style={styles.breadcrumbText}>Back to Profile</Text>
+            <Text style={styles.breadcrumbText}>{t("patient:backToProfile")}</Text>
           </Pressable>
         )}
 
-        <Text style={styles.title}>Medical Information</Text>
+        <Text style={styles.title}>{t("doctor:medicalInformationTitle")}</Text>
         <Text style={styles.subtitle}>
           Keep your medical record up to date so doctors can serve you better.
         </Text>
 
         {(error || localError) && <Banner variant="error" message={(localError || error) ?? ''} />}
-        {saved && <Banner variant="success" message="Medical info updated successfully." />}
+        {saved && <Banner variant="success" message={t("doctor:updateSuccess")} />}
 
         {/* ── Personal Details ── */}
         <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>Personal Details</Text>
+          <Text style={styles.sectionTitle}>{t("patient:personalDetails")}</Text>
 
           <Input
-            label="Date of Birth"
-            placeholder="YYYY-MM-DD"
+            label={t("patient:dob")}
+            placeholder={t("common:dateFormatPlaceholder")}
             value={dateOfBirth}
             onChangeText={(t) => { setDateOfBirth(t); clear(); }}
           />
@@ -182,7 +184,7 @@ export function MedicalInfoForm() {
           </View>
 
           {/* Blood Type Selector */}
-          <Text style={styles.chipLabel}>Blood Type</Text>
+          <Text style={styles.chipLabel}>{t("patient:bloodType")}</Text>
           <View style={styles.chipRow}>
             {BLOOD_TYPES.map((bt) => (
               <Button
@@ -202,8 +204,8 @@ export function MedicalInfoForm() {
           <Text style={styles.sectionTitle}>Health Record</Text>
 
           <Input
-            label="Medical History"
-            placeholder="Previous diagnoses, surgeries, etc."
+            label={t("doctor:medicalHistoryTitle")}
+            placeholder={t("doctor:pastHistoryDesc")}
             value={medicalHistory}
             onChangeText={(t) => { setMedicalHistory(t); clear(); }}
             multiline
@@ -211,15 +213,15 @@ export function MedicalInfoForm() {
           />
 
           <Input
-            label="Chronic Conditions"
-            placeholder="e.g. Diabetes, Hypertension"
+            label={t("doctor:chronicConditions")}
+            placeholder={t("doctor:egChronic")}
             value={chronicConditions}
             onChangeText={(t) => { setChronicConditions(t); clear(); }}
           />
 
           <Input
-            label="Allergies"
-            placeholder="e.g. Penicillin, Peanuts"
+            label={t("doctor:allergies")}
+            placeholder={t("doctor:egAllergies")}
             value={allergies}
             onChangeText={(t) => { setAllergies(t); clear(); }}
           />
@@ -230,23 +232,23 @@ export function MedicalInfoForm() {
           <Text style={styles.sectionTitle}>Location</Text>
 
           <Input
-            label="Address"
-            placeholder="Street address"
+            label={t("common:address")}
+            placeholder={t("patient:streetAddress")}
             value={address}
             onChangeText={(t) => { setAddress(t); clear(); }}
           />
 
           <View style={styles.row}>
             <Input
-              label="City"
-              placeholder="City"
+              label={t("common:city")}
+              placeholder={t("common:city")}
               value={city}
               onChangeText={(t) => { setCity(t); clear(); }}
               containerStyle={styles.halfField}
             />
             <Input
-              label="Country"
-              placeholder="Country"
+              label={t("common:country")}
+              placeholder={t("common:country")}
               value={country}
               onChangeText={(t) => { setCountry(t); clear(); }}
               containerStyle={styles.halfField}
@@ -255,7 +257,7 @@ export function MedicalInfoForm() {
         </Card>
 
         <Button
-          title="Save Medical Info"
+          title={t("doctor:saveMedicalInfo")}
           onPress={handleSave}
           loading={isUpdatingInfo || isLoadingInfo}
           fullWidth

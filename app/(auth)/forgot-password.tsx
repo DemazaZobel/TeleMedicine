@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Text, View, StyleSheet, Pressable } from 'react-native';
@@ -7,6 +8,7 @@ import { authService } from '../../src/features/auth/services/authService';
 import { useTheme, Theme } from '../../src/theme';
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
@@ -76,7 +78,7 @@ export default function ForgotPasswordScreen() {
             />
 
             <Button
-              title="Send Reset Code"
+              title={t("auth:sendResetCode")}
               onPress={handleSubmit}
               loading={loading}
               fullWidth
@@ -86,7 +88,7 @@ export default function ForgotPasswordScreen() {
           </View>
         ) : (
           <Button
-            title="Back to Login"
+            title={t("auth:backToLogin")}
             variant="outline"
             onPress={() => router.replace('/(auth)/login')}
             fullWidth
@@ -97,7 +99,7 @@ export default function ForgotPasswordScreen() {
         {!sent && (
           <Pressable onPress={() => router.back()} style={styles.backLink}>
             <Ionicons name="arrow-back" size={16} color={theme.colors.textTertiary} style={{ marginRight: 4 }} />
-            <Text style={styles.backLinkText}>Back to Login</Text>
+            <Text style={styles.backLinkText}>{t("auth:backToLogin")}</Text>
           </Pressable>
         )}
       </View>

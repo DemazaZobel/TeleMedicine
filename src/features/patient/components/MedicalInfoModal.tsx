@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from '../../../i18n';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -18,6 +19,7 @@ const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENDER_OPTIONS = ['Male', 'Female'];
 
 export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -178,23 +180,23 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Medical Information"
-      subtitle="Update your health profile and history."
+      title={t("doctor:medicalInformationTitle")}
+      subtitle={t("patient:healthRecordDesc")}
     >
       <View style={styles.container}>
         {(error || localError) && <Banner variant="error" message={(localError || error) ?? ''} />}
-        {saved && <Banner variant="success" message="Medical information updated." />}
+        {saved && <Banner variant="success" message={t("doctor:updateSuccessShort")} />}
 
         {/* ── Basic Info Section ── */}
         <Card style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Ionicons name="person-outline" size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Basic Information</Text>
+            <Text style={styles.sectionTitle}>{t("patient:basicInformation")}</Text>
           </View>
 
           {Platform.OS === 'web' ? (
             <View style={{ marginBottom: 16 }}>
-              <Text style={styles.label}>Date of Birth</Text>
+              <Text style={styles.label}>{t("patient:dob")}</Text>
               <input 
                 type="date" 
                 value={dateOfBirth} 
@@ -219,7 +221,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
             </View>
           ) : (
             <View style={{ marginBottom: 16 }}>
-              <Text style={styles.label}>Date of Birth</Text>
+              <Text style={styles.label}>{t("patient:dob")}</Text>
               <Pressable 
                 style={[styles.dateInput]} 
                 onPress={() => setShowDatePicker(true)}
@@ -259,7 +261,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
             })}
           </View>
 
-          <Text style={[styles.label, { marginTop: 16 }]}>Blood Type</Text>
+          <Text style={[styles.label, { marginTop: 16 }]}>{t("patient:bloodType")}</Text>
           <View style={[styles.chipsRow, { flexWrap: 'wrap' }]}>
             {BLOOD_TYPES.map((bt) => {
               const isSelected = bloodType === bt;
@@ -282,28 +284,28 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
         <Card style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Ionicons name="medical-outline" size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Health History</Text>
+            <Text style={styles.sectionTitle}>{t("doctor:healthHistory")}</Text>
           </View>
 
           <Input
-            label="Allergies"
-            placeholder="E.g., Penicillin, Peanuts (or leave blank)"
+            label={t("doctor:allergies")}
+            placeholder={t("doctor:allergiesPlaceholder")}
             value={allergies}
             onChangeText={(t) => { setAllergies(t); clearError(); setSaved(false); }}
             containerStyle={{ marginBottom: 16 }}
           />
 
           <Input
-            label="Chronic Conditions"
-            placeholder="E.g., Asthma, Diabetes (or leave blank)"
+            label={t("doctor:chronicConditions")}
+            placeholder={t("doctor:chronicPlaceholder")}
             value={chronicConditions}
             onChangeText={(t) => { setChronicConditions(t); clearError(); setSaved(false); }}
             containerStyle={{ marginBottom: 16 }}
           />
 
           <Input
-            label="General Medical History"
-            placeholder="Any past surgeries, ongoing treatments, or other notes..."
+            label={t("doctor:generalHistory")}
+            placeholder={t("doctor:pastHistoryPlaceholder")}
             value={medicalHistory}
             onChangeText={(t) => { setMedicalHistory(t); clearError(); setSaved(false); }}
             multiline
@@ -312,7 +314,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
           />
 
           {/* Documents Upload UI */}
-          <Text style={styles.label}>Attachments & Files</Text>
+          <Text style={styles.label}>{t("doctor:attachmentsFiles")}</Text>
           <View style={styles.documentsContainer}>
             {documents.map((doc, index) => (
               <View key={index} style={styles.documentChip}>
@@ -324,7 +326,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
               </View>
             ))}
             <Button 
-              title="Upload File" 
+              title={t("doctor:uploadFile")} 
               variant="outline" 
               icon={<Ionicons name="cloud-upload-outline" size={18} color={theme.colors.primary} style={{ marginRight: 8 }} />}
               onPress={pickDocument} 
@@ -340,23 +342,23 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
             <Text style={styles.sectionTitle}>Location</Text>
           </View>
           <Input
-            label="Address"
-            placeholder="Street address"
+            label={t("common:address")}
+            placeholder={t("patient:streetAddress")}
             value={address}
             onChangeText={(t) => { setAddress(t); clearError(); setSaved(false); }}
             containerStyle={{ marginBottom: 16 }}
           />
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Input
-              label="City"
-              placeholder="Addis Ababa"
+              label={t("common:city")}
+              placeholder={t("common:addisAbaba")}
               value={city}
               onChangeText={(t) => { setCity(t); clearError(); setSaved(false); }}
               containerStyle={{ flex: 1 }}
             />
             <Input
-              label="Country"
-              placeholder="Ethiopia"
+              label={t("common:country")}
+              placeholder={t("common:ethiopia")}
               value={country}
               onChangeText={(t) => { setCountry(t); clearError(); setSaved(false); }}
               containerStyle={{ flex: 1 }}
@@ -365,7 +367,7 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
         </Card>
 
         <Button
-          title="Save Medical Info"
+          title={t("doctor:saveMedicalInfo")}
           onPress={handleSave}
           loading={isUpdatingInfo || isLoadingInfo}
           fullWidth

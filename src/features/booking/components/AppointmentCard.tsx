@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import * as WebBrowser from "expo-web-browser";
 import React, { useMemo, useState } from "react";
 import {
@@ -31,6 +32,7 @@ export function AppointmentCard({
   onCancel,
   onAccept,
 }: AppointmentCardProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const {
@@ -71,7 +73,7 @@ export function AppointmentCard({
           appointment.payment_status === "paid"
             ? "Confirmed"
             : appointment.payment_status === "charge_pending"
-              ? "Verifying..."
+              ? t("common:verifying")
               : "Unpaid",
         color:
           appointment.payment_status === "paid"
@@ -235,25 +237,17 @@ export function AppointmentCard({
         backendError?.message ||
         error?.message ||
         "Failed to initiate payment.";
-
-      // Handle DRF validation errors nicely
       if (
-        backendError &&
-        typeof backendError === "object"
+        errorMessage.includes("already been initiated") ||
+        errorMessage.includes("charge_pending")
       ) {
-        const firstKey = Object.keys(backendError)[0];
-
-        if (
-          firstKey &&
-          Array.isArray(backendError[firstKey])
-        ) {
-          errorMessage = backendError[firstKey][0];
-        }
+        Alert.alert(
+          "Payment In Progress",
+          'Your payment is being verified. Tap "Refresh Status" to check for updates.',
+        );
+      } else {
+        Alert.alert(t("errors:paymentError"), errorMessage);
       }
-
-      Alert.alert("Payment Error", errorMessage);
-    } finally {
-      setLocalLoading(false);
     }
   };
 
@@ -287,7 +281,7 @@ export function AppointmentCard({
         });
       }
       setRescheduleVisible(false);
-      Alert.alert("Success", "Reschedule request sent.");
+      Alert.alert("Success", t("appointment:rescheduleSentSuccess"));
     } catch (error) {
     } finally {
       setLocalLoading(false);
@@ -305,11 +299,11 @@ export function AppointmentCard({
         Platform.OS === "web"
           ? window.confirm(msg)
           : await new Promise((resolve) => {
-            Alert.alert("Review Reschedule", msg, [
-              { text: "No", style: "cancel", onPress: () => resolve(false) },
-              { text: "Yes", style: "default", onPress: () => resolve(true) },
-            ]);
-          });
+              Alert.alert(t("appointment:reviewReschedule"), msg, [
+                { text: "No", style: "cancel", onPress: () => resolve(false) },
+                { text: "Yes", style: "default", onPress: () => resolve(true) },
+              ]);
+            });
 
       if (!confirmed) return;
 
@@ -354,7 +348,7 @@ export function AppointmentCard({
       setLocalLoading(true);
       const { completeAppointment } = useBookingStore.getState();
       await completeAppointment(appointment.id);
-      Alert.alert("Success", "Consultation completed.");
+      Alert.alert("Success", t("appointment:consultationCompleted"));
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to complete.");
     } finally {
@@ -416,7 +410,7 @@ export function AppointmentCard({
 
         {isDoctor && appointment.patient_allergies && (
           <View style={styles.infoSection}>
-            <Text style={styles.infoLabel}>ALLERGIES</Text>
+            <Text style={styles.infoLabel}>{t("doctor:allergiesTitle")}</Text>
             <Text style={[styles.infoValue, { color: theme.colors.error }]} numberOfLines={2}>{appointment.patient_allergies}</Text>
           </View>
         )}
@@ -432,7 +426,7 @@ export function AppointmentCard({
           <View style={styles.proposalCard}>
             <View style={styles.proposalTag}>
               <Ionicons name="swap-horizontal" size={12} color={theme.colors.warning} />
-              <Text style={styles.proposalTagText}>PROPOSED CHANGE</Text>
+              <Text style={styles.proposalTagText}>{t("appointment:proposedChange")}</Text>
             </View>
             <Text style={styles.proposalDetails}>
               {new Date(appointment.latest_change_request.proposed_start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} @ {new Date(appointment.latest_change_request.proposed_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -440,21 +434,21 @@ export function AppointmentCard({
 
             {((!isDoctor && appointment.latest_change_request.requested_by?.role === 'DOCTOR') ||
               (isDoctor && appointment.latest_change_request.requested_by?.role === 'PATIENT')) && (
-                <View style={styles.proposalActions}>
-                  <TouchableOpacity
-                    style={styles.proposalBtnReject}
-                    onPress={() => handleRespondChange('reject')}
-                  >
-                    <Text style={styles.proposalBtnRejectText}>Decline</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.proposalBtnAccept}
-                    onPress={() => handleRespondChange('accept')}
-                  >
-                    <Text style={styles.proposalBtnAcceptText}>Accept</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              <View style={styles.proposalActions}>
+                <TouchableOpacity 
+                  style={styles.proposalBtnReject} 
+                  onPress={() => handleRespondChange('reject')}
+                >
+                  <Text style={styles.proposalBtnRejectText}>{t("common:decline")}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.proposalBtnAccept} 
+                  onPress={() => handleRespondChange('accept')}
+                >
+                  <Text style={styles.proposalBtnAcceptText}>{t("common:accept")}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -489,53 +483,21 @@ export function AppointmentCard({
 
           {appointment.status?.toUpperCase() === "CONFIRMED" && (
             appointment.payment_status === "paid" ? (
-              appointment.mode === "ONLINE" ? (
-                <Button
-                  title="Join"
-                  size="sm"
-                  onPress={handleJoin}
-                  loading={localLoading}
-                  style={styles.mainBtn}
-                />
-              ) : (
-                <View style={styles.inPersonBadge}>
-                  <Ionicons
-                    name="location-outline"
-                    size={14}
-                    color={theme.colors.primary}
-                  />
-                  <Text style={styles.inPersonText}>
-                    In-Person Visit
-                  </Text>
-                </View>
-              )
+              <Button title={t("common:join")} size="sm" onPress={handleJoin} loading={localLoading} style={styles.mainBtn} />
             ) : (
               !isDoctor && (
                 appointment.payment_status === "charge_pending" ? (
-                  <Button
-                    title="Verifying..."
-                    size="sm"
-                    onPress={handleRefresh}
-                    loading={localLoading}
-                    style={styles.mainBtn}
-                  />
+                  <Button title={t("common:verifying")} size="sm" onPress={handleRefresh} loading={localLoading} style={styles.mainBtn} />
                 ) : (
-                  <Button
-                    title="Pay Now"
-                    size="sm"
-                    variant="primary"
-                    onPress={handlePay}
-                    loading={localLoading}
-                    style={styles.payBtn}
-                  />
+                  <Button title={t("appointment:payNow")} size="sm" variant="secondary" onPress={handlePay} loading={localLoading} style={styles.payBtn} />
                 )
               )
             )
           )}
 
           {isDoctor && appointment.status?.toUpperCase() === "REQUESTED" && (
-            <Button
-              title="Accept"
+            <Button 
+              title={t("common:accept")} 
               size="sm"
               onPress={async () => {
                 try {

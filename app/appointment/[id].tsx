@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from '../../src/i18n';
 import {
   ActivityIndicator,
   Alert,
@@ -37,6 +38,7 @@ function formatTime(iso: string): string {
 }
 
 export default function AppointmentDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -83,9 +85,9 @@ export default function AppointmentDetailScreen() {
           onPress: async () => {
             try {
               await cancelAppointment(appointment.id);
-              Alert.alert("Cancelled", "Appointment has been cancelled.");
+              Alert.alert("Cancelled", t("appointment:cancelledSuccessMessage"));
             } catch {
-              Alert.alert("Error", "Failed to cancel.");
+              Alert.alert("Error", t("errors:cancelActionFailed"));
             }
           },
         },
@@ -96,9 +98,9 @@ export default function AppointmentDetailScreen() {
   const handleAccept = async () => {
     try {
       await doctorDecision(appointment.id, { action: "accept" });
-      Alert.alert("Accepted", "Appointment has been confirmed.");
+      Alert.alert(t("appointment:accepted"), t("appointment:confirmedSuccess"));
     } catch {
-      Alert.alert("Error", "Failed to accept.");
+      Alert.alert("Error", t("errors:acceptActionFailed"));
     }
   };
 
@@ -173,7 +175,7 @@ export default function AppointmentDetailScreen() {
 
       {/* Details Card */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Appointment Details</Text>
+        <Text style={styles.cardTitle}>{t("appointment:appointmentDetails")}</Text>
 
         <DetailRow
           icon="calendar"
@@ -182,7 +184,7 @@ export default function AppointmentDetailScreen() {
         />
         <DetailRow
           icon="time"
-          label="Time"
+          label={t("common:timeLabel")}
           value={`${formatTime(appointment.scheduled_start)} – ${formatTime(
             appointment.scheduled_end
           )}`}
@@ -193,7 +195,7 @@ export default function AppointmentDetailScreen() {
           value={appointment.mode === "ONLINE" ? "Online Consultation" : "In-Person Visit"}
         />
         {appointment.reason ? (
-          <DetailRow icon="document-text" label="Reason" value={appointment.reason} />
+          <DetailRow icon="document-text" label={t("common:reasonLabel")} value={appointment.reason} />
         ) : null}
       </View>
 
@@ -210,7 +212,7 @@ export default function AppointmentDetailScreen() {
             ) : (
               <>
                 <Ionicons name="videocam" size={20} color="#fff" />
-                <Text style={styles.joinText}>Join Consultation</Text>
+                <Text style={styles.joinText}>{t("appointment:joinConsultation")}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -227,7 +229,7 @@ export default function AppointmentDetailScreen() {
             ) : (
               <>
                 <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                <Text style={styles.acceptText}>Accept Appointment</Text>
+                <Text style={styles.acceptText}>{t("appointment:acceptAppointment")}</Text>
               </>
             )}
           </TouchableOpacity>

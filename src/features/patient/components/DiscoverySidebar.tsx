@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation } from 'react-native';
 import { Input, StarRating } from '../../../components/ui';
@@ -29,6 +30,7 @@ interface DiscoverySidebarProps {
 }
 
 export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProps) {
+  const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme, isDark, isCollapsed), [theme, isDark, isCollapsed]);
   
@@ -51,7 +53,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
 
   const getSortLabel = () => {
     const sort = SORT_OPTIONS.find(s => s.value === sortBy);
-    return sort?.label || 'Recommended (Rating)';
+    return sort?.label || t('patient:recommendedRating');
   };
 
   if (isCollapsed) {
@@ -91,17 +93,17 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
           <TouchableOpacity onPress={onToggle} style={styles.headerToggle}>
             <Ionicons name="chevron-forward" size={18} color={theme.colors.textSecondary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Filters</Text>
+          <Text style={styles.headerTitle}>{t("patient:filters")}</Text>
         </View>
         <TouchableOpacity onPress={clearFilters}>
-          <Text style={styles.clearText}>Reset</Text>
+          <Text style={styles.clearText}>{t("common:reset")}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Sort By Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sort By</Text>
+          <Text style={styles.sectionTitle}>{t("patient:sortBy")}</Text>
           <TouchableOpacity 
             style={styles.dropdownTrigger} 
             onPress={() => toggleSection('sort')}
@@ -125,7 +127,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
                   setExpandedSection(null);
                 }}
               >
-                <Text style={styles.dropdownItemText}>Recommended (Rating)</Text>
+                <Text style={styles.dropdownItemText}>{t("patient:recommendedRating")}</Text>
               </TouchableOpacity>
               {SORT_OPTIONS.map((sort) => (
                 <TouchableOpacity 
@@ -189,9 +191,9 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
 
         {/* Location & Facility Redesign - Simpler and Spaced */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location & Facility</Text>
+          <Text style={styles.sectionTitle}>{t("appointment:locationFacility")}</Text>
           <Input
-            placeholder="City or Region"
+            placeholder={t("common:cityRegion")}
             value={location || ''}
             onChangeText={(val) => setAdvancedFilters({ location: val || null })}
             leftIcon={<Ionicons name="location-outline" size={16} color={theme.colors.primary} />}
@@ -200,7 +202,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
           />
           <View style={{ height: 12 }} />
           <Input
-            placeholder="Hospital Name"
+            placeholder={t("doctor:hospitalName")}
             value={hospital || ''}
             onChangeText={(val) => setAdvancedFilters({ hospital: val || null })}
             leftIcon={<Ionicons name="business-outline" size={16} color={theme.colors.primary} />}
@@ -211,7 +213,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
 
         {/* Price Dropdown */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Consultation Fee</Text>
+          <Text style={styles.sectionTitle}>{t("doctor:consultationFeeLabel")}</Text>
           <TouchableOpacity 
             style={styles.dropdownTrigger} 
             onPress={() => toggleSection('price')}
@@ -246,7 +248,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
 
         {/* Rating Dropdown */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Minimum Rating</Text>
+          <Text style={styles.sectionTitle}>{t("patient:minimumRating")}</Text>
           <TouchableOpacity 
             style={styles.dropdownTrigger} 
             onPress={() => toggleSection('rating')}
@@ -258,7 +260,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
                   <Text style={[styles.dropdownValue, { marginLeft: 8 }]}>{minRating}+ Stars</Text>
                 </>
               ) : (
-                <Text style={[styles.dropdownValue, { color: theme.colors.textTertiary }]}>Select Minimum Rating</Text>
+                <Text style={[styles.dropdownValue, { color: theme.colors.textTertiary }]}>{t("patient:selectMinRating")}</Text>
               )}
             </View>
             <Ionicons 
@@ -277,7 +279,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
                   setExpandedSection(null);
                 }}
               >
-                <Text style={styles.dropdownItemText}>Any Rating</Text>
+                <Text style={styles.dropdownItemText}>{t("patient:anyRating")}</Text>
               </TouchableOpacity>
               {[3, 4, 4.5].map((rating) => (
                 <TouchableOpacity 
@@ -307,7 +309,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
           >
             <Ionicons name="calendar-outline" size={18} color={theme.colors.primary} />
             <Text style={styles.calendarValue}>
-              {availability === 'any' ? 'Select Date Range' : availability === 'today' ? 'Today' : 'Next 7 Days'}
+              {availability === 'any' ? 'Select Date Range' : availability === 'today' ? t('common:today') : 'Next 7 Days'}
             </Text>
             <Ionicons name="chevron-down" size={16} color={theme.colors.textTertiary} />
           </TouchableOpacity>
@@ -321,7 +323,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
                   setExpandedSection(null);
                 }}
               >
-                <Text style={[styles.dateOptionText, availability === 'any' && styles.dateOptionTextActive]}>Any Time</Text>
+                <Text style={[styles.dateOptionText, availability === 'any' && styles.dateOptionTextActive]}>{t("patient:anyTime")}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.dateOption, availability === 'today' && styles.dateOptionActive]}
@@ -330,7 +332,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
                   setExpandedSection(null);
                 }}
               >
-                <Text style={[styles.dateOptionText, availability === 'today' && styles.dateOptionTextActive]}>Today</Text>
+                <Text style={[styles.dateOptionText, availability === 'today' && styles.dateOptionTextActive]}>{t("common:today")}</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.dateOption, availability === 'this-week' && styles.dateOptionActive]}
@@ -339,7 +341,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
                   setExpandedSection(null);
                 }}
               >
-                <Text style={[styles.dateOptionText, availability === 'this-week' && styles.dateOptionTextActive]}>This Week</Text>
+                <Text style={[styles.dateOptionText, availability === 'this-week' && styles.dateOptionTextActive]}>{t("common:thisWeek")}</Text>
               </TouchableOpacity>
             </View>
           )}

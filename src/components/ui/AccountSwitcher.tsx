@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../i18n';
 import React, { useMemo } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuthStore } from '../../store/authStore';
@@ -13,6 +14,7 @@ interface AccountSwitcherProps {
 }
 
 export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, variant = 'sidebar' }: AccountSwitcherProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -53,8 +55,8 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
               <Ionicons name="people" size={22} color={theme.colors.primary} />
             </View>
             <View style={styles.ctaTextContainer}>
-              <Text style={styles.ctaTitle}>Patient Account</Text>
-              <Text style={styles.ctaSub}>Book appointments as a patient too.</Text>
+              <Text style={styles.ctaTitle}>{t("patient:patientAccount")}</Text>
+              <Text style={styles.ctaSub}>{t("patient:bookAsPatientDesc")}</Text>
             </View>
           </View>
 
@@ -71,7 +73,7 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
                 <Ionicons name="person-add-outline" size={18} color={theme.colors.primary} />
               </View>
               <View style={styles.ctaOptionText}>
-                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>Create New Account</Text>
+                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>{t("auth:createNewAccount")}</Text>
                 <Text style={[styles.ctaOptionSub, { color: theme.colors.textTertiary }]}>
                   Set up a fresh patient profile
                 </Text>
@@ -92,7 +94,7 @@ export function AccountSwitcher({ isCollapsed, onCreatePatient, onLinkExisting, 
                 <Ionicons name="link-outline" size={18} color="#13C2C2" />
               </View>
               <View style={styles.ctaOptionText}>
-                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>Link Existing Account</Text>
+                <Text style={[styles.ctaOptionTitle, { color: theme.colors.text }]}>{t("patient:linkExistingAccount")}</Text>
                 <Text style={[styles.ctaOptionSub, { color: theme.colors.textTertiary }]}>
                   Connect an account you already have
                 </Text>

@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useTranslation } from '../../src/i18n';
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +17,7 @@ import { COLORS, RADII, SPACING } from "../../src/constants/theme";
 import { useAuthStore } from "../../src/store/authStore";
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
@@ -32,7 +34,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert("Error", t("errors:fillAllFieldsWarning"));
       return;
     }
 
@@ -54,8 +56,8 @@ export default function LoginScreen() {
     >
       <View style={[styles.inner, { paddingTop: insets.top + 40 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome to MedLink</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.title}>{t("auth:welcomeToMedLink")}</Text>
+          <Text style={styles.subtitle}>{t("auth:signInToContinue")}</Text>
         </View>
 
         <View style={styles.form}>
@@ -69,7 +71,7 @@ export default function LoginScreen() {
             <Text style={styles.label}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your email"
+              placeholder={t("auth:enterYourEmail")}
               placeholderTextColor={COLORS.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -82,7 +84,7 @@ export default function LoginScreen() {
             <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your password"
+              placeholder={t("auth:enterYourPassword")}
               placeholderTextColor={COLORS.textMuted}
               secureTextEntry
               value={password}
@@ -105,7 +107,7 @@ export default function LoginScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Login</Text>
+              <Text style={styles.btnText}>{t("auth:loginBtnText")}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -113,7 +115,7 @@ export default function LoginScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => router.push("/auth/register" as any)}>
-            <Text style={styles.footerLink}>Register Here</Text>
+            <Text style={styles.footerLink}>{t("auth:registerHere")}</Text>
           </TouchableOpacity>
         </View>
       </View>

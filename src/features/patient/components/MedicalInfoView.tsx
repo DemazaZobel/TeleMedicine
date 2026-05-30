@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
@@ -28,6 +29,7 @@ function Badge({ label, color, bg }: { label: string; color: string; bg: string 
 }
 
 export function MedicalInfoView() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -54,7 +56,7 @@ export function MedicalInfoView() {
         {/* Header */}
         <PageHeader
           title="Health Record"
-          subtitle="Your medical information at a glance"
+          subtitle={t("doctor:medicalInfoSub")}
           action={hasData ? {
             label: "Edit",
             onPress: () => setIsModalVisible(true)
@@ -64,8 +66,8 @@ export function MedicalInfoView() {
         {!hasData && !isLoadingInfo ? (
           <EmptyState
             icon="heart-outline"
-            title="No Medical Info Yet"
-            description="Add your medical details so doctors can serve you better."
+            title={t("doctor:noMedicalInfoYet")}
+            description={t("doctor:addMedicalInfoDesc")}
             actionLabel="Add Medical Info"
             onAction={() => setIsModalVisible(true)}
           />
@@ -75,7 +77,7 @@ export function MedicalInfoView() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="water-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.sectionTitle}>Vitals</Text>
+                <Text style={styles.sectionTitle}>{t("doctor:vitals")}</Text>
               </View>
 
               {medicalInfo?.blood_type ? (
@@ -83,11 +85,11 @@ export function MedicalInfoView() {
                   <View style={styles.bloodTypeBadge}>
                     <Text style={styles.bloodTypeText}>{medicalInfo.blood_type}</Text>
                   </View>
-                  <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>Blood Type</Text>
+                  <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary }}>{t("patient:bloodType")}</Text>
                 </View>
               ) : null}
 
-              <InfoRow label="Date of Birth" value={medicalInfo?.date_of_birth ?? ''} theme={theme} />
+              <InfoRow label={t("patient:dob")} value={medicalInfo?.date_of_birth ?? ''} theme={theme} />
               <InfoRow label="Gender" value={medicalInfo?.gender ?? ''} theme={theme} />
             </View>
 
@@ -97,12 +99,12 @@ export function MedicalInfoView() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="alert-circle-outline" size={20} color={theme.colors.warning} />
-                <Text style={styles.sectionTitle}>Conditions & Allergies</Text>
+                <Text style={styles.sectionTitle}>{t("doctor:conditionsAllergies")}</Text>
               </View>
 
               {medicalInfo?.allergies ? (
                 <View style={{ marginBottom: 16 }}>
-                  <Text style={styles.fieldLabel}>Allergies</Text>
+                  <Text style={styles.fieldLabel}>{t("doctor:allergies")}</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                     {medicalInfo.allergies.split(',').map((a, i) => (
                       <Badge
@@ -118,7 +120,7 @@ export function MedicalInfoView() {
 
               {medicalInfo?.chronic_conditions ? (
                 <View style={{ marginBottom: 16 }}>
-                  <Text style={styles.fieldLabel}>Chronic Conditions</Text>
+                  <Text style={styles.fieldLabel}>{t("doctor:chronicConditions")}</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                     {medicalInfo.chronic_conditions.split(',').map((c, i) => (
                       <Badge
@@ -146,7 +148,7 @@ export function MedicalInfoView() {
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
-                    <Text style={styles.sectionTitle}>Medical History</Text>
+                    <Text style={styles.sectionTitle}>{t("doctor:medicalHistoryTitle")}</Text>
                   </View>
                   <Text style={{ ...theme.typography.body, color: theme.colors.textSecondary, lineHeight: 24 }}>
                     {medicalInfo.medical_history}
@@ -164,9 +166,9 @@ export function MedicalInfoView() {
                     <Ionicons name="location-outline" size={20} color={theme.colors.success} />
                     <Text style={styles.sectionTitle}>Location</Text>
                   </View>
-                  <InfoRow label="Address" value={medicalInfo?.address ?? ''} theme={theme} />
-                  <InfoRow label="City" value={medicalInfo?.city ?? ''} theme={theme} />
-                  <InfoRow label="Country" value={medicalInfo?.country ?? ''} theme={theme} />
+                  <InfoRow label={t("common:address")} value={medicalInfo?.address ?? ''} theme={theme} />
+                  <InfoRow label={t("common:city")} value={medicalInfo?.city ?? ''} theme={theme} />
+                  <InfoRow label={t("common:country")} value={medicalInfo?.country ?? ''} theme={theme} />
                 </View>
               </>
             ) : null}

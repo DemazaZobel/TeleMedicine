@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from '../../i18n';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from './ScreenContainer';
@@ -19,6 +20,7 @@ export const ComingSoon = React.memo(function ComingSoon({
   icon = '🚧',
   showBackButton = false,
 }: ComingSoonProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const router = useRouter();
   const styles = useMemo(() => createComingSoonStyles(theme), [theme]);
@@ -27,7 +29,7 @@ export const ComingSoon = React.memo(function ComingSoon({
     <ScreenContainer centered scrollable={false}>
       <View style={styles.container}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>In Development</Text>
+          <Text style={styles.badgeText}>{t("common:inDevelopment")}</Text>
         </View>
 
         <Text style={styles.icon}>{icon}</Text>

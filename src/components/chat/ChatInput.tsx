@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../../i18n';
 import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 const ChatInput: React.FC<Props> = ({ onSend }) => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -31,7 +33,7 @@ const ChatInput: React.FC<Props> = ({ onSend }) => {
         style={styles.input}
         value={text}
         onChangeText={setText}
-        placeholder="Type a message..."
+        placeholder={t("patient:inputPlaceholder")}
         placeholderTextColor="#8E8E93"
         multiline
         maxLength={2000}

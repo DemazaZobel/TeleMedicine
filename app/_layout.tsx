@@ -1,16 +1,20 @@
 import { useFonts } from 'expo-font';
+import { useTranslation } from '../src/i18n';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../global.css';
 import { Loader } from '../src/components/ui';
 import { useAuthStore } from '../src/store/authStore';
 import { ThemeProvider, useTheme } from '../src/theme';
+import "../src/i18n";
+import { getItemAsync } from '../src/services/storage';
 
 // Prevent the splash screen from auto-hiding (no-op on web)
 SplashScreen.preventAutoHideAsync().catch(() => { });
 
 function AuthGate({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const segments = useSegments();
   const { isAuthenticated, isBootstrapping, user } = useAuthStore();
@@ -52,7 +56,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isBootstrapping, segments, router, user?.role]);
 
   if (isBootstrapping) {
-    return <Loader message="Starting MedLink..." />;
+    return <Loader message={t("common:startingMedLink")} />;
   }
 
   return <>{children}</>;
@@ -91,23 +95,40 @@ const styles = StyleSheet.create({
 });
 
 export default function RootLayout() {
+  const { t } = useTranslation();
   const bootstrap = useAuthStore((state) => state.bootstrap);
 
   const [fontsLoaded] = useFonts({
     // Add custom fonts here if needed
   });
+  const [langLoaded, setLangLoaded] = useState(false);
 
   useEffect(() => {
+    async function initLanguage() {
+      try {
+        const savedLang = await getItemAsync('preferred_language');
+        if (savedLang) {
+          const i18nInstance = require('../src/i18n').default;
+          await i18nInstance.changeLanguage(savedLang);
+        }
+      } catch (err) {
+        console.warn('Failed to load persisted language:', err);
+      } finally {
+        setLangLoaded(true);
+      }
+    }
+    
+    initLanguage();
     bootstrap();
   }, []);
 
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    if (fontsLoaded && langLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, langLoaded]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !langLoaded) {
     return null;
   }
 

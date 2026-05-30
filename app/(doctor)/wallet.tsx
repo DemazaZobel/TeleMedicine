@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from '../../src/i18n';
 import { View, Text, StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { ScreenContainer, Card, EmptyState } from '../../src/components/ui';
 import { useBookingStore } from '../../src/store/booking.store';
@@ -6,6 +7,7 @@ import { useTheme, Theme } from '../../src/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function WalletScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const { wallet, fetchWallet, isLoading } = useBookingStore();
@@ -21,7 +23,7 @@ export default function WalletScreen() {
   return (
     <ScreenContainer padded={false}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Wallet</Text>
+        <Text style={styles.headerTitle}>{t("doctor:myWallet")}</Text>
       </View>
 
       <ScrollView 
@@ -29,22 +31,22 @@ export default function WalletScreen() {
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={onRefresh} />}
       >
         <Card style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Available Balance</Text>
+          <Text style={styles.balanceLabel}>{t("doctor:availableBalance")}</Text>
           <Text style={styles.balanceAmount}>
             {wallet?.total_earned ? `${wallet.total_earned} ETB` : '0.00 ETB'}
           </Text>
           <View style={styles.badge}>
             <Ionicons name="checkmark-circle" size={14} color={theme.colors.success} />
-            <Text style={styles.badgeText}>Ready for withdrawal</Text>
+            <Text style={styles.badgeText}>{t("doctor:readyForWithdrawal")}</Text>
           </View>
         </Card>
 
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={styles.sectionTitle}>{t("doctor:recentActivity")}</Text>
           <EmptyState 
             icon="receipt-outline" 
-            title="No recent transactions" 
-            description="Completed appointment payments will appear here." 
+            title={t("doctor:noTransactions")} 
+            description={t("doctor:noTransactionsDesc")} 
           />
         </View>
       </ScrollView>

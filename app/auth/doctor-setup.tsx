@@ -1,4 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -6,6 +7,7 @@ import { COLORS, RADII, SPACING } from '../../src/constants/theme';
 import { doctorApi } from '../../src/features/doctor/services/doctor.api';
 
 export default function DoctorSetupScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function DoctorSetupScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!file) return Alert.alert("Missing File", "Please upload your medical license.");
+    if (!file) return Alert.alert(t("errors:missingFile"), t("doctor:uploadLicenseWarning"));
     setLoading(true);
 
     try {
@@ -49,10 +51,10 @@ export default function DoctorSetupScreen() {
 
       await doctorApi.uploadDoctorDocument(formData);
 
-      Alert.alert("Submitted", "Your profile is now under review by MedLink Admin.");
+      Alert.alert(t("common:submitted"), t("doctor:underReviewDesc"));
       router.replace('/doctor/pending' as any);
     } catch (err) {
-      Alert.alert("Error", "Submission failed. Please check your network and try again.");
+      Alert.alert("Error", t("errors:submissionFailedError"));
     } finally {
       setLoading(false);
     }
@@ -60,15 +62,15 @@ export default function DoctorSetupScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Professional Onboarding</Text>
+      <Text style={styles.header}>{t("doctor:professionalOnboarding")}</Text>
       <Text style={styles.subHeader}>Step {step} of 2</Text>
 
       {step === 1 ? (
         <View style={styles.stepContainer}>
-          <Text style={styles.label}>What is your medical specialization?</Text>
+          <Text style={styles.label}>{t("doctor:specializationQuestion")}</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. General Practitioner, Cardiologist"
+            placeholder={t("doctor:egRole")}
             placeholderTextColor={COLORS.textMuted}
             value={spec}
             onChangeText={setSpec}
@@ -96,17 +98,17 @@ export default function DoctorSetupScreen() {
 
           <TouchableOpacity
             style={styles.primaryBtn}
-            onPress={() => spec && exp && fee ? setStep(2) : Alert.alert("Required", "Fill all fields")}
+            onPress={() => spec && exp && fee ? setStep(2) : Alert.alert(t("errors:required"), t("common:fillAllFields"))}
           >
-            <Text style={styles.btnText}>Next: Verification Docs</Text>
+            <Text style={styles.btnText}>{t("doctor:nextDocs")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.stepContainer}>
-          <Text style={styles.label}>Medical License Number</Text>
+          <Text style={styles.label}>{t("doctor:medicalLicenseNumber")}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter license ID"
+            placeholder={t("doctor:enterLicenseId")}
             placeholderTextColor={COLORS.textMuted}
             value={licenseNo}
             onChangeText={setLicenseNo}
@@ -122,7 +124,7 @@ export default function DoctorSetupScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Submit for Approval</Text>}
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t("doctor:submitForApproval")}</Text>}
             </TouchableOpacity>
           </View>
         </View>

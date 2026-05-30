@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useTranslation } from '../../src/i18n';
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +17,7 @@ import { COLORS, RADII, SPACING } from "../../src/constants/theme";
 import { useAuthStore } from "../../src/store/authStore";
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -38,7 +40,7 @@ export default function RegisterScreen() {
 
   const submit = async () => {
     if (!firstName || !lastName || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert("Error", t("errors:fillAllFieldsWarning"));
       return;
     }
     
@@ -70,8 +72,8 @@ export default function RegisterScreen() {
     >
       <View style={[styles.inner, { paddingTop: insets.top + 40 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join MedLink for better healthcare</Text>
+          <Text style={styles.title}>{t("auth:createAccount")}</Text>
+          <Text style={styles.subtitle}>{t("auth:joinMedLinkTitle")}</Text>
         </View>
 
         <View style={styles.form}>
@@ -82,20 +84,20 @@ export default function RegisterScreen() {
           )}
           
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>I am a...</Text>
+            <Text style={styles.label}>{t("auth:iAmA")}</Text>
             <View style={styles.roleRow}>
               <TouchableOpacity
                 style={[styles.roleCard, role === "PATIENT" && styles.roleCardActive]}
                 onPress={() => handleRoleChange("PATIENT")}
               >
-                <Text style={[styles.roleText, role === "PATIENT" && styles.roleTextActive]}>Patient</Text>
+                <Text style={[styles.roleText, role === "PATIENT" && styles.roleTextActive]}>{t("common:patient")}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[styles.roleCard, role === "DOCTOR" && styles.roleCardActive]}
                 onPress={() => handleRoleChange("DOCTOR")}
               >
-                <Text style={[styles.roleText, role === "DOCTOR" && styles.roleTextActive]}>Doctor</Text>
+                <Text style={[styles.roleText, role === "DOCTOR" && styles.roleTextActive]}>{t("common:doctor")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -127,7 +129,7 @@ export default function RegisterScreen() {
             <Text style={styles.label}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your email"
+              placeholder={t("auth:enterYourEmail")}
               placeholderTextColor={COLORS.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -140,7 +142,7 @@ export default function RegisterScreen() {
             <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Create a password"
+              placeholder={t("auth:createPasswordPlaceholder")}
               placeholderTextColor={COLORS.textMuted}
               secureTextEntry
               value={password}
@@ -156,15 +158,15 @@ export default function RegisterScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Register Account</Text>
+              <Text style={styles.btnText}>{t("auth:registerAccount")}</Text>
             )}
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
+          <Text style={styles.footerText}>{t("auth:alreadyHaveAccount")}</Text>
           <TouchableOpacity onPress={() => router.replace("/auth/login" as any)}>
-            <Text style={styles.footerLink}>Login Here</Text>
+            <Text style={styles.footerLink}>{t("auth:loginHere")}</Text>
           </TouchableOpacity>
         </View>
       </View>

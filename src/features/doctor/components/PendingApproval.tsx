@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Platform,
@@ -15,6 +16,7 @@ import { DoctorDocumentsModal } from "./DoctorDocumentsModal";
 import { DoctorProfileModal } from "./DoctorProfileModal";
 
 export function PendingApproval() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const logout = useAuthStore((s) => s.logout);
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -41,7 +43,7 @@ export function PendingApproval() {
             "Welcome to MedLink. Please configure your professional profile to begin accepting patient appointments.",
           actionComponent: (
             <Button
-              title="Configure Profile"
+              title={t("patient:configureProfile")}
               onPress={() => setProfileModalVisible(true)}
               fullWidth
               style={styles.primaryActionBtn}
@@ -58,13 +60,13 @@ export function PendingApproval() {
           actionComponent: (
             <View style={{ width: "100%", gap: 12 }}>
               <Button
-                title="Upload Secure Documents"
+                title={t("doctor:uploadSecureDocs")}
                 onPress={() => setDocsModalVisible(true)}
                 fullWidth
                 style={styles.primaryActionBtn}
               />
               <Button
-                title="Review Profile"
+                title={t("doctor:reviewProfile")}
                 variant="outline"
                 onPress={() => setProfileModalVisible(true)}
                 fullWidth
@@ -92,7 +94,7 @@ export function PendingApproval() {
                   size={18}
                   color={theme.colors.primary}
                 />
-                <Text style={styles.secondaryActionText}>Manage Docs</Text>
+                <Text style={styles.secondaryActionText}>{t("doctor:manageDocs")}</Text>
               </TouchableOpacity>
 
               <View style={styles.verticalDivider} />
@@ -106,7 +108,7 @@ export function PendingApproval() {
                   size={18}
                   color={theme.colors.primary}
                 />
-                <Text style={styles.secondaryActionText}>Review Profile</Text>
+                <Text style={styles.secondaryActionText}>{t("doctor:reviewProfile")}</Text>
               </TouchableOpacity>
             </View>
           ),
@@ -137,7 +139,7 @@ export function PendingApproval() {
         <View style={styles.actions}>{content.actionComponent}</View>
 
         <Button
-          title="Log Out Securely"
+          title={t("auth:logOutSecurely")}
           variant="ghost"
           onPress={logout}
           style={styles.logoutBtn}

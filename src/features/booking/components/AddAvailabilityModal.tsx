@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import { useTranslation } from '../../../i18n';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
@@ -43,9 +46,8 @@ interface AddAvailabilityModalProps {
   } | null;
 }
 
-export function AddAvailabilityModal({
-  visible, onClose, onConfirm, isLoading, initialData
-}: AddAvailabilityModalProps) {
+export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, initialData }: AddAvailabilityModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -85,7 +87,7 @@ export function AddAvailabilityModal({
   const handleAdd = async () => {
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-      Alert.alert("Invalid Time", "Please use 24-hour format (e.g., 09:30 or 15:00)");
+      Alert.alert(t("errors:invalidTime"), t("doctor:validationTimeFormat"));
       return;
     }
 
@@ -93,7 +95,7 @@ export function AddAvailabilityModal({
     const [endH, endM] = endTime.split(':').map(Number);
 
     if (startH > endH || (startH === endH && startM >= endM)) {
-      Alert.alert("Invalid Range", "End time must be after start time");
+      Alert.alert(t("errors:invalidRange"), t("errors:endTimeError"));
       return;
     }
 
@@ -130,10 +132,8 @@ export function AddAvailabilityModal({
         {/* ── Recurring toggle ── */}
         <View style={styles.recurringSection}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.recurringTitle}>Repeat Weekly</Text>
-            <Text style={styles.recurringSubtitle}>
-              Make these hours available every week
-            </Text>
+            <Text style={styles.recurringTitle}>{t("doctor:repeatWeekly")}</Text>
+            <Text style={styles.recurringSubtitle}>{t("doctor:makeWeekly")}</Text>
           </View>
           <Switch
             value={isRecurring}
@@ -148,7 +148,7 @@ export function AddAvailabilityModal({
         {/* ── Day / date picker ── */}
         {isRecurring ? (
           <View style={styles.section}>
-            <Text style={styles.label}>Select Day</Text>
+            <Text style={styles.label}>{t("doctor:selectDay")}</Text>
             <View style={styles.daySelector}>
               {DAYS.map((day, index) => {
                 const isActive = weekday === index;
@@ -168,8 +168,8 @@ export function AddAvailabilityModal({
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.label}>Select Specific Date</Text>
-            <TouchableOpacity
+            <Text style={styles.label}>{t("doctor:selectSpecificDate")}</Text>
+            <TouchableOpacity 
               style={styles.datePickerBtn}
               onPress={() => {
                 if (Platform.OS === 'web') {
@@ -225,10 +225,7 @@ export function AddAvailabilityModal({
         {/* ── Time inputs ── */}
         <View style={styles.timeRow}>
           <View style={styles.timeField}>
-            <Text style={styles.fieldLabel}>
-              Start Time{" "}
-              <Text style={styles.fieldHint}>(24h)</Text>
-            </Text>
+            <Text style={styles.fieldLabel}>{t("doctor:startTime")}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons
                 name="time-outline"
@@ -252,10 +249,7 @@ export function AddAvailabilityModal({
           </View>
 
           <View style={styles.timeField}>
-            <Text style={styles.fieldLabel}>
-              End Time{" "}
-              <Text style={styles.fieldHint}>(24h)</Text>
-            </Text>
+            <Text style={styles.fieldLabel}>{t("doctor:endTime")}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons
                 name="time"

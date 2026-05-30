@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
@@ -91,6 +92,7 @@ Violations may result in immediate account suspension and legal action.`,
 ];
 
 export default function TermsScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
@@ -108,7 +110,7 @@ export default function TermsScreen() {
 
         <View style={{ paddingHorizontal: isMobile ? 16 : 64, paddingVertical: isMobile ? 24 : 48, gap: 32 }}>
           <View style={{ gap: 8 }}>
-            <Text style={{ fontSize: isMobile ? 26 : 32, fontWeight: '800', color: theme.colors.text }}>Terms of Service</Text>
+            <Text style={{ fontSize: isMobile ? 26 : 32, fontWeight: '800', color: theme.colors.text }}>{t("common:termsOfService")}</Text>
             <Text style={{ fontSize: 13, color: theme.colors.textSecondary }}>Last updated: May 2026</Text>
             <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>
               Please read these Terms of Service carefully before using the Medlink platform.

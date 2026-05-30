@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
@@ -60,6 +61,7 @@ function HelpArticle({ title, body, theme }: { title: string; body: string; them
 }
 
 export default function HelpScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
@@ -77,8 +79,8 @@ export default function HelpScreen() {
 
         <View style={{ paddingHorizontal: isMobile ? 16 : 64, paddingVertical: isMobile ? 24 : 48, gap: 32 }}>
           <View style={{ gap: 8 }}>
-            <Text style={{ fontSize: isMobile ? 26 : 32, fontWeight: '800', color: theme.colors.text }}>Help Center</Text>
-            <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>Find answers to common questions about using Medlink.</Text>
+            <Text style={{ fontSize: isMobile ? 26 : 32, fontWeight: '800', color: theme.colors.text }}>{t("common:helpCenter")}</Text>
+            <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>{t("common:faqDesc")}</Text>
           </View>
 
           {HELP_CATEGORIES.map((cat) => (

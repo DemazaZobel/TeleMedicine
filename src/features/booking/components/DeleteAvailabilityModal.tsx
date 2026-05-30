@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../../i18n';
 import { StyleSheet, View, Text } from 'react-native';
 import { Button } from '../../../components/ui/Button';
 import { ModalBase } from '../../../components/ui/ModalBase';
@@ -17,14 +18,15 @@ export function DeleteAvailabilityModal({
   onConfirm,
   isLoading
 }: DeleteAvailabilityModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
 
   return (
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Delete Working Hours"
-      subtitle="Are you sure you want to remove this schedule? This action cannot be undone."
+      title={t("doctor:deleteWorkingHours")}
+      subtitle={t("doctor:removeConfirm")}
       maxWidth={400}
     >
       <View style={styles.container}>

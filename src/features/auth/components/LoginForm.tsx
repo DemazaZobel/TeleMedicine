@@ -5,11 +5,13 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AuthContainer, Button, Input } from '../../../components/ui';
 import { useAuthStore } from '../../../store/authStore';
 import { Theme, useTheme } from '../../../theme';
+import { useTranslation } from '../../../i18n';
 
 export function LoginForm() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const { t } = useTranslation();
 
   const { login, isLoading, error, clearError } = useAuthStore();
 
@@ -57,7 +59,7 @@ export function LoginForm() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.title}>{t("auth:welcomeBack")}</Text>
 
         </View>
 
@@ -72,7 +74,7 @@ export function LoginForm() {
         {/* Form */}
         <View style={styles.form}>
           <Input
-            placeholder="email address"
+            placeholder={t("auth:email")}
             value={email}
             onChangeText={(text) => {
               setEmail(text);
@@ -85,7 +87,7 @@ export function LoginForm() {
           />
 
           <Input
-            placeholder="Password"
+            placeholder={t("auth:password")}
             value={password}
             onChangeText={(text) => {
               setPassword(text);
@@ -99,11 +101,11 @@ export function LoginForm() {
             onPress={() => router.push('/(auth)/forgot-password')}
             style={styles.forgotRow}
           >
-            <Text style={styles.forgotText}>Forgot password?</Text>
+            <Text style={styles.forgotText}>{t("auth:forgotPassword")}</Text>
           </Pressable>
 
           <Button
-            title="Login"
+            title={t("auth:login")}
             onPress={handleLogin}
             loading={isLoading}
             fullWidth
@@ -135,12 +137,12 @@ export function LoginForm() {
         </View>*/}
 
         <Text style={styles.subtitle}>
-          Don't have an account yet?{' '}
+          {t("auth:dontHaveAccount")}{' '}
           <Text
             style={styles.link}
             onPress={() => router.push('/(auth)/register')}
           >
-            Sign up
+            {t("auth:signup")}
           </Text>
         </Text>
 

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
@@ -81,6 +82,7 @@ To exercise any of these rights, contact us at privacy@medlink.et.`,
 ];
 
 export default function PrivacyScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
@@ -98,7 +100,7 @@ export default function PrivacyScreen() {
 
         <View style={{ paddingHorizontal: isMobile ? 16 : 64, paddingVertical: isMobile ? 24 : 48, gap: 32 }}>
           <View style={{ gap: 8 }}>
-            <Text style={{ fontSize: isMobile ? 26 : 32, fontWeight: '800', color: theme.colors.text }}>Privacy Policy</Text>
+            <Text style={{ fontSize: isMobile ? 26 : 32, fontWeight: '800', color: theme.colors.text }}>{t("common:privacyPolicy")}</Text>
             <Text style={{ fontSize: 13, color: theme.colors.textSecondary }}>Last updated: May 2026</Text>
             <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>
               This Privacy Policy describes how Medlink collects, uses, and protects your personal and medical information when you use our platform.

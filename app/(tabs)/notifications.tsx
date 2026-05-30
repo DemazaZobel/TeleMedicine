@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from '../../src/i18n';
 import {
   FlatList,
   RefreshControl,
@@ -12,6 +13,7 @@ import { COLORS, SPACING } from "../../src/constants/theme";
 import { useAppointmentStore } from "../../src/store/appointmentStore";
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const {
     notifications,
@@ -57,7 +59,7 @@ export default function NotificationsScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No notifications yet</Text>
+            <Text style={styles.emptyText}>{t("common:noNotificationsYet")}</Text>
           </View>
         }
         refreshControl={

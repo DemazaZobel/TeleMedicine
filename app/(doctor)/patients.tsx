@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../src/i18n';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList, StyleSheet, Text,
@@ -72,6 +73,9 @@ function avatarColor(userId: string): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PatientsScreen() {
+  const { t } = useTranslation();
+  const isDoctor = useAuthStore((s) => s.user?.role === "DOCTOR");
+  const isVerified = useDoctorStore((s) => s.isDoctorVerified());
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -188,92 +192,20 @@ export default function PatientsScreen() {
             </View>
           </View>
 
-          {/* Stats + chevron */}
-          <View style={styles.cardRight}>
-            <Text style={styles.apptCount}>{item.totalAppointments}</Text>
-            <Text style={styles.apptCountLabel}>visits</Text>
-            <Ionicons
-              name={isOpen ? "chevron-up" : "chevron-down"}
-              size={14}
-              color={theme.colors.textTertiary}
-              style={{ marginTop: 6 }}
-            />
-          </View>
-        </View>
+          <View style={styles.divider} />
 
-        {/* ── Expanded detail ── */}
-        {isOpen && (
-          <View style={styles.expandedSection}>
-            <View style={styles.expandDivider} />
-
-            {/* Appointment reason */}
-            {appt.reason ? (
-              <View style={styles.detailRow}>
-                <Ionicons name="chatbubble-outline" size={14} color={theme.colors.textSecondary} />
-                <Text style={styles.detailLabel}>Reason:</Text>
-                <Text style={styles.detailValue} numberOfLines={2}>{appt.reason}</Text>
-              </View>
-            ) : null}
-
-            {/* Medical info */}
-            {item.profile && (
-              <>
-                {item.profile.blood_type ? (
-                  <View style={styles.detailRow}>
-                    <Ionicons name="water-outline" size={14} color={theme.colors.error} />
-                    <Text style={styles.detailLabel}>Blood Type:</Text>
-                    <Text style={styles.detailValue}>{item.profile.blood_type}</Text>
-                  </View>
-                ) : null}
-
-                {item.profile.allergies ? (
-                  <View style={styles.detailRow}>
-                    <Ionicons name="warning-outline" size={14} color={theme.colors.warning} />
-                    <Text style={styles.detailLabel}>Allergies:</Text>
-                    <Text style={styles.detailValue} numberOfLines={2}>{item.profile.allergies}</Text>
-                  </View>
-                ) : null}
-
-                {item.profile.chronic_conditions ? (
-                  <View style={styles.detailRow}>
-                    <Ionicons name="pulse-outline" size={14} color={theme.colors.primary} />
-                    <Text style={styles.detailLabel}>Conditions:</Text>
-                    <Text style={styles.detailValue} numberOfLines={2}>{item.profile.chronic_conditions}</Text>
-                  </View>
-                ) : null}
-
-                {item.profile.phone_number ? (
-                  <View style={styles.detailRow}>
-                    <Ionicons name="call-outline" size={14} color={theme.colors.textSecondary} />
-                    <Text style={styles.detailLabel}>Phone:</Text>
-                    <Text style={styles.detailValue}>{item.profile.phone_number}</Text>
-                  </View>
-                ) : null}
-              </>
-            )}
-
-            {/* Stats footer */}
-            <View style={styles.statsFooter}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statNum, { color: theme.colors.primary }]}>
-                  {item.totalAppointments}
-                </Text>
-                <Text style={styles.statLabel}>Total</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statNum, { color: theme.colors.success }]}>
-                  {item.completedAppointments}
-                </Text>
-                <Text style={styles.statLabel}>Completed</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statNum, { color: theme.colors.warning }]}>
-                  {item.totalAppointments - item.completedAppointments}
-                </Text>
-                <Text style={styles.statLabel}>Pending</Text>
-              </View>
+          <View style={styles.medicalInfoRow}>
+            <View style={styles.medicalInfoBlock}>
+              <Text style={styles.medicalLabel}>{t("doctor:allergiesTitle")}</Text>
+              <Text style={styles.medicalValue} numberOfLines={2}>
+                {allergies}
+              </Text>
+            </View>
+            <View style={styles.medicalInfoBlock}>
+              <Text style={styles.medicalLabel}>MEDICAL HISTORY</Text>
+              <Text style={styles.medicalValue} numberOfLines={2}>
+                {history}
+              </Text>
             </View>
           </View>
         )}
@@ -290,59 +222,68 @@ export default function PatientsScreen() {
   ];
 
   return (
-    <ScreenContainer scrollable={false} padded constrained>
-      <PageHeader
-        title="Patients"
-        subtitle={`${patients.length} patient${patients.length !== 1 ? "s" : ""} from your appointments`}
-      />
-
-      {/* Search */}
-      <View style={styles.searchBox}>
-        <Ionicons name="search-outline" size={16} color={theme.colors.textSecondary} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name, email or city…"
-          placeholderTextColor={theme.colors.textSecondary}
-          value={search}
-          onChangeText={setSearch}
+    <ScreenContainer scrollable={false} padded={false}>
+      <View style={styles.pageWrapper}>
+        <PageHeader
+          title={t("doctor:yourPatients")}
+          subtitle={t("doctor:patientsSub")}
         />
-        {search ? (
-          <TouchableOpacity onPress={() => setSearch("")}>
-            <Ionicons name="close-circle" size={16} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-        ) : null}
-      </View>
 
-      {/* Filter chips */}
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.key}
-            onPress={() => setFilter(f.key)}
-            style={[styles.filterChip, filter === f.key && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterText, filter === f.key && styles.filterTextActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.userId}
-        renderItem={renderPatient}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <EmptyState
-            icon="people-outline"
-            title="No Patients Found"
-            description={
-              filter !== "all"
-                ? "No patients match this filter."
-                : "Patients will appear here once you have appointments."
+        {/* ── Search & Filter Bar ── */}
+        <View style={styles.toolbar}>
+          <View style={styles.searchContainer}>
+            <Input
+              placeholder={t("doctor:searchPatientsPlaceholder")}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              containerStyle={{ marginBottom: 0, flex: 1 }}
+              leftIcon={
+                <Ionicons
+                  name="search-outline"
+                  size={20}
+                  color={theme.colors.textTertiary}
+                />
+              }
+            />
+          </View>
+          <Button
+            title={sortOrder === "asc" ? "A-Z" : "Z-A"}
+            variant="outline"
+            icon={
+              <Ionicons
+                name="filter"
+                size={16}
+                color={theme.colors.primary}
+                style={{ marginRight: 6 }}
+              />
             }
+            onPress={() =>
+              setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+            }
+            style={styles.sortBtn}
+          />
+        </View>
+
+        {isLoading && uniquePatients.length === 0 ? (
+          <ActivityIndicator
+            size="large"
+            color={theme.colors.primary}
+            style={{ marginTop: 40 }}
+          />
+        ) : (
+          <FlatList
+            data={uniquePatients}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderPatient}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <EmptyState
+                icon="people-outline"
+                title={t("doctor:noPatientsYet")}
+                description={t("doctor:noPatientsDesc")}
+              />
+            }
+            showsVerticalScrollIndicator={false}
           />
         }
       />

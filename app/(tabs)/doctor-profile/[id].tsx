@@ -1,4 +1,5 @@
 import { useBookingStore } from "@/store/booking.store";
+import { useTranslation } from '../../../src/i18n';
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
@@ -21,6 +22,7 @@ import { Theme, useTheme } from "../../../src/theme";
 import { formatDisplayValue } from "@/utils";
 
 export default function DoctorProfilePage() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams();
   const doctorId = typeof id === "string" ? id : id?.[0];
   const router = useRouter();
@@ -208,7 +210,7 @@ export default function DoctorProfilePage() {
                   <Ionicons name="cash-outline" size={20} color={theme.colors.primary} />
                   <View>
                     <Text style={styles.quickStatVal}>Br {doctor.consultation_fee}</Text>
-                    <Text style={styles.quickStatLabel}>Consultation</Text>
+                    <Text style={styles.quickStatLabel}>{t("appointment:consultation")}</Text>
                   </View>
                 </View>
               </View>
@@ -224,7 +226,7 @@ export default function DoctorProfilePage() {
                 style={styles.primaryActionBtn}
               />
               <Button
-                title="Message"
+                title={t("patient:message")}
                 variant="outline"
                 onPress={() => {}}
                 style={styles.secondaryActionBtn}
@@ -237,7 +239,7 @@ export default function DoctorProfilePage() {
       {/* ── ABOUT SECTION ── */}
       {doctor.biography || (doctor as any).bio ? (
         <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Professional Summary</Text>
+          <Text style={styles.sectionTitle}>{t("doctor:professionalSummary")}</Text>
           <Text style={styles.bioText}>
             {doctor.biography || (doctor as any).bio}
           </Text>
@@ -252,7 +254,7 @@ export default function DoctorProfilePage() {
 
         return (
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Clinical Experience</Text>
+            <Text style={styles.sectionTitle}>{t("doctor:clinicalExperience")}</Text>
             <View style={styles.listContainer}>
               <View style={styles.experienceItem}>
                 <View style={styles.experienceIcon}>
@@ -301,7 +303,7 @@ export default function DoctorProfilePage() {
             size={20}
             color={theme.colors.primary}
           />
-          <Text style={styles.miniCardTitle}>Quick Availability</Text>
+          <Text style={styles.miniCardTitle}>{t("doctor:quickAvailability")}</Text>
         </View>
 
         {isAvailabilityLoading ? (
@@ -351,7 +353,7 @@ export default function DoctorProfilePage() {
         )}
 
         <Button
-          title="See Full Schedule"
+          title={t("doctor:seeFullSchedule")}
           variant="outline"
           size="sm"
           onPress={() => {
@@ -371,7 +373,7 @@ export default function DoctorProfilePage() {
               size={20}
               color={theme.colors.primary}
             />
-            <Text style={styles.miniCardTitle}>Education</Text>
+            <Text style={styles.miniCardTitle}>{t("doctor:education")}</Text>
           </View>
           <Text style={styles.miniCardText}>
             {formatDisplayValue(doctor.education)}
@@ -410,7 +412,7 @@ export default function DoctorProfilePage() {
             size={20}
             color={theme.colors.primary}
           />
-          <Text style={styles.miniCardTitle}>Verified Provider</Text>
+          <Text style={styles.miniCardTitle}>{t("doctor:verifiedProvider")}</Text>
         </View>
         <Text style={styles.miniCardText}>
           Credentials verified by the MedLink clinical team.

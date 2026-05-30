@@ -10,10 +10,11 @@ import { GoogleSignInButton } from '../../../components/ui/GoogleSignInButton';
 import { useAuthStore } from '../../../store/authStore';
 import { Theme, useTheme } from '../../../theme';
 import type { UserRole } from '../../../types';
+import { useTranslation } from '../../../i18n';
 
-const ROLES: { label: string; icon: keyof typeof Ionicons.glyphMap; value: UserRole }[] = [
-  { label: 'Patient', icon: 'person-outline', value: 'PATIENT' },
-  { label: 'Doctor', icon: 'medkit-outline', value: 'DOCTOR' },
+const ROLES: { labelKey: string; icon: keyof typeof Ionicons.glyphMap; value: UserRole }[] = [
+  { labelKey: 'Patient', icon: 'person-outline', value: 'PATIENT' },
+  { labelKey: 'Doctor', icon: 'medkit-outline', value: 'DOCTOR' },
 ];
 
 function getPasswordStrength(password: string): { label: string; color: string; width: string } {
@@ -27,6 +28,7 @@ export function RegisterForm() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
 
   const { register, isLoading, error, clearError } = useAuthStore();
 
@@ -82,13 +84,11 @@ export function RegisterForm() {
 
         {/* LOGO + HEADING */}
         <View style={styles.header}>
-          <Image
-            source={require('../../../../assets/images/logo.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join MedLink and take control of your health</Text>
+          <View style={styles.logoBadge}>
+            <Ionicons name="medical" size={26} color={theme.colors.primary} />
+          </View>
+          <Text style={styles.title}>{t("auth:createAccount")}</Text>
+          <Text style={styles.subtitle}>{t("auth:joinMedLinkSubtitle")}</Text>
         </View>
 
         {/* ERROR */}
@@ -127,7 +127,7 @@ export function RegisterForm() {
                 styles.roleText,
                 role === r.value && { color: theme.colors.primary, fontWeight: '600' }
               ]}>
-                {r.label}
+                {t(r.labelKey === 'Patient' ? 'auth.patient' : 'auth.doctor')}
               </Text>
             </Pressable>
           ))}
@@ -139,22 +139,32 @@ export function RegisterForm() {
           {/* NAME ROW */}
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>
-              <Input placeholder="First Name" value={firstName} onChangeText={clearOnChange(setFirstName)} />
+              <Input 
+                placeholder={t("auth:firstName")} 
+                value={firstName} 
+                onChangeText={clearOnChange(setFirstName)} 
+                enableTranslit={true}
+              />
             </View>
             <View style={{ flex: 1 }}>
-              <Input placeholder="Last Name" value={lastName} onChangeText={clearOnChange(setLastName)} />
+              <Input 
+                placeholder={t("auth:lastName")} 
+                value={lastName} 
+                onChangeText={clearOnChange(setLastName)} 
+                enableTranslit={true}
+              />
             </View>
           </View>
 
           <Input
-            placeholder="Email address"
+            placeholder={t("auth:email")}
             value={email}
             onChangeText={clearOnChange(setEmail)}
           />
 
           {/* PASSWORD */}
           <Input
-            placeholder="Password"
+            placeholder={t("auth:password")}
             value={password}
             onChangeText={clearOnChange(setPassword)}
             secureTextEntry={!showPassword}
@@ -173,7 +183,7 @@ export function RegisterForm() {
           {password.length > 0 && (
             <View style={styles.strengthWrap}>
               <View style={styles.strengthTrack}>
-                <View style={[styles.strengthFill, { width: strength.width, backgroundColor: strength.color }]} />
+                <View style={[styles.strengthFill, { width: strength.width as any, backgroundColor: strength.color }]} />
               </View>
               <Text style={[styles.strengthLabel, { color: strength.color }]}>{strength.label}</Text>
             </View>
@@ -181,7 +191,7 @@ export function RegisterForm() {
 
           {/* TERMS */}
           <View style={styles.termsRow}>
-            <Checkbox checked={agreeTerms} onChange={() => setAgreeTerms(!agreeTerms)} />
+            <Checkbox checked={agreeTerms} onChange={() => setAgreeTerms(!agreeTerms)} label="" />
             <Text style={styles.termsText}>
               I agree to the{' '}
               <Text style={[styles.termsText, styles.termsLinkText]} onPress={() => router.push('./terms')}>
@@ -192,7 +202,7 @@ export function RegisterForm() {
 
           {/* SUBMIT */}
           <Button
-            title="Create Account"
+            title={t("auth:createAccount")}
             onPress={handleRegister}
             loading={isLoading}
             disabled={!isValid}
@@ -211,10 +221,10 @@ export function RegisterForm() {
 
         {/* LOGIN LINK */}
         <View style={styles.loginRow}>
-          <Text style={styles.loginText}>Already have an account? </Text>
+          <Text style={styles.loginText}>{t("auth:alreadyHaveAccount")} </Text>
           <Pressable onPress={() => router.push('/(auth)/login')}>
             <Text style={[styles.loginText, { color: theme.colors.primary, fontWeight: '600' }]}>
-              Sign In
+              {t("auth:login")}
             </Text>
           </Pressable>
         </View>

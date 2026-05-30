@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from '../../src/i18n';
 import {
   ActivityIndicator, Alert, FlatList,
   RefreshControl,
@@ -25,8 +26,8 @@ const FILTERS: { key: DoctorFilter; label: string }[] = [
 ];
 
 export default function DoctorAppointmentsScreen() {
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const user = useAuthStore((s) => s.user);
@@ -56,10 +57,10 @@ export default function DoctorAppointmentsScreen() {
   const handleAccept = async (id: string | number) => {
     setActingOn(String(id));
     try {
-      await doctorDecision(id, { action: "accept" });
-      Alert.alert("Accepted", "Appointment confirmed successfully.");
+      await doctorDecision(apt.id, { action: "accept" });
+      Alert.alert(t("appointment:accepted"), t("appointment:confirmedSuccessMessage"));
     } catch {
-      Alert.alert("Error", "Failed to accept appointment.");
+      Alert.alert("Error", t("errors:acceptFailed"));
     } finally {
       setActingOn(null);
     }
@@ -135,43 +136,105 @@ export default function DoctorAppointmentsScreen() {
           })}
         </View>
 
-        {/* List */}
-        {isLoading && !refreshing && appointments.length === 0 ? (
-          <View style={styles.loader}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-          </View>
-        ) : (
-          <FlatList
-            key={`grid-${numColumns}`}
-            data={filtered}
-            numColumns={numColumns}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContent}
-            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
-            renderItem={({ item }) => (
-              <View style={[styles.cardContainer, { maxWidth: `${100 / numColumns}%` }]}>
-                <AppointmentCard
-                  appointment={item}
-                  isDoctor
-                  onAccept={() => handleAccept(item.id)}
-                  onCancel={() => handleViewDetails(item.id)} // Maps clean interaction logic safely inside the primary container layout
-                />
-              </View>
-            )}
-            ListEmptyComponent={renderEmpty}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={theme.colors.primary}
-                colors={[theme.colors.primary]}
+      {/* Error */}
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={clearError}>
+            <Ionicons name="close" size={18} color={COLORS.error} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {/* Loading */}
+      {loading && appointments.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <View>
+              <AppointmentCard
+                appointment={item}
+                role="DOCTOR"
+                onPress={() =>
+                  router.push({
+                    pathname: "/appointment/[id]",
+                    params: { id: item.id },
+                  } as any)
+                }
               />
-            }
-          />
-        )}
-      </View>
-    </ScreenContainer>
+              {/* Quick action for pending */}
+              {item.status === "REQUESTED" && (
+                <View style={styles.quickActions}>
+                  <TouchableOpacity
+                    style={styles.quickAccept}
+                    onPress={() => handleAccept(item)}
+                    disabled={actingOn === item.id}
+                  >
+                    {actingOn === item.id ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="checkmark"
+                          size={16}
+                          color="#fff"
+                        />
+                        <Text style={styles.quickAcceptText}>{t("common:accept")}</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.quickView}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/appointment/[id]",
+                        params: { id: item.id },
+                      } as any)
+                    }
+                  >
+                    <Ionicons
+                      name="eye-outline"
+                      size={16}
+                      color={COLORS.primary}
+                    />
+                    <Text style={styles.quickViewText}>{t("appointment:viewDetails")}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons
+                name="calendar-outline"
+                size={56}
+                color={`${COLORS.textMuted}60`}
+              />
+              <Text style={styles.emptyText}>
+                {activeTab === "requests"
+                  ? "No pending appointment requests"
+                  : "No appointments found"}
+              </Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.primary}
+              colors={[COLORS.primary]}
+            />
+          }
+        />
+      )}
+    </View>
   );
 }
 

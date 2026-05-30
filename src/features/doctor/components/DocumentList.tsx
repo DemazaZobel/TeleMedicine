@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from '../../../i18n';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { ScreenContainer, Card, Loader } from '../../../components/ui';
 import { useTheme } from '../../../theme';
@@ -14,6 +15,7 @@ const STATUS_MAP: Record<DocumentStatus, { style: string; textStyle: string; lab
 };
 
 export function DocumentList({ header }: { header?: React.ReactNode }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createDocumentListStyles(theme), [theme]);
 
@@ -70,14 +72,14 @@ export function DocumentList({ header }: { header?: React.ReactNode }) {
   );
 
   if (isLoadingProfile && documents.length === 0) {
-    return <Loader message="Loading documents..." />;
+    return <Loader message={t("doctor:loadingDocuments")} />;
   }
 
   const HeaderComponent = (
     <>
       {header}
       <View style={{ paddingHorizontal: 16 }}>
-        <Text style={styles.title}>My Documents</Text>
+        <Text style={styles.title}>{t("doctor:myDocuments")}</Text>
         <Text style={styles.subtitle}>
           Track the status of your uploaded credentials
         </Text>
@@ -93,7 +95,7 @@ export function DocumentList({ header }: { header?: React.ReactNode }) {
             {HeaderComponent}
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📄</Text>
-              <Text style={styles.emptyTitle}>No documents uploaded</Text>
+              <Text style={styles.emptyTitle}>{t("doctor:noDocsUploaded")}</Text>
               <Text style={styles.emptySubtitle}>
                 Upload your credentials to get verified
               </Text>

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -33,7 +34,13 @@ interface BookingModalProps {
   onSuccess: () => void;
 }
 
-export function BookingModal({ visible, doctorId, initialSlotIndex, onClose, onSuccess }: BookingModalProps) {
+export function BookingModal({
+  visible,
+  doctorId,
+  onClose,
+  onSuccess,
+}: BookingModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -183,11 +190,11 @@ export function BookingModal({ visible, doctorId, initialSlotIndex, onClose, onS
   const handleBook = async () => {
     if (selectedSlotIndex === null || !selectedDate) return;
     if (hasActiveAppointment) {
-      Alert.alert("Booking Exists", "You already have an active appointment with this doctor.");
+      Alert.alert(t("appointment:bookingExists"), t("errors:duplicateBookingErrorShort"));
       return;
     }
     if (isSelfBooking) {
-      Alert.alert("Invalid Booking", "You cannot book an appointment with your own Doctor profile.");
+      Alert.alert(t("errors:invalidBooking"), t("errors:bookSelfError"));
       return;
     }
 
@@ -213,8 +220,13 @@ export function BookingModal({ visible, doctorId, initialSlotIndex, onClose, onS
   };
 
   return (
-    <ModalBase visible={visible} onClose={onClose} title="Book Appointment"
-      subtitle="Select a date and time that works best for you." maxWidth={520}>
+    <ModalBase
+      visible={visible}
+      onClose={onClose}
+      title="Book Appointment"
+      subtitle={t("appointment:selectBestTimeDesc")}
+      maxWidth={520}
+    >
       <View style={styles.container}>
 
         {isSelfBooking ? (
@@ -299,24 +311,29 @@ export function BookingModal({ visible, doctorId, initialSlotIndex, onClose, onS
         {/* MODE */}
         <Text style={styles.label}>3. Consultation Mode</Text>
         <View style={styles.modeContainer}>
-          {([
-            { value: "ONLINE", icon: "videocam", label: "Online" },
-            { value: "IN_PERSON", icon: "people", label: "In Person" },
-          ] as const).map((opt) => (
-            <TouchableOpacity key={opt.value}
-              style={[styles.modeOption, mode === opt.value && styles.modeOptionActive]}
-              onPress={() => setMode(opt.value)}>
-              <Ionicons name={opt.icon} size={18}
-                color={mode === opt.value ? theme.colors.primary : theme.colors.textTertiary} />
-              <Text style={[styles.modeLabel, mode === opt.value && { color: theme.colors.primary }]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[styles.modeOption, mode === 'ONLINE' && styles.modeOptionActive]}
+            onPress={() => setMode('ONLINE')}
+          >
+            <Ionicons name="videocam" size={18} color={mode === 'ONLINE' ? theme.colors.primary : theme.colors.textTertiary} />
+            <Text style={[styles.modeLabel, mode === 'ONLINE' && { color: theme.colors.primary }]}>{t("appointment:online")}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeOption, mode === 'IN_PERSON' && styles.modeOptionActive]}
+            onPress={() => setMode('IN_PERSON')}
+          >
+            <Ionicons name="people" size={18} color={mode === 'IN_PERSON' ? theme.colors.primary : theme.colors.textTertiary} />
+            <Text style={[styles.modeLabel, mode === 'IN_PERSON' && { color: theme.colors.primary }]}>{t("appointment:inPerson")}</Text>
+          </TouchableOpacity>
         </View>
 
-        <Input label="Reason for Visit" placeholder="E.g., General checkup, follow-up..."
-          value={reason} onChangeText={setReason} containerStyle={styles.reasonInput} />
+        <Input
+          label="Reason for Visit"
+          placeholder={t("appointment:reasonEgp")}
+          value={reason}
+          onChangeText={setReason}
+          containerStyle={styles.reasonInput}
+        />
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 

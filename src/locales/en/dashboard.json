@@ -1,0 +1,11 @@
+{
+  "welcome": "Welcome,",
+  "upcomingAppointments": "Upcoming Appointments",
+  "noUpcoming": "No upcoming appointments found.",
+  "activePatients": "Active Patients",
+  "completedSessions": "Completed Sessions",
+  "pendingAppr": "Pending Approval",
+  "apprDesc": "Your professional credentials are currently under review by our medical board.",
+  "totalEarnings": "Total Earnings",
+  "withdraw": "Withdraw Funds"
+}

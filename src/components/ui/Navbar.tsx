@@ -1,6 +1,7 @@
 "use client";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../i18n';
 import { useRouter, useSegments } from "expo-router";
 import React, { useState } from "react";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
@@ -17,6 +18,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
+  const { t } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
   const segments = useSegments();
@@ -119,7 +121,7 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
           value={search}
           onChangeText={setSearch}
           onSubmitEditing={handleSearchSubmit}
-          placeholder="Search doctors..."
+          placeholder={t("patient:searchPlaceholderSimple")}
           placeholderTextColor="#9ca3af"
           className="flex-1 text-sm text-foreground"
           returnKeyType="search"
@@ -154,7 +156,7 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
           className="flex-row items-center h-9 rounded-lg px-3 gap-2 hover:bg-destructive/10"
         >
           <Ionicons name="log-out-outline" size={19} className="text-destructive" />
-          <Text className="text-sm font-medium text-destructive">Logout</Text>
+          <Text className="text-sm font-medium text-destructive">{t("auth:logoutBtn")}</Text>
         </Pressable>
       </View>
 

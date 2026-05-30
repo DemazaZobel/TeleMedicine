@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '../../src/i18n';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { EmptyState, ScreenContainer, PageHeader } from '../../src/components/ui';
 import { AppointmentCard } from '../../src/features/booking/components/AppointmentCard';
@@ -10,6 +11,7 @@ import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
 
 export default function AppointmentsScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -49,9 +51,9 @@ export default function AppointmentsScreen() {
   const handleAccept = async (id: string | number) => {
     try {
       await doctorDecision(id, { action: 'accept' });
-      Alert.alert("Success", "Appointment accepted.");
+      Alert.alert("Success", t("appointment:acceptedMessage"));
     } catch (err) {
-      Alert.alert("Error", "Could not accept appointment.");
+      Alert.alert("Error", t("errors:acceptError"));
     }
   };
 
@@ -67,8 +69,8 @@ export default function AppointmentsScreen() {
     return (
       <EmptyState
         icon="calendar-outline"
-        title="No Appointments"
-        description="You don't have any upcoming appointments scheduled."
+        title={t("appointment:noAppointments")}
+        description={t("appointment:noUpcomingScheduled")}
       />
     );
   };

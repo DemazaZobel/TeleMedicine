@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Text, View, StyleSheet, Pressable } from 'react-native';
@@ -7,6 +8,7 @@ import { authService } from '../../src/features/auth/services/authService';
 import { useTheme, Theme } from '../../src/theme';
 
 export default function VerifyEmailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
   const { theme, isDark } = useTheme();
@@ -61,7 +63,7 @@ export default function VerifyEmailScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Verify Email</Text>
+          <Text style={styles.title}>{t("auth:verifyEmailTitle")}</Text>
           <Text style={styles.subtitle}>
             Enter the verification code sent to
           </Text>
@@ -79,7 +81,7 @@ export default function VerifyEmailScreen() {
         {/* Form */}
         <View style={styles.form}>
           <Input
-            placeholder="Enter 6-digit code"
+            placeholder={t("auth:enter6DigitCode")}
             value={otp}
             onChangeText={(t) => { setOtp(t); setError(''); }}
             keyboardType="number-pad"
@@ -88,7 +90,7 @@ export default function VerifyEmailScreen() {
           />
 
           <Button
-            title="Verify Email"
+            title={t("auth:verifyEmailTitle")}
             onPress={handleVerify}
             loading={loading}
             fullWidth
@@ -101,7 +103,7 @@ export default function VerifyEmailScreen() {
         <Pressable onPress={handleResend} disabled={resending} style={styles.resendRow}>
           <Text style={styles.resendText}>
             {resending ? 'Sending...' : "Didn't receive the code? "}
-            {!resending && <Text style={styles.resendLink}>Resend</Text>}
+            {!resending && <Text style={styles.resendLink}>{t("common:resend")}</Text>}
           </Text>
         </Pressable>
       </View>

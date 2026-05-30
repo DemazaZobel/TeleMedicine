@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from '../../src/i18n';
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +18,7 @@ import { COLORS, RADII, SPACING } from "../../src/constants/theme";
 import { resetPassword } from "../../src/services/authService";
 
 export default function ResetPasswordScreen() {
+  const { t } = useTranslation();
   const { email } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -31,7 +33,7 @@ export default function ResetPasswordScreen() {
     setLoading(true);
     try {
       await resetPassword(email as string, code, password);
-      Alert.alert("Success", "Password updated successfully.");
+      Alert.alert("Success", t("patient:changePasswordSuccessShort"));
       router.replace("/auth/login" as any);
     } catch (e: any) {
       Alert.alert("Error", e?.response?.data?.detail || "Failed to reset password.");
@@ -55,15 +57,15 @@ export default function ResetPasswordScreen() {
 
         <View style={styles.header}>
           <Text style={styles.title}>New Password</Text>
-          <Text style={styles.subtitle}>Enter the verification code and set your new password.</Text>
+          <Text style={styles.subtitle}>{t("auth:resetPasswordInstructions")}</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Verification Code</Text>
+            <Text style={styles.label}>{t("auth:verificationCodeLabel")}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter 6-digit code"
+              placeholder={t("auth:enter6DigitCode")}
               placeholderTextColor={COLORS.textMuted}
               keyboardType="number-pad"
               value={code}
@@ -75,7 +77,7 @@ export default function ResetPasswordScreen() {
             <Text style={styles.label}>New Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Create a new password"
+              placeholder={t("auth:createNewPassword")}
               placeholderTextColor={COLORS.textMuted}
               secureTextEntry
               value={password}

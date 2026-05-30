@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from '../../../i18n';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
 
 export default function TermsAndConditions() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
 
   return (
@@ -17,49 +19,49 @@ export default function TermsAndConditions() {
           Last updated: May 2026
         </Text>
 
-        <Section title="1. Acceptance of Terms">
+        <Section title={t("common:termsAcceptance")}>
           By creating an account on Medlink, you agree to these Terms & Conditions.
           If you do not agree, you may not use the application.
         </Section>
 
-        <Section title="2. Nature of the Service">
+        <Section title={t("common:termsNature")}>
           Medlink is a digital healthcare platform that connects patients with
           licensed medical professionals. It does not replace emergency services
           or in-person medical care.
         </Section>
 
-        <Section title="3. User Accounts">
+        <Section title={t("common:termsAccounts")}>
           You are responsible for maintaining the confidentiality of your account
           credentials. You agree to provide accurate and truthful information when
           registering as either a patient or a doctor.
         </Section>
 
-        <Section title="4. Medical Disclaimer">
+        <Section title={t("common:termsDisclaimer")}>
           All medical advice provided through Medlink is for informational purposes
           only. Always seek professional medical help for serious conditions or emergencies.
         </Section>
 
-        <Section title="5. Doctor Verification">
+        <Section title={t("common:termsVerification")}>
           Doctors using Medlink may be required to submit valid credentials.
           However, Medlink does not guarantee diagnosis accuracy or treatment outcomes.
         </Section>
 
-        <Section title="6. Data Privacy">
+        <Section title={t("common:termsPrivacy")}>
           We collect only necessary personal data such as name, email, and usage
           activity to improve the service. Your data will never be sold to third parties.
         </Section>
 
-        <Section title="7. User Conduct">
+        <Section title={t("common:termsConduct")}>
           Users must not misuse the platform, upload harmful content, or impersonate
           others. Violations may result in account suspension or termination.
         </Section>
 
-        <Section title="8. Limitation of Liability">
+        <Section title={t("common:termsLiability")}>
           Medlink is not liable for any indirect, incidental, or consequential damages
           arising from the use of the platform.
         </Section>
 
-        <Section title="9. Changes to Terms">
+        <Section title={t("common:termsChanges")}>
           We may update these Terms occasionally. Continued use of the app means you
           accept the updated terms.
         </Section>

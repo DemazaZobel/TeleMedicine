@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from '../../i18n';
 import {
   View, Text, ActivityIndicator,
   StyleSheet, RefreshControl, ScrollView,
@@ -10,6 +11,7 @@ import { getChatRooms } from '../../services/chatService';
 import type { ChatRoom } from '../../types/chat';
 
 const ChatListScreen: React.FC = () => {
+  const { t } = useTranslation();
   const router = useRouter();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ const ChatListScreen: React.FC = () => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         >
           <Text style={styles.errorText}>⚠️ {error}</Text>
-          <Text style={styles.errorHint}>Pull down to retry</Text>
+          <Text style={styles.errorHint}>{t("common:pullToRetry")}</Text>
         </ScrollView>
       </ScreenContainer>
     );
@@ -72,7 +74,7 @@ const ChatListScreen: React.FC = () => {
   return (
     <ScreenContainer scrollable={false} constrained>
       <PageHeader 
-        title="Messages" 
+        title={t("patient:messages")} 
         subtitle={rooms.length > 0 ? `${rooms.length} conversations` : undefined} 
       />
       {rooms.length === 0 ? (
@@ -84,7 +86,7 @@ const ChatListScreen: React.FC = () => {
           <EmptyState
             icon="chatbubble-ellipses-outline"
             title="No conversations yet"
-            description="Your chats with doctors will appear here"
+            description={t("patient:patientNoChatsDesc")}
           />
         </ScrollView>
       ) : (

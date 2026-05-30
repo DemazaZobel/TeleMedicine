@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
@@ -20,6 +21,7 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -85,8 +87,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
       setBiography(bio);
       setLocation(loc);
       setHospital(hosp);
-      setEducation(edu);
-      setExperience(exp);
+      setEducation(edu as string);
+      setExperience(exp as string);
 
       setOriginal({
         firstName: fn,
@@ -95,9 +97,9 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         biography: bio,
         location: loc,
         hospital: hosp,
-        education: edu,
-        experience: exp,
-      });
+        education: edu as string,
+        experience: exp as string,
+      } as any);
     }
   }, [user, doctorProfile, visible]);
 
@@ -170,8 +172,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Edit Profile"
-      subtitle="Update your personal information"
+      title={t("patient:editProfileTitle")}
+      subtitle={t("patient:personalInfoDesc")}
     >
       <ScrollView
         contentContainerStyle={styles.container}
@@ -192,7 +194,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         {/* ── Banners ── */}
         {error && <Banner variant="error" message={error} />}
         {saved && (
-          <Banner variant="success" message="Profile updated successfully." />
+          <Banner variant="success" message={t("patient:updateSuccess")} />
         )}
 
         {/* ── Side-by-side Name Fields ── */}
@@ -223,8 +225,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
         {/* ── Phone Number ── */}
         <Input
-          label="Phone"
-          placeholder="+251 9XX XXX XXX"
+          label={t("common:phoneLabel")}
+          placeholder={t("common:phonePlaceholder")}
           value={phoneNumber}
           onChangeText={(t) => {
             setPhoneNumber(t);
@@ -237,8 +239,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         {/* ── Biography (Doctor Only) ── */}
         {user?.role === "DOCTOR" && (
           <Input
-            label="Biography"
-            placeholder="Tell us about yourself..."
+            label={t("doctor:biography")}
+            placeholder={t("doctor:summaryPlaceholder")}
             value={biography}
             onChangeText={(t) => {
               setBiography(t);
@@ -254,7 +256,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         {/* ── Location (Both) ── */}
         <Input
           label="Location"
-          placeholder="Addis Ababa, Ethiopia"
+          placeholder={t("common:addisAbabaEthiopia")}
           value={location}
           onChangeText={(t) => {
             setLocation(t);
@@ -267,8 +269,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
         {user?.role === "DOCTOR" && (
           <>
             <Input
-              label="Current Hospital"
-              placeholder="Black Lion Hospital"
+              label={t("doctor:currentHospital")}
+              placeholder={t("common:blackLionHospital")}
               value={hospital}
               onChangeText={(t) => {
                 setHospital(t);
@@ -278,8 +280,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
             />
 
             <Input
-              label="Education"
-              placeholder="E.g. MD from Addis Ababa University"
+              label={t("doctor:education")}
+              placeholder={t("doctor:educationPlaceholder")}
               value={education}
               onChangeText={(t) => {
                 setEducation(t);
@@ -291,7 +293,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
             <Input
               label="Experience"
-              placeholder="E.g. 5 years at St. Paul Hospital"
+              placeholder={t("doctor:experiencePlaceholder")}
               value={experience}
               onChangeText={(t) => {
                 setExperience(t);
@@ -305,7 +307,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
 
         {/* ── Save Button ── */}
         <Button
-          title="Save Changes"
+          title={t("common:saveChanges")}
           onPress={handleSave}
           loading={isLoading}
           disabled={!hasChanges}

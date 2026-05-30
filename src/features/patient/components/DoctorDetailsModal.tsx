@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, Platform, ScrollView, Linking } from 'react-native';
 import { Button, ModalBase, StarRating } from '../../../components/ui';
@@ -15,6 +16,7 @@ interface DoctorDetailsModalProps {
 }
 
 export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsModalProps) {
+  const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
@@ -38,7 +40,7 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title="Doctor Profile"
+      title={t("doctor:doctorProfile")}
       maxWidth={500}
     >
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -60,7 +62,7 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
             <View style={styles.socialRow}>
               {doctor.youtube_link && (
                 <Button
-                  title="YouTube"
+                  title={t("patient:youtube")}
                   variant="outline"
                   size="sm"
                   icon={<Ionicons name="logo-youtube" size={16} color="#FF0000" style={{ marginRight: 6 }} />}
@@ -71,7 +73,7 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
               )}
               {doctor.linkedin_link && (
                 <Button
-                  title="LinkedIn"
+                  title={t("patient:linkedin")}
                   variant="outline"
                   size="sm"
                   icon={<Ionicons name="logo-linkedin" size={16} color="#0077B5" style={{ marginRight: 6 }} />}
@@ -99,7 +101,7 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
           <View style={styles.statBox}>
             <Ionicons name="cash-outline" size={20} color="#10B981" />
             <Text style={styles.statValue}>Br {doctor.consultation_fee}</Text>
-            <Text style={styles.statLabel}>Fee</Text>
+            <Text style={styles.statLabel}>{t("doctor:fee")}</Text>
           </View>
         </View>
 
@@ -107,8 +109,8 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
           <View style={styles.verifiedAlert}>
             <Ionicons name="shield-checkmark" size={24} color={theme.colors.primary} />
             <View style={styles.verifiedAlertText}>
-              <Text style={styles.verifiedAlertTitle}>Verified Provider</Text>
-              <Text style={styles.verifiedAlertSub}>This doctor's credentials have been verified by our team.</Text>
+              <Text style={styles.verifiedAlertTitle}>{t("doctor:verifiedProvider")}</Text>
+              <Text style={styles.verifiedAlertSub}>{t("doctor:verifiedBadgeDesc")}</Text>
             </View>
           </View>
         )}
@@ -117,11 +119,11 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
           <View style={styles.activeAppointmentAlert}>
             <Ionicons name="calendar" size={24} color={theme.colors.primary} />
             <View style={styles.activeAppointmentText}>
-              <Text style={styles.activeAppointmentTitle}>Upcoming Appointment</Text>
-              <Text style={styles.activeAppointmentSub}>You already have an active appointment scheduled with this doctor.</Text>
+              <Text style={styles.activeAppointmentTitle}>{t("appointment:upcomingAppointment")}</Text>
+              <Text style={styles.activeAppointmentSub}>{t("errors:duplicateBookingError")}</Text>
             </View>
             <Button
-              title="View"
+              title={t("common:viewBtn")}
               variant="outline"
               onPress={() => {
                 onClose();

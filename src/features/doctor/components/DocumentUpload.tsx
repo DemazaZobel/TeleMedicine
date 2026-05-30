@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
+import { useTranslation } from '../../../i18n';
 import { View, Text, Pressable, Alert, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +9,7 @@ import { useDoctorStore } from '../../../store/doctor.store';
 import { createDocumentUploadStyles } from '../styles/documentUpload.styles';
 
 export function DocumentUpload() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createDocumentUploadStyles(theme), [theme]);
 
@@ -35,7 +37,7 @@ export function DocumentUpload() {
         // Security Check: File Size Limit (5MB)
         const MAX_FILE_SIZE = 5 * 1024 * 1024;
         if (asset.size && asset.size > MAX_FILE_SIZE) {
-          Alert.alert('Security Warning', 'For security and performance, documents must be less than 5MB.');
+          Alert.alert(t('errors:securityWarning'), t('doctor:fileLimitNotice'));
           return;
         }
 
@@ -47,7 +49,7 @@ export function DocumentUpload() {
         const isAllowedExtension = asset.name.toLowerCase().match(/\.(pdf|jpeg|jpg|png)$/);
 
         if (!allowedTypes.includes(detectedType) && !isAllowedExtension) {
-          Alert.alert('Invalid Format', 'Only PDF, JPEG, and PNG files are accepted for verification documents.');
+          Alert.alert(t('errors:invalidFormat'), t('doctor:acceptedFileTypes'));
           return;
         }
 
@@ -59,7 +61,7 @@ export function DocumentUpload() {
         clearError();
       }
     } catch {
-      Alert.alert('Error', 'Failed to pick document securely.');
+      Alert.alert('Error', t('errors:documentPickSecureError'));
     }
   }, [clearError]);
 
@@ -86,7 +88,7 @@ export function DocumentUpload() {
       setLicenseNumber('');
 
       if (Platform.OS !== 'web') {
-        Alert.alert('Success', 'Document uploaded successfully!');
+        Alert.alert('Success', t('doctor:uploadSuccess'));
       }
     } catch {
       // Error is set in the store
@@ -95,7 +97,7 @@ export function DocumentUpload() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Upload Document</Text>
+      <Text style={styles.title}>{t("doctor:uploadDocument")}</Text>
       <Text style={styles.subtitle}>
         Upload your medical credentials for approval
       </Text>
@@ -107,15 +109,15 @@ export function DocumentUpload() {
       )}
 
       <Input
-        label="Document Type"
-        placeholder="e.g. Medical License, Board Certification"
+        label={t("doctor:documentType")}
+        placeholder={t("doctor:egLicenseDocs")}
         value={documentType}
         onChangeText={(t) => { setDocumentType(t); clearError(); }}
       />
 
       <Input
-        label="License / Reference Number"
-        placeholder="e.g. LRN-123456"
+        label={t("doctor:licenseRefNumber")}
+        placeholder={t("doctor:egLicense")}
         value={licenseNumber}
         onChangeText={(t) => { setLicenseNumber(t); clearError(); }}
       />
@@ -131,7 +133,7 @@ export function DocumentUpload() {
         <Text style={styles.uploadText}>
           {selectedFile ? 'Change Select File' : 'Tap to Select File'}
         </Text>
-        <Text style={styles.uploadHint}>Secure PDF or image formats</Text>
+        <Text style={styles.uploadHint}>{t("doctor:fileFormatNotice")}</Text>
       </Pressable>
 
       {selectedFile && (
@@ -142,7 +144,7 @@ export function DocumentUpload() {
       )}
 
       <Button
-        title="Upload Document"
+        title={t("doctor:uploadDocument")}
         onPress={handleUpload}
         loading={isUploadingDocument}
         fullWidth

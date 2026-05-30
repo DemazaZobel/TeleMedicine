@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../../i18n';
 import * as DocumentPicker from "expo-document-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -24,6 +25,7 @@ export function DoctorDocumentsModal({
   visible,
   onClose,
 }: DoctorDocumentsModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -72,7 +74,7 @@ export function DoctorDocumentsModal({
 
         const MAX_FILE_SIZE = 5 * 1024 * 1024;
         if (asset.size && asset.size > MAX_FILE_SIZE) {
-          Alert.alert("Security Warning", "Documents must be less than 5MB.");
+          Alert.alert(t("errors:securityWarning"), t("doctor:fileSizeLimit"));
           return;
         }
 
@@ -103,7 +105,7 @@ export function DoctorDocumentsModal({
         clearError();
       }
     } catch {
-      Alert.alert("Error", "Failed to pick document.");
+      Alert.alert("Error", t("errors:documentPickError"));
     }
   }, [clearError]);
 
@@ -241,8 +243,8 @@ export function DoctorDocumentsModal({
 
             <Card style={styles.card}>
               <Input
-                label="Credential Type"
-                placeholder="e.g. Medical License"
+                label={t("doctor:credentialType")}
+                placeholder={t("doctor:egLicenseDoc")}
                 value={documentType}
                 onChangeText={(t) => {
                   setDocumentType(t);
@@ -252,8 +254,8 @@ export function DoctorDocumentsModal({
               />
 
               <Input
-                label="License Number / ID"
-                placeholder="e.g. LRN-123456"
+                label={t("doctor:licenseNumberId")}
+                placeholder={t("doctor:egLicense")}
                 value={licenseNumber}
                 onChangeText={(t) => {
                   setLicenseNumber(t);
@@ -311,7 +313,7 @@ export function DoctorDocumentsModal({
 
             <View style={{ gap: 12, marginBottom: 24 }}>
               <Button
-                title="Submit for Verification"
+                title={t("doctor:submitForVerification")}
                 onPress={handleUpload}
                 loading={isUploadingDocument}
                 disabled={
@@ -331,9 +333,9 @@ export function DoctorDocumentsModal({
         ) : (
           <>
             <View style={styles.listHeader}>
-              <Text style={styles.sectionTitle}>My Credentials</Text>
+              <Text style={styles.sectionTitle}>{t("doctor:myCredentials")}</Text>
               <Button
-                title="Add New"
+                title={t("common:addNew")}
                 size="sm"
                 variant="outline"
                 onPress={() => setIsUploading(true)}
@@ -350,7 +352,7 @@ export function DoctorDocumentsModal({
                   size={64}
                   color={theme.colors.textTertiary}
                 />
-                <Text style={styles.emptyTitle}>No credentials yet</Text>
+                <Text style={styles.emptyTitle}>{t("doctor:noCredentialsYet")}</Text>
                 <Text style={styles.emptySubtitle}>
                   Upload your medical license and certificates to get verified.
                 </Text>
@@ -375,7 +377,7 @@ export function DoctorDocumentsModal({
                     {doc.status === 'REJECTED' && doc.rejection_reason && (
                       <View style={{ marginTop: 8, padding: 8, backgroundColor: theme.colors.error + '10', borderRadius: 8 }}>
                         <Text style={{ fontSize: 12, color: theme.colors.error }}>
-                          <Text style={{ fontWeight: '600' }}>Reason:</Text> {doc.rejection_reason}
+                          <Text style={{ fontWeight: '600' }}>{t("common:reasonLabelWithColon")}</Text> {doc.rejection_reason}
                         </Text>
                       </View>
                     )}

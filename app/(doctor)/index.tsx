@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
@@ -13,6 +14,7 @@ import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { width } = useWindowDimensions();
@@ -109,11 +111,11 @@ export default function HomeScreen() {
         />
 
         <Card style={styles.statsCard}>
-          <Text style={styles.cardTitle}>Your Dashboard</Text>
+          <Text style={styles.cardTitle}>{t("doctor:dashboardTitle")}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{upcomingCount}</Text>
-              <Text style={styles.statLabel}>Upcoming</Text>
+              <Text style={styles.statLabel}>{t("appointment:upcoming")}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -157,8 +159,8 @@ export default function HomeScreen() {
     return (
       <EmptyState
         icon="search-outline"
-        title="No Doctors Found"
-        description="Try adjusting your search or selecting a different specialization."
+        title={t("patient:noDoctorsFound")}
+        description={t("patient:noDoctorsDesc")}
       />
     );
   };

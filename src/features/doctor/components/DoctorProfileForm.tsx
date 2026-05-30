@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Image, Text, View, useWindowDimensions } from "react-native";
+import { useTranslation } from '../../../i18n';
+import { Image, Text, View } from "react-native";
 import {
   Button,
   Card,
@@ -13,6 +14,7 @@ import { createDoctorProfileStyles } from "../styles/doctorProfile.styles";
 import type { DoctorProfileUpdate } from "../types/doctor.types";
 
 export function DoctorProfileForm() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createDoctorProfileStyles(theme), [theme]);
   const { width } = useWindowDimensions();
@@ -173,141 +175,85 @@ export function DoctorProfileForm() {
             </Card>
           )}
 
-          {/* Right Column: Dynamic Form UI Sections */}
-          <View style={{ flex: isDesktop ? 2 : undefined, width: "100%" }}>
-            <Card style={{ padding: 24, marginBottom: 24 }}>
-              <Text style={{ ...theme.typography.h4, color: theme.colors.text, marginBottom: 16, fontWeight: "600" }}>
-                Professional Info
-              </Text>
+        <Card style={{ marginBottom: 24 }}>
+          <Text style={styles.sectionTitle}>{t("doctor:professionalInfo")}</Text>
 
-              <Input
-                label="Specialization"
-                placeholder="e.g. Cardiology"
-                value={specialization}
-                onChangeText={(t) => {
-                  setSpecialization(t);
-                  clearError();
-                  setSaved(false);
-                }}
-              />
+          <Input
+            label="Specialization"
+            placeholder={t("doctor:egCardiology")}
+            value={specialization}
+            onChangeText={(t) => {
+              setSpecialization(t);
+              clearError();
+              setSaved(false);
+            }}
+          />
 
-              <View style={{ flexDirection: "row", gap: 16, marginTop: 12 }}>
-                <View style={{ flex: 1 }}>
-                  <Input
-                    label="Experience (years)"
-                    placeholder="0"
-                    value={yearsOfExperience}
-                    onChangeText={(t) => {
-                      setYearsOfExperience(t);
-                      clearError();
-                      setSaved(false);
-                    }}
-                    keyboardType="numeric"
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Input
-                    label="Consultation Fee"
-                    placeholder="0.00"
-                    value={consultationFee}
-                    onChangeText={(t) => {
-                      setConsultationFee(t);
-                      clearError();
-                      setSaved(false);
-                    }}
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-              </View>
-
-              {/* Added Workplace Fields */}
-              <View style={{ marginTop: 12 }}>
-                <Input
-                  label="Current Working Hospital"
-                  placeholder="e.g. St. Mary's Hospital"
-                  value={currentWorkingHospital}
-                  onChangeText={(t) => {
-                    setCurrentWorkingHospital(t);
-                    clearError();
-                    setSaved(false);
-                  }}
-                />
-              </View>
-
-              <View style={{ marginTop: 12 }}>
-                <Input
-                  label="Location Address"
-                  placeholder="e.g. New York, NY"
-                  value={location}
-                  onChangeText={(t) => {
-                    setLocation(t);
-                    clearError();
-                    setSaved(false);
-                  }}
-                />
-              </View>
-
-              {/* Added Professional Bio Field */}
-              <View style={{ marginTop: 12 }}>
-                <Input
-                  label="Biography"
-                  placeholder="Tell patients about your medical background, medical interests, etc."
-                  value={biography}
-                  onChangeText={(t) => {
-                    setBiography(t);
-                    clearError();
-                    setSaved(false);
-                  }}
-                  multiline
-                  numberOfLines={4}
-                />
-              </View>
+          <View style={styles.row}>
+            <Input
+              label="Experience (years)"
+              placeholder="0"
+              value={yearsOfExperience}
+              onChangeText={(t) => {
+                setYearsOfExperience(t);
+                clearError();
+                setSaved(false);
+              }}
+              keyboardType="numeric"
+              containerStyle={styles.halfField}
+            />
+            <Input
+              label={t("doctor:consultationFeeLabel")}
+              placeholder="0.00"
+              value={consultationFee}
+              onChangeText={(t) => {
+                setConsultationFee(t);
+                clearError();
+                setSaved(false);
+              }}
+              keyboardType="decimal-pad"
+              containerStyle={styles.halfField}
+            />
+          </View>
 
               <Text style={{ ...theme.typography.h4, color: theme.colors.text, marginTop: 28, marginBottom: 16, fontWeight: "600" }}>
                 Social Links
               </Text>
 
-              <Input
-                label="YouTube Channel"
-                placeholder="https://youtube.com/..."
-                value={youtubeLink}
-                onChangeText={(t) => {
-                  setYoutubeLink(t);
-                  clearError();
-                  setSaved(false);
-                }}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
+          <Input
+            label={t("patient:youtubeChannel")}
+            placeholder={t("patient:youtubePlaceholder")}
+            value={youtubeLink}
+            onChangeText={(t) => {
+              setYoutubeLink(t);
+              clearError();
+              setSaved(false);
+            }}
+            autoCapitalize="none"
+            keyboardType="url"
+          />
 
-              <View style={{ marginTop: 12 }}>
-                <Input
-                  label="LinkedIn Profile"
-                  placeholder="https://linkedin.com/in/..."
-                  value={linkedinLink}
-                  onChangeText={(t) => {
-                    setLinkedinLink(t);
-                    clearError();
-                    setSaved(false);
-                  }}
-                  autoCapitalize="none"
-                  keyboardType="url"
-                />
-              </View>
-            </Card>
+          <Input
+            label={t("patient:linkedinProfile")}
+            placeholder={t("patient:linkedinPlaceholder")}
+            value={linkedinLink}
+            onChangeText={(t) => {
+              setLinkedinLink(t);
+              clearError();
+              setSaved(false);
+            }}
+            autoCapitalize="none"
+            keyboardType="url"
+          />
+        </Card>
 
-            {/* Sticky Save layout alignment */}
-            <View style={{ alignItems: isDesktop ? "flex-end" : "stretch" }}>
-              <Button
-                title="Save Profile"
-                onPress={handleSave}
-                loading={isUpdatingProfile || isLoadingProfile}
-                style={{ width: isDesktop ? 240 : "100%", height: 48 }}
-              />
-            </View>
-          </View>
-
-        </View>
+        <Button
+          title={t("patient:saveProfile")}
+          onPress={handleSave}
+          loading={isUpdatingProfile || isLoadingProfile}
+          fullWidth
+          style={styles.submitButton}
+        />
       </View>
     </ScreenContainer>
   );

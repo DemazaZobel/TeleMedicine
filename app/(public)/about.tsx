@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
@@ -45,6 +46,7 @@ const TEAM = [
 ];
 
 export default function AboutScreen() {
+  const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
@@ -79,7 +81,7 @@ export default function AboutScreen() {
 
           {/* Our Story */}
           <View style={{ gap: 16 }}>
-            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>Our Story</Text>
+            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>{t("common:ourStory")}</Text>
             <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary }} />
             <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 26 }}>
               Medlink was born out of a shared frustration with the fragmented state of healthcare access in Ethiopia. As a team of five Software Engineering graduates, we witnessed firsthand how difficult it was for patients to find the right doctor, book appointments, and manage their health records — all without a unified digital system.
@@ -91,7 +93,7 @@ export default function AboutScreen() {
 
           {/* What We Built */}
           <View style={{ gap: 16 }}>
-            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>What We Built</Text>
+            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>{t("common:whatWeBuilt")}</Text>
             <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary }} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
               {[
@@ -117,7 +119,7 @@ export default function AboutScreen() {
 
           {/* Team */}
           <View style={{ gap: 16 }}>
-            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>Meet the Team</Text>
+            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>{t("common:meetTheTeam")}</Text>
             <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary }} />
             <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>
               Five Software Engineering graduates who turned a shared vision into a working product.
@@ -152,7 +154,7 @@ export default function AboutScreen() {
           <View style={{ backgroundColor: isDark ? '#0a5c4e' : '#ecfdf5', borderRadius: 20, padding: isMobile ? 24 : 36, gap: 12, borderWidth: 1, borderColor: isDark ? theme.colors.border : '#bbf7d0' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <Ionicons name="heart" size={24} color={theme.colors.primary} />
-              <Text style={{ fontSize: 20, fontWeight: '800', color: isDark ? '#fff' : '#065f46' }}>Our Mission</Text>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: isDark ? '#fff' : '#065f46' }}>{t("common:ourMission")}</Text>
             </View>
             <Text style={{ fontSize: 15, color: isDark ? '#dcfce7' : '#047857', lineHeight: 26 }}>
               To make quality healthcare accessible to every Ethiopian through technology — breaking down barriers of distance, cost, and complexity so that finding and connecting with the right doctor is as simple as a few taps.

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from '../../i18n';
 import { ActivityIndicator, SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from './EmptyState';
@@ -13,6 +14,7 @@ interface NotificationsDrawerProps {
 }
 
 export function NotificationsDrawer({ visible, onClose }: NotificationsDrawerProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { notifications, isLoading, fetchNotifications, markNotificationRead, markAllNotificationsRead } = useBookingStore();
@@ -99,7 +101,7 @@ export function NotificationsDrawer({ visible, onClose }: NotificationsDrawerPro
            {hasUnread && (
             <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllAsRead}>
               <Ionicons name="checkmark-done" size={20} color={theme.colors.primary} />
-              <Text style={[styles.markAllText, { color: theme.colors.primary }]}>Mark all as read</Text>
+              <Text style={[styles.markAllText, { color: theme.colors.primary }]}>{t("common:markAllAsRead")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -120,8 +122,8 @@ export function NotificationsDrawer({ visible, onClose }: NotificationsDrawerPro
               <View style={styles.emptyContainer}>
                 <EmptyState
                   icon="notifications-off-outline"
-                  title="No Notifications"
-                  description="You're all caught up! New alerts will appear here."
+                  title={t("common:noNotifications")}
+                  description={t("common:allCaughtUp")}
                 />
               </View>
             }

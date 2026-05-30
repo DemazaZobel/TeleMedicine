@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../../i18n';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button, Input, ModalBase, StarRating } from '../../../components/ui';
@@ -28,6 +29,7 @@ const PRICE_RANGES = [
 ];
 
 export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters }: AdvancedFilterModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [filters, setFilters] = useState<FilterState>(initialFilters);
@@ -49,20 +51,20 @@ export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters 
   };
 
   return (
-    <ModalBase visible={visible} onClose={onClose} title="Advanced Filters" maxWidth={500}>
+    <ModalBase visible={visible} onClose={onClose} title={t("patient:advancedFilters")} maxWidth={500}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Location & Hospital */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location & Facility</Text>
+          <Text style={styles.sectionTitle}>{t("appointment:locationFacility")}</Text>
           <Input
-            placeholder="City or Region (e.g. Addis Ababa)"
+            placeholder={t("common:cityRegionPlaceholder")}
             value={filters.location || ''}
             onChangeText={(val) => setFilters({ ...filters, location: val || null })}
             leftIcon={<Ionicons name="location-outline" size={20} color={theme.colors.textTertiary} />}
             containerStyle={{ marginBottom: theme.spacing.md }}
           />
           <Input
-            placeholder="Hospital or Clinic Name"
+            placeholder={t("doctor:hospitalClinicName")}
             value={filters.hospital || ''}
             onChangeText={(val) => setFilters({ ...filters, hospital: val || null })}
             leftIcon={<Ionicons name="business-outline" size={20} color={theme.colors.textTertiary} />}
@@ -71,7 +73,7 @@ export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters 
 
         {/* Price Range */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Consultation Fee</Text>
+          <Text style={styles.sectionTitle}>{t("doctor:consultationFeeLabel")}</Text>
           <View style={styles.chipRow}>
             {PRICE_RANGES.map((range) => {
               const isSelected = filters.minFee === range.min && filters.maxFee === range.max;
@@ -90,7 +92,7 @@ export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters 
 
         {/* Rating */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Minimum Rating</Text>
+          <Text style={styles.sectionTitle}>{t("patient:minimumRating")}</Text>
           <View style={styles.chipRow}>
             {[3, 4, 4.5].map((rating) => {
               const isSelected = filters.minRating === rating;
@@ -132,8 +134,8 @@ export function AdvancedFilterModal({ visible, onClose, onApply, initialFilters 
         </View>
 
         <View style={styles.footer}>
-          <Button title="Reset All" variant="ghost" onPress={handleReset} style={{ flex: 1 }} />
-          <Button title="Apply Filters" variant="primary" onPress={handleApply} style={{ flex: 2 }} />
+          <Button title={t("common:resetAll")} variant="ghost" onPress={handleReset} style={{ flex: 1 }} />
+          <Button title={t("patient:applyFilters")} variant="primary" onPress={handleApply} style={{ flex: 2 }} />
         </View>
       </ScrollView>
     </ModalBase>

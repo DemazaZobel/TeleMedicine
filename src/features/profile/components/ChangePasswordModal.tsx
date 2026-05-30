@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import { useTranslation } from '../../../i18n';
 import { View, Text, StyleSheet } from 'react-native';
 import { Input, Button, Banner } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
@@ -11,6 +12,7 @@ interface ChangePasswordModalProps {
 }
 
 export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -71,7 +73,7 @@ export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalPro
       visible={visible}
       onClose={onClose}
       title="Change Password"
-      subtitle="Enter your current password and choose a new one."
+      subtitle={t("patient:changePasswordInstructions")}
     >
       <View style={styles.container}>
         {displayError ? (
@@ -79,12 +81,12 @@ export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalPro
         ) : null}
 
         {success && (
-          <Banner variant="success" message="Password successfully changed!" />
+          <Banner variant="success" message={t("patient:changePasswordSuccess")} />
         )}
 
         <Input
-          label="Current Password"
-          placeholder="Enter current password"
+          label={t("patient:currentPassword")}
+          placeholder={t("patient:enterCurrentPassword")}
           value={oldPassword}
           onChangeText={(t) => {
             setOldPassword(t);
@@ -98,7 +100,7 @@ export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalPro
 
         <Input
           label="New Password"
-          placeholder="Min. 8 characters"
+          placeholder={t("auth:passwordMinLength")}
           value={newPassword}
           onChangeText={(t) => {
             setNewPassword(t);
@@ -111,8 +113,8 @@ export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalPro
         />
 
         <Input
-          label="Confirm New Password"
-          placeholder="Re-enter new password"
+          label={t("patient:confirmNewPassword")}
+          placeholder={t("patient:reEnterNewPassword")}
           value={confirmPassword}
           onChangeText={(t) => {
             setConfirmPassword(t);
@@ -125,7 +127,7 @@ export function ChangePasswordModal({ visible, onClose }: ChangePasswordModalPro
         />
 
         <Button
-          title="Update Password"
+          title={t("patient:updatePassword")}
           onPress={handleChangePassword}
           loading={isLoading}
           disabled={isDisabled}

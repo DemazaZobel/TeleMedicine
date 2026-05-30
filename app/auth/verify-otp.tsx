@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useTranslation } from '../../src/i18n';
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +18,7 @@ import { COLORS, RADII, SPACING } from "../../src/constants/theme";
 import { resendOTP, verifyOTP } from "../../src/services/authService";
 
 export default function VerifyOTPScreen() {
+  const { t } = useTranslation();
   const { email } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -31,7 +33,7 @@ export default function VerifyOTPScreen() {
     setLoading(true);
     try {
       await verifyOTP(email as string, code);
-      Alert.alert("Success", "Account verified successfully.");
+      Alert.alert("Success", t("auth:verificationSuccess"));
       router.replace("/auth/login" as any);
     } catch (e: any) {
       Alert.alert("Error", e?.response?.data?.detail || "Invalid code.");
@@ -44,9 +46,9 @@ export default function VerifyOTPScreen() {
     setResending(true);
     try {
       await resendOTP(email as string);
-      Alert.alert("Code Sent", "A new verification code has been sent to your email.");
+      Alert.alert(t("auth:codeSent"), t("auth:codeResentSuccess"));
     } catch (e: any) {
-      Alert.alert("Error", "Failed to resend code.");
+      Alert.alert("Error", t("errors:resendFailed"));
     } finally {
       setResending(false);
     }
@@ -66,7 +68,7 @@ export default function VerifyOTPScreen() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Verify Email</Text>
+          <Text style={styles.title}>{t("auth:verifyEmailTitle")}</Text>
           <Text style={styles.subtitle}>Enter the 6-digit code sent to{"\n"}{email}</Text>
         </View>
 
@@ -92,17 +94,17 @@ export default function VerifyOTPScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Verify Account</Text>
+              <Text style={styles.btnText}>{t("auth:verifyAccount")}</Text>
             )}
           </TouchableOpacity>
 
           <View style={styles.resendRow}>
-            <Text style={styles.footerText}>Didn't receive code? </Text>
+            <Text style={styles.footerText}>{t("auth:didntReceiveCode")} </Text>
             <TouchableOpacity onPress={handleResend} disabled={resending}>
               {resending ? (
                 <ActivityIndicator size="small" color={COLORS.primary} />
               ) : (
-                <Text style={styles.resendLink}>Resend</Text>
+                <Text style={styles.resendLink}>{t("common:resend")}</Text>
               )}
             </TouchableOpacity>
           </View>

@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from '../src/i18n';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer, Button } from '../src/components/ui';
 import { useTheme, Theme } from '../src/theme';
 
 export default function ModalScreen() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const router = useRouter();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -12,13 +14,13 @@ export default function ModalScreen() {
   return (
     <ScreenContainer centered>
       <View style={styles.container}>
-        <Text style={styles.title}>Modal</Text>
+        <Text style={styles.title}>{t("common:modal")}</Text>
         <Text style={styles.subtitle}>
           This is a generic modal route. Use it for overlays,
           confirmations, or detail views.
         </Text>
         <Button
-          title="Dismiss"
+          title={t("common:dismiss")}
           variant="outline"
           onPress={() => router.back()}
           style={styles.dismissButton}

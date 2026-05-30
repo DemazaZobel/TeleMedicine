@@ -1,0 +1,11 @@
+{
+  "welcome": "እንኳን ደህና መጡ፣",
+  "upcomingAppointments": "ቀጣይ ቀጠሮዎች",
+  "noUpcoming": "ምንም ቀጣይ ቀጠሮዎች አልተገኙም።",
+  "activePatients": "ንቁ ታካሚዎች",
+  "completedSessions": "ያለቁ ምክክሮች",
+  "pendingAppr": "ማረጋገጫ በመጠባበቅ ላይ",
+  "apprDesc": "የእርስዎ ሙያዊ ሰነዶች በአሁኑ ጊዜ በሕክምና ቦርዳችን እየተገመገሙ ነው።",
+  "totalEarnings": "አጠቃላይ ገቢ",
+  "withdraw": "ገንዘብ አውጣ"
+}

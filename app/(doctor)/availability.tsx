@@ -1,4 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from '../../src/i18n';
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator, Alert, FlatList,
@@ -29,6 +31,8 @@ const DAY_COLORS = [
 ];
 
 export default function AvailabilityScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -129,60 +133,43 @@ export default function AvailabilityScreen() {
   );
 
   return (
-    <ScreenContainer scrollable={false} padded constrained>
-      <PageHeader
-        title="Working Hours"
-        subtitle="Set your weekly consultation schedule"
-        rightElement={
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowAddModal(true)}
-          >
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text style={styles.addButtonText}>Add Hours</Text>
-          </TouchableOpacity>
-        }
-      />
-
-      {totalSlots > 0 && (
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{activeDays}</Text>
-            <Text style={styles.statLabel}>Active Days</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{totalSlots}</Text>
-            <Text style={styles.statLabel}>Total Slots</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{7 - activeDays}</Text>
-            <Text style={styles.statLabel}>Days Off</Text>
-          </View>
+    <ScreenContainer padded={false} style={{ backgroundColor: theme.colors.background }}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>{t("doctor:workingHoursTitle")}</Text>
+          <Text style={styles.subtitle}>Set your weekly consultation schedule</Text>
         </View>
-      )}
-
-      {isLoading && totalSlots === 0 ? (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={grouped}
-          keyExtractor={(item) => String(item.index)}
-          renderItem={renderDayGroup}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <EmptyState
-              icon="calendar-outline"
-              title="No Schedule Set"
-              description="Patients cannot book you until you set your working hours."
-            />
-          }
+        <Button
+          title={t("doctor:addHours")}
+          size="sm"
+          onPress={() => setShowAddModal(true)}
+          icon={<Ionicons name="add" size={18} color="#FFF" />}
         />
-      )}
+      </View>
+
+      <View style={styles.content}>
+        {isLoading && availabilityRules.length === 0 ? (
+          <ActivityIndicator
+            size="large"
+            color={theme.colors.primary}
+            style={{ marginTop: 100 }}
+          />
+        ) : (
+          <FlatList
+            data={[...availabilityRules].sort((a, b) => a.weekday - b.weekday)}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderRule}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={
+              <EmptyState
+                icon="calendar-outline"
+                title={t("doctor:noScheduleSet")}
+                description={t("doctor:onboardingNotice")}
+              />
+            }
+          />
+        )}
+      </View>
 
       <AddAvailabilityModal
         visible={showAddModal}

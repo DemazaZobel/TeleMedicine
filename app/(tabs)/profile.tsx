@@ -11,6 +11,8 @@ import { useBookingStore } from '../../src/store/booking.store';
 import { EditProfileModal } from '../../src/features/profile/components/EditProfileModal';
 import { ChangePasswordModal } from '../../src/features/profile/components/ChangePasswordModal';
 import { MedicalInfoModal } from '../../src/features/patient/components/MedicalInfoModal';
+import { useTranslation } from '../../src/i18n';
+import { setItemAsync } from '../../src/services/storage';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -72,6 +74,7 @@ function MenuItem({ icon, label, onPress, rightElement, destructive, theme }: Me
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const fetchProfile = useAuthStore((s) => s.fetchProfile);
@@ -103,22 +106,25 @@ export default function ProfileScreen() {
 
   const LANGUAGES = [
     { value: 'en' as const, label: 'English' },
-    { value: 'am' as const, label: 'Amharic' },
-    { value: 'fr' as const, label: 'French' },
+    { value: 'am' as const, label: 'አማርኛ (Amharic)' },
   ];
 
-  const currentLang = user?.preferred_language || 'en';
+  const currentLang = i18n.language || 'en';
   const currentLangLabel = LANGUAGES.find(l => l.value === currentLang)?.label || 'English';
 
-  const handleLanguageChange = async () => {
-    // Cycle through languages: en -> am -> fr -> en
+  const handleLanguageChange = () => {
     const currentIndex = LANGUAGES.findIndex(l => l.value === currentLang);
     const nextLang = LANGUAGES[(currentIndex + 1) % LANGUAGES.length];
-    try {
-      await updateProfile({ preferred_language: nextLang.value });
-    } catch {
-      // Error handled in store
-    }
+    const nextLangCode = nextLang.value;
+
+    // Instant local change
+    i18n.changeLanguage(nextLangCode);
+    setItemAsync('preferred_language', nextLangCode);
+
+    // Background sync with API (non-blocking)
+    updateProfile({ preferred_language: nextLangCode }).catch((error) => {
+      console.warn("Failed to sync language preference with backend:", error);
+    });
   };
 
   return (
@@ -160,7 +166,7 @@ export default function ProfileScreen() {
         <View style={styles.sectionCard}>
           <MenuItem
             icon="person-outline"
-            label="Edit Profile"
+            label={t("common:editProfile")}
             onPress={() => setEditProfileVisible(true)}
             theme={theme}
           />
@@ -169,7 +175,7 @@ export default function ProfileScreen() {
               <View style={styles.divider} />
               <MenuItem
                 icon="calendar-outline"
-                label="Set Availability"
+                label={t("common:availability")}
                 onPress={() => router.push('/(doctor)/availability')}
                 theme={theme}
               />
@@ -180,7 +186,7 @@ export default function ProfileScreen() {
               <View style={styles.divider} />
               <MenuItem
                 icon="heart-outline"
-                label="Medical Info"
+                label={t("doctor:medicalInfo")}
                 onPress={() => setMedicalInfoVisible(true)}
                 theme={theme}
               />
@@ -189,17 +195,17 @@ export default function ProfileScreen() {
           <View style={styles.divider} />
           <MenuItem
             icon="lock-closed-outline"
-            label="Change Password"
+            label={t("common:changePassword")}
             onPress={() => setChangePasswordVisible(true)}
             theme={theme}
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Text style={styles.sectionTitle}>{t("common:profileSettings")}</Text>
         <View style={styles.sectionCard}>
           <MenuItem
             icon="mail-outline"
-            label="Email Notifications"
+            label={t("common:emailNotifications")}
             theme={theme}
             rightElement={
               <Switch
@@ -214,7 +220,7 @@ export default function ProfileScreen() {
           <View style={styles.divider} />
           <MenuItem
             icon="apps-outline"
-            label="In-App Notifications"
+            label={t("common:inAppNotifications")}
             theme={theme}
             rightElement={
               <Switch
@@ -228,11 +234,11 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <Text style={styles.sectionTitle}>App Settings</Text>
+        <Text style={styles.sectionTitle}>{t("common:appSettings")}</Text>
         <View style={styles.sectionCard}>
           <MenuItem
             icon="moon-outline"
-            label="Dark Mode"
+            label={t("common:darkMode")}
             theme={theme}
             rightElement={
               <Switch
@@ -249,7 +255,7 @@ export default function ProfileScreen() {
           <View style={styles.divider} />
           <MenuItem
             icon="language-outline"
-            label="Language"
+            label={t("common:languagePref")}
             theme={theme}
             onPress={handleLanguageChange}
             rightElement={
@@ -262,7 +268,7 @@ export default function ProfileScreen() {
           <View style={styles.divider} />
           <MenuItem
             icon="help-circle-outline"
-            label="Help Center"
+            label={t("common:helpCenter")}
             theme={theme}
             onPress={() => {}}
           />
@@ -271,7 +277,7 @@ export default function ProfileScreen() {
         <View style={[styles.sectionCard, { marginTop: theme.spacing.xl, marginBottom: 60 }]}>
           <MenuItem
             icon="log-out-outline"
-            label="Log Out"
+            label={t("auth:logout")}
             onPress={logout}
             destructive
             theme={theme}
