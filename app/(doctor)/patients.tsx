@@ -1,303 +1,537 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
+  FlatList, StyleSheet, Text,
+  TextInput,
+  TouchableOpacity, View,
 } from "react-native";
 import {
-  Button,
-  Card,
-  Input,
-  PageHeader,
-  ScreenContainer,
+  EmptyState, PageHeader, ScreenContainer,
 } from "../../src/components/ui";
-import { EmptyState } from "../../src/components/ui/EmptyState";
-import { PendingApproval } from "../../src/features/doctor/components/PendingApproval";
-import { useAuthStore } from "../../src/store/authStore";
+import type { AppointmentDetail } from "../../src/features/booking/types/bookingTypes";
 import { useBookingStore } from "../../src/store/booking.store";
-import { useDoctorStore } from "../../src/store/doctor.store";
 import type { Theme } from "../../src/theme";
 import { useTheme } from "../../src/theme";
 
-/** Doctor-only tab — hidden for PATIENT and ADMIN roles via the tabs layout. */
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface PatientSummary {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  // Latest appointment info
+  latestAppointment: AppointmentDetail;
+  // All appointments with this patient
+  totalAppointments: number;
+  completedAppointments: number;
+  // Medical info from latest appointment's patient_profile
+  profile?: AppointmentDetail["patient_profile"];
+}
+
+type FilterStatus = "all" | "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getStatusConfig(status: string, theme: any) {
+  switch (status) {
+    case "CONFIRMED": return { color: theme.colors.primary, icon: "checkmark-circle-outline", label: "Confirmed" };
+    case "COMPLETED": return { color: theme.colors.success, icon: "checkmark-done-outline", label: "Completed" };
+    case "CANCELLED": return { color: theme.colors.error, icon: "close-circle-outline", label: "Cancelled" };
+    case "REQUESTED": return { color: theme.colors.warning, icon: "time-outline", label: "Requested" };
+    default: return { color: theme.colors.textSecondary, icon: "ellipse-outline", label: status };
+  }
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function getInitials(first: string, last: string): string {
+  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase();
+}
+
+// Consistent avatar color per patient
+const AVATAR_COLORS = [
+  "#3B82F6", "#8B5CF6", "#10B981", "#EF4444",
+  "#F59E0B", "#06B6D4", "#F97316", "#EC4899",
+];
+function avatarColor(userId: string): string {
+  let hash = 0;
+  for (const ch of userId) hash = (hash * 31 + ch.charCodeAt(0)) & 0xffffffff;
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function PatientsScreen() {
-  const isDoctor = useAuthStore((s) => s.user?.role === "DOCTOR");
-  const isVerified = useDoctorStore((s) => s.isDoctorVerified());
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { appointments, isLoading, fetchMyAppointments } = useBookingStore();
+  const { appointments, fetchMyAppointments, isLoading } = useBookingStore();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [filter, setFilter] = useState<FilterStatus>("all");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isDoctor && isVerified) {
-      fetchMyAppointments();
-    }
-  }, [isDoctor, isVerified, fetchMyAppointments]);
+  useEffect(() => { fetchMyAppointments(); }, []);
 
-  const uniquePatients = useMemo(() => {
-    const map = new Map();
-    appointments.forEach((app) => {
-      // Safely access patient details from flat fields or legacy nested objects
-      const patientId = app.patient?.id || app.patient_user_id;
-      if (patientId && !map.has(patientId)) {
-        const patientData = {
-          id: patientId,
-          first_name:
-            app.patient?.user?.first_name ||
-            app.patient_first_name ||
-            "Unknown",
-          last_name:
-            app.patient?.user?.last_name || app.patient_last_name || "Patient",
-          email: app.patient?.user?.email || "No email provided",
-        };
-        map.set(patientId, patientData);
+  // ── Derive unique patients from appointments ──────────────────────────────
+  const patients = useMemo<PatientSummary[]>(() => {
+    const map = new Map<string, PatientSummary>();
+
+    // Sort newest first so latestAppointment is correct
+    const sorted = [...appointments].sort(
+      (a, b) => new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime()
+    );
+
+    for (const appt of sorted) {
+      const uid = appt.patient_user_id ?? appt.patient?.user?.id?.toString();
+      if (!uid) continue;
+
+      if (!map.has(uid)) {
+        map.set(uid, {
+          userId: uid,
+          firstName: appt.patient_first_name ?? appt.patient?.user?.first_name ?? "Unknown",
+          lastName: appt.patient_last_name ?? appt.patient?.user?.last_name ?? "",
+          latestAppointment: appt,
+          totalAppointments: 0,
+          completedAppointments: 0,
+          profile: (appt as any).patient_profile,
+        });
       }
-    });
-    const uniqueArray = Array.from(map.values());
 
-    // Filter
-    let filtered = uniqueArray;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.first_name.toLowerCase().includes(q) ||
-          p.last_name.toLowerCase().includes(q) ||
-          p.email.toLowerCase().includes(q),
-      );
+      const p = map.get(uid)!;
+      p.totalAppointments += 1;
+      if (appt.status === "COMPLETED") p.completedAppointments += 1;
     }
 
-    // Sort
-    filtered.sort((a, b) => {
-      const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
-      const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
-      if (sortOrder === "asc") return nameA.localeCompare(nameB);
-      return nameB.localeCompare(nameA);
+    return [...map.values()];
+  }, [appointments]);
+
+  // ── Filter + search ───────────────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    return patients.filter((p) => {
+      const matchesFilter =
+        filter === "all" ||
+        p.latestAppointment.status === filter;
+
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !q ||
+        p.firstName.toLowerCase().includes(q) ||
+        p.lastName.toLowerCase().includes(q) ||
+        p.profile?.email?.toLowerCase().includes(q) ||
+        p.profile?.city?.toLowerCase().includes(q);
+
+      return matchesFilter && matchesSearch;
     });
+  }, [patients, filter, search]);
 
-    return filtered;
-  }, [appointments, searchQuery, sortOrder]);
+  // ── Render ────────────────────────────────────────────────────────────────
 
-  if (isDoctor && !isVerified) {
-    return <PendingApproval />;
-  }
-
-  const renderPatient = ({ item }: { item: any }) => {
-    const initials =
-      `${item.first_name?.[0] || ""}${item.last_name?.[0] || ""}`.toUpperCase();
-
-    // Fallbacks since backend doesn't send this yet
-    const allergies = item.allergies || "No known allergies reported.";
-    const history = item.medical_history || "No medical history provided.";
+  const renderPatient = ({ item }: { item: PatientSummary }) => {
+    const appt = item.latestAppointment;
+    const status = getStatusConfig(appt.status, theme);
+    const color = avatarColor(item.userId);
+    const isOpen = expandedId === item.userId;
 
     return (
-      <View style={styles.patientCardWrapper}>
-        <Card style={styles.patientCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarInitials}>{initials}</Text>
-            </View>
-            <View style={styles.infoContainer}>
-              <Text style={styles.name} numberOfLines={1}>
-                {item.first_name} {item.last_name}
-              </Text>
-              <Text style={styles.email} numberOfLines={1}>
-                {item.email}
-              </Text>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => setExpandedId(isOpen ? null : item.userId)}
+        activeOpacity={0.85}
+      >
+        {/* ── Row ── */}
+        <View style={styles.cardRow}>
+          {/* Avatar */}
+          <View style={[styles.avatar, { backgroundColor: color + "20" }]}>
+            <Text style={[styles.avatarText, { color }]}>
+              {getInitials(item.firstName, item.lastName)}
+            </Text>
+          </View>
+
+          {/* Info */}
+          <View style={styles.cardInfo}>
+            <Text style={styles.patientName}>
+              {item.firstName} {item.lastName}
+            </Text>
+            <Text style={styles.appointmentMeta}>
+              {formatDate(appt.scheduled_start)} · {formatTime(appt.scheduled_start)}
+            </Text>
+            <View style={styles.tagRow}>
+              {/* Status badge */}
+              <View style={[styles.badge, { backgroundColor: status.color + "15" }]}>
+                <Ionicons name={status.icon as any} size={11} color={status.color} />
+                <Text style={[styles.badgeText, { color: status.color }]}>
+                  {status.label}
+                </Text>
+              </View>
+              {/* Mode badge */}
+              <View style={[styles.badge, { backgroundColor: theme.colors.primary + "10" }]}>
+                <Ionicons
+                  name={appt.mode === "ONLINE" ? "videocam-outline" : "location-outline"}
+                  size={11}
+                  color={theme.colors.primary}
+                />
+                <Text style={[styles.badgeText, { color: theme.colors.primary }]}>
+                  {appt.mode === "ONLINE" ? "Online" : "In-Person"}
+                </Text>
+              </View>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          {/* Stats + chevron */}
+          <View style={styles.cardRight}>
+            <Text style={styles.apptCount}>{item.totalAppointments}</Text>
+            <Text style={styles.apptCountLabel}>visits</Text>
+            <Ionicons
+              name={isOpen ? "chevron-up" : "chevron-down"}
+              size={14}
+              color={theme.colors.textTertiary}
+              style={{ marginTop: 6 }}
+            />
+          </View>
+        </View>
 
-          <View style={styles.medicalInfoRow}>
-            <View style={styles.medicalInfoBlock}>
-              <Text style={styles.medicalLabel}>ALLERGIES</Text>
-              <Text style={styles.medicalValue} numberOfLines={2}>
-                {allergies}
-              </Text>
-            </View>
-            <View style={styles.medicalInfoBlock}>
-              <Text style={styles.medicalLabel}>MEDICAL HISTORY</Text>
-              <Text style={styles.medicalValue} numberOfLines={2}>
-                {history}
-              </Text>
+        {/* ── Expanded detail ── */}
+        {isOpen && (
+          <View style={styles.expandedSection}>
+            <View style={styles.expandDivider} />
+
+            {/* Appointment reason */}
+            {appt.reason ? (
+              <View style={styles.detailRow}>
+                <Ionicons name="chatbubble-outline" size={14} color={theme.colors.textSecondary} />
+                <Text style={styles.detailLabel}>Reason:</Text>
+                <Text style={styles.detailValue} numberOfLines={2}>{appt.reason}</Text>
+              </View>
+            ) : null}
+
+            {/* Medical info */}
+            {item.profile && (
+              <>
+                {item.profile.blood_type ? (
+                  <View style={styles.detailRow}>
+                    <Ionicons name="water-outline" size={14} color={theme.colors.error} />
+                    <Text style={styles.detailLabel}>Blood Type:</Text>
+                    <Text style={styles.detailValue}>{item.profile.blood_type}</Text>
+                  </View>
+                ) : null}
+
+                {item.profile.allergies ? (
+                  <View style={styles.detailRow}>
+                    <Ionicons name="warning-outline" size={14} color={theme.colors.warning} />
+                    <Text style={styles.detailLabel}>Allergies:</Text>
+                    <Text style={styles.detailValue} numberOfLines={2}>{item.profile.allergies}</Text>
+                  </View>
+                ) : null}
+
+                {item.profile.chronic_conditions ? (
+                  <View style={styles.detailRow}>
+                    <Ionicons name="pulse-outline" size={14} color={theme.colors.primary} />
+                    <Text style={styles.detailLabel}>Conditions:</Text>
+                    <Text style={styles.detailValue} numberOfLines={2}>{item.profile.chronic_conditions}</Text>
+                  </View>
+                ) : null}
+
+                {item.profile.phone_number ? (
+                  <View style={styles.detailRow}>
+                    <Ionicons name="call-outline" size={14} color={theme.colors.textSecondary} />
+                    <Text style={styles.detailLabel}>Phone:</Text>
+                    <Text style={styles.detailValue}>{item.profile.phone_number}</Text>
+                  </View>
+                ) : null}
+              </>
+            )}
+
+            {/* Stats footer */}
+            <View style={styles.statsFooter}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statNum, { color: theme.colors.primary }]}>
+                  {item.totalAppointments}
+                </Text>
+                <Text style={styles.statLabel}>Total</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statNum, { color: theme.colors.success }]}>
+                  {item.completedAppointments}
+                </Text>
+                <Text style={styles.statLabel}>Completed</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statNum, { color: theme.colors.warning }]}>
+                  {item.totalAppointments - item.completedAppointments}
+                </Text>
+                <Text style={styles.statLabel}>Pending</Text>
+              </View>
             </View>
           </View>
-        </Card>
-      </View>
+        )}
+      </TouchableOpacity>
     );
   };
 
+  const FILTERS: { key: FilterStatus; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "REQUESTED", label: "Requested" },
+    { key: "CONFIRMED", label: "Confirmed" },
+    { key: "COMPLETED", label: "Completed" },
+    { key: "CANCELLED", label: "Cancelled" },
+  ];
+
   return (
-    <ScreenContainer scrollable={false} padded={false}>
-      <View style={styles.pageWrapper}>
-        <PageHeader
-          title="Your Patients"
-          subtitle="View and manage patients you have consulted with"
+    <ScreenContainer scrollable={false} padded constrained>
+      <PageHeader
+        title="Patients"
+        subtitle={`${patients.length} patient${patients.length !== 1 ? "s" : ""} from your appointments`}
+      />
+
+      {/* Search */}
+      <View style={styles.searchBox}>
+        <Ionicons name="search-outline" size={16} color={theme.colors.textSecondary} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by name, email or city…"
+          placeholderTextColor={theme.colors.textSecondary}
+          value={search}
+          onChangeText={setSearch}
         />
-
-        {/* ── Search & Filter Bar ── */}
-        <View style={styles.toolbar}>
-          <View style={styles.searchContainer}>
-            <Input
-              placeholder="Search patients by name or email..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              containerStyle={{ marginBottom: 0, flex: 1 }}
-              leftIcon={
-                <Ionicons
-                  name="search-outline"
-                  size={20}
-                  color={theme.colors.textTertiary}
-                />
-              }
-            />
-          </View>
-          <Button
-            title={sortOrder === "asc" ? "A-Z" : "Z-A"}
-            variant="outline"
-            icon={
-              <Ionicons
-                name="filter"
-                size={16}
-                color={theme.colors.primary}
-                style={{ marginRight: 6 }}
-              />
-            }
-            onPress={() =>
-              setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
-            }
-            style={styles.sortBtn}
-          />
-        </View>
-
-        {isLoading && uniquePatients.length === 0 ? (
-          <ActivityIndicator
-            size="large"
-            color={theme.colors.primary}
-            style={{ marginTop: 40 }}
-          />
-        ) : (
-          <FlatList
-            data={uniquePatients}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderPatient}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <EmptyState
-                icon="people-outline"
-                title="No Patients Yet"
-                description="Patients will appear here once they book appointments with you."
-              />
-            }
-            showsVerticalScrollIndicator={false}
-          />
-        )}
+        {search ? (
+          <TouchableOpacity onPress={() => setSearch("")}>
+            <Ionicons name="close-circle" size={16} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        ) : null}
       </View>
+
+      {/* Filter chips */}
+      <View style={styles.filterRow}>
+        {FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.key}
+            onPress={() => setFilter(f.key)}
+            style={[styles.filterChip, filter === f.key && styles.filterChipActive]}
+          >
+            <Text style={[styles.filterText, filter === f.key && styles.filterTextActive]}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.userId}
+        renderItem={renderPatient}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <EmptyState
+            icon="people-outline"
+            title="No Patients Found"
+            description={
+              filter !== "all"
+                ? "No patients match this filter."
+                : "Patients will appear here once you have appointments."
+            }
+          />
+        }
+      />
     </ScreenContainer>
   );
 }
 
-const createStyles = (theme: Theme) =>
-  StyleSheet.create({
-    pageWrapper: {
-      flex: 1,
-      width: "100%",
-      maxWidth: 1100,
-      alignSelf: "center",
-    },
-    toolbar: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      marginHorizontal: theme.spacing.xl,
-      marginBottom: theme.spacing.lg,
-    },
-    searchContainer: {
-      flex: 1,
-    },
-    sortBtn: {
-      height: 48, // Match input height
-    },
-    listContent: {
-      flexGrow: 1,
-      paddingBottom: 40,
-      paddingHorizontal: theme.spacing.xl,
-    },
-    patientCardWrapper: {
-      marginBottom: theme.spacing.lg,
-    },
-    patientCard: {
-      padding: theme.spacing.lg,
-      borderRadius: theme.radius.xl,
-      backgroundColor: theme.colors.surface,
-      borderWidth: 1,
-      borderColor: "rgba(0,0,0,0.04)",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    cardHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-    },
-    avatar: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      backgroundColor: theme.colors.primaryLight + "40",
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: theme.spacing.md,
-    },
-    avatarInitials: {
-      fontSize: 18,
-      fontWeight: "700",
-      color: theme.colors.primary,
-    },
-    infoContainer: {
-      flex: 1,
-    },
-    name: {
-      ...theme.typography.h4,
-      fontSize: 17,
-      color: theme.colors.text,
-      marginBottom: 2,
-    },
-    email: {
-      ...theme.typography.bodySm,
-      color: theme.colors.textSecondary,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: theme.colors.border,
-      marginVertical: 14,
-    },
-    medicalInfoRow: {
-      flexDirection: "row",
-      gap: 16,
-    },
-    medicalInfoBlock: {
-      flex: 1,
-    },
-    medicalLabel: {
-      fontSize: 10,
-      fontWeight: "800",
-      color: theme.colors.textTertiary,
-      letterSpacing: 1,
-      marginBottom: 4,
-    },
-    medicalValue: {
-      fontSize: 13,
-      color: theme.colors.textSecondary,
-      lineHeight: 18,
-    },
-  });
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const createStyles = (theme: Theme) => StyleSheet.create({
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    flexWrap: "wrap",
+  },
+  filterChip: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 6,
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  filterText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: theme.colors.textSecondary,
+  },
+  filterTextActive: {
+    color: "#fff",
+  },
+  list: {
+    paddingBottom: 100,
+    flexGrow: 1,
+  },
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
+    overflow: "hidden",
+    ...theme.shadows.sm,
+  },
+  cardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  cardInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  patientName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: theme.colors.text,
+  },
+  appointmentMeta: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  tagRow: {
+    flexDirection: "row",
+    gap: theme.spacing.xs,
+    marginTop: 4,
+    flexWrap: "wrap",
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.radius.full,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  cardRight: {
+    alignItems: "center",
+  },
+  apptCount: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: theme.colors.primary,
+  },
+  apptCountLabel: {
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+    fontWeight: "500",
+  },
+
+  // Expanded
+  expandedSection: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+  },
+  expandDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    minWidth: 70,
+  },
+  detailValue: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.text,
+    fontWeight: "500",
+  },
+  statsFooter: {
+    flexDirection: "row",
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.md,
+    marginTop: theme.spacing.sm,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: theme.spacing.sm,
+  },
+  statNum: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  statLabel: {
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: theme.colors.border,
+    marginVertical: theme.spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.colors.text,
+    padding: 0,
+  },
+});

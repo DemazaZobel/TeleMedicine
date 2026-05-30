@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AuthContainer, Button, Input } from '../../../components/ui';
 import { Checkbox } from '../../../components/ui/CheckBox';
@@ -49,17 +49,21 @@ export function RegisterForm() {
 
   const handleRegister = useCallback(async () => {
     if (!isValid) return;
-    await register({
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      email: email.trim(),
-      password,
-      role,
-    });
-    router.push({
-      pathname: '/(auth)/verify-email',
-      params: { email: email.trim() },
-    });
+    try {
+      await register({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        password,
+        role,
+      });
+      router.push({
+        pathname: '/(auth)/verify-email',
+        params: { email: email.trim() },
+      });
+    } catch (err: any) {
+      // Handled globally by authStore's error state which will render in the UI banner
+    }
   }, [firstName, lastName, email, password, role, isValid]);
 
   const handleGoogle = () => console.log('Google signup clicked');
@@ -78,9 +82,11 @@ export function RegisterForm() {
 
         {/* LOGO + HEADING */}
         <View style={styles.header}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="medical" size={26} color={theme.colors.primary} />
-          </View>
+          <Image
+            source={require('../../../../assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join MedLink and take control of your health</Text>
         </View>
@@ -231,13 +237,9 @@ const createStyles = (theme: Theme) =>
       marginBottom: 24,
     },
 
-    logoBadge: {
-      width: 54,
-      height: 54,
-      borderRadius: 16,
-      backgroundColor: theme.colors.primary + '15',
-      justifyContent: 'center',
-      alignItems: 'center',
+    logoImage: {
+      width: 140,
+      height: 48,
       marginBottom: 14,
     },
 

@@ -1,4 +1,4 @@
-import type { User, DoctorProfile } from '../../../types/models';
+import type { User } from '../../../types/models';
 
 export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'EXPIRED';
 export type AppointmentMode = 'ONLINE' | 'IN_PERSON';
@@ -20,6 +20,25 @@ export interface AppointmentDetail {
   patient_user_id?: string;
   patient_first_name?: string;
   patient_last_name?: string;
+  // Add to AppointmentDetail interface in bookingTypes.ts
+  patient_profile?: {
+    id: string;
+    user_id: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+    date_of_birth?: string;
+    gender?: string;
+    blood_type?: string;
+    medical_history?: string;
+    chronic_conditions?: string;
+    allergies?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    medical_documents?: string;
+  };
   // Flat doctor fields from backend
   doctor_user_id?: string;
   doctor_first_name?: string;

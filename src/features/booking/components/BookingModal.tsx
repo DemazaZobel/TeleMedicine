@@ -28,11 +28,12 @@ function toLocalISOString(date: Date): string {
 interface BookingModalProps {
   visible: boolean;
   doctorId: string | number;
+  initialSlotIndex?: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingModalProps) {
+export function BookingModal({ visible, doctorId, initialSlotIndex, onClose, onSuccess }: BookingModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -163,6 +164,21 @@ export function BookingModal({ visible, doctorId, onClose, onSuccess }: BookingM
       fetchMyAppointments();
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (visible && initialSlotIndex !== undefined && allSlots.length > 0) {
+      const slot = allSlots[initialSlotIndex];
+      if (slot) {
+        const dateKey = slot.start.toDateString();
+        setSelectedDate(dateKey);
+        const slotsForDate = groupedSlots[dateKey] || [];
+        const slotIdx = slotsForDate.findIndex(
+          (s) => s.start.getTime() === slot.start.getTime()
+        );
+        setSelectedSlotIndex(slotIdx !== -1 ? slotIdx : null);
+      }
+    }
+  }, [allSlots, visible, initialSlotIndex, groupedSlots]);
 
   const handleBook = async () => {
     if (selectedSlotIndex === null || !selectedDate) return;

@@ -50,8 +50,19 @@ apiClient.interceptors.request.use(
       console.log(`[API PAYLOAD] =>`, JSON.stringify(sanitizedData, null, 2));
     }
 
+    // Do not attach the Authorization header to public authentication/registration endpoints
+    const isPublicAuthEndpoint = config.url && (
+      config.url.includes('/auth/login') ||
+      config.url.includes('/auth/register') ||
+      config.url.includes('/auth/token/refresh') ||
+      config.url.includes('/auth/verify-email') ||
+      config.url.includes('/auth/forgot-password') ||
+      config.url.includes('/auth/reset-password') ||
+      config.url.includes('/auth/resend-otp')
+    );
+
     const token = await Storage.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-    if (token && config.headers) {
+    if (token && config.headers && !isPublicAuthEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

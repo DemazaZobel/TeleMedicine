@@ -269,7 +269,7 @@ export function DoctorProfileModal({
       location: location.trim(),
       current_working_hospital: hospital.trim(),
       biography: biography.trim(),
-      education: educationList.map(({ id, isEditing, ...rest }) => rest), // Remove internal UI fields
+      education: educationList.map(({ id, isEditing, ...rest }) => rest),
       experience: experienceList.map(({ id, isEditing, ...rest }) => rest),
       youtube_link: youtube.trim(),
       linkedin_link: linkedin.trim(),
@@ -653,7 +653,7 @@ export function DoctorProfileModal({
                             style={[
                               styles.chipText,
                               exp.employmentType === type &&
-                                styles.chipTextSelected,
+                              styles.chipTextSelected,
                             ]}
                           >
                             {type}

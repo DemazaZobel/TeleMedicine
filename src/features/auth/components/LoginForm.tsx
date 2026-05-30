@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AuthContainer, Button, Input } from '../../../components/ui';
 import { useAuthStore } from '../../../store/authStore';
 import { Theme, useTheme } from '../../../theme';
@@ -48,9 +48,11 @@ export function LoginForm() {
       <View style={styles.container}>
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="medical" size={28} color={theme.colors.primary} />
-          </View>
+          <Image
+            source={require('../../../../assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Header */}
@@ -156,15 +158,9 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     logoContainer: {
       marginBottom: 24,
     },
-    logoBadge: {
-      width: 56,
-      height: 56,
-      borderRadius: 16,
-      backgroundColor: theme.colors.primary + '15',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.colors.primary + '25',
+    logoImage: {
+      width: 140,
+      height: 48,
     },
     header: {
       alignItems: 'center',

@@ -18,6 +18,7 @@ import { doctorApi } from "../../../src/features/doctor/services/doctor.api";
 import type { ProviderSearchResult } from "../../../src/features/doctor/types/doctor.types";
 import { useDiscoveryStore } from "../../../src/store/discovery.store";
 import { Theme, useTheme } from "../../../src/theme";
+import { formatDisplayValue } from "@/utils";
 
 export default function DoctorProfilePage() {
   const { id } = useLocalSearchParams();
@@ -246,7 +247,8 @@ export default function DoctorProfilePage() {
       {/* ── EXPERIENCE SECTION ── */}
       {(() => {
         const exp = doctor.experience || (doctor as any).experience_details;
-        if (!exp || (Array.isArray(exp) && exp.length === 0)) return null;
+        const formattedExp = formatDisplayValue(exp);
+        if (!formattedExp) return null;
 
         return (
           <Card style={styles.sectionCard}>
@@ -262,7 +264,7 @@ export default function DoctorProfilePage() {
                 </View>
                 <View style={styles.experienceDetails}>
                   <Text style={styles.bioText}>
-                    {Array.isArray(exp) ? exp.join("\n") : exp}
+                    {formattedExp}
                   </Text>
                 </View>
               </View>
@@ -274,18 +276,16 @@ export default function DoctorProfilePage() {
       {!isDesktop && (
         <>
           {/* Mobile Education Card */}
-          {doctor.education && (
+          {doctor.education && formatDisplayValue(doctor.education) ? (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>
                 Education & Certifications
               </Text>
               <Text style={styles.bioText}>
-                {Array.isArray(doctor.education)
-                  ? doctor.education.join("\n")
-                  : doctor.education}
+                {formatDisplayValue(doctor.education)}
               </Text>
             </Card>
-          )}
+          ) : null}
         </>
       )}
     </View>
@@ -363,7 +363,7 @@ export default function DoctorProfilePage() {
       </Card>
 
       {/* ── EDUCATION SIDEBAR CARD (Desktop Only) ── */}
-      {isDesktop && doctor.education && (
+      {isDesktop && doctor.education && formatDisplayValue(doctor.education) && (
         <Card style={styles.miniCard}>
           <View style={styles.miniCardHeader}>
             <Ionicons
@@ -374,9 +374,7 @@ export default function DoctorProfilePage() {
             <Text style={styles.miniCardTitle}>Education</Text>
           </View>
           <Text style={styles.miniCardText}>
-            {Array.isArray(doctor.education)
-              ? doctor.education.join("\n")
-              : doctor.education}
+            {formatDisplayValue(doctor.education)}
           </Text>
           {doctor.current_working_hospital && (
             <View

@@ -82,3 +82,73 @@ export function humanizeNotificationBody(body: string): string {
     }
   });
 }
+
+/**
+ * Formats a legacy or structured experience/education value (string, array of strings, or array of objects)
+ * into a single clean human-readable multiline string.
+ */
+export function formatDisplayValue(val: any): string {
+  if (!val) return '';
+  
+  // If it's a string, try to parse it if it looks like JSON
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed === '[object Object]') return '';
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return formatDisplayValue(parsed);
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+  
+  // If it's an array
+  if (Array.isArray(val)) {
+    return val
+      .map((item) => {
+        if (!item) return '';
+        if (typeof item === 'string') {
+          return item.trim() === '[object Object]' ? '' : item;
+        }
+        if (typeof item === 'object') {
+          const title = item.role || item.degree || item.title || '';
+          const subtitle = item.hospital || item.institution || item.school || item.company || '';
+          const start = item.start_year || item.start_date || '';
+          const end = item.end_year || item.end_date || (item.current ? 'Present' : '');
+          
+          const timeRange = start || end ? ` (${start}${start && end ? ' - ' : ''}${end})` : '';
+          
+          if (title && subtitle) {
+            return `• ${title} at ${subtitle}${timeRange}`;
+          } else if (title) {
+            return `• ${title}${timeRange}`;
+          } else if (subtitle) {
+            return `• ${subtitle}${timeRange}`;
+          } else {
+            return `• ` + Object.entries(item)
+              .filter(([k]) => k !== 'id')
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(', ');
+          }
+        }
+        return String(item);
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+  
+  // If it's a single object
+  if (typeof val === 'object') {
+    const title = val.role || val.degree || val.title || '';
+    const subtitle = val.hospital || val.institution || val.school || val.company || '';
+    if (title && subtitle) return `${title} at ${subtitle}`;
+    if (title) return title;
+    if (subtitle) return subtitle;
+    return JSON.stringify(val);
+  }
+  
+  return String(val);
+}

@@ -3,7 +3,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
 import React, { useState } from "react";
-import { LayoutAnimation, Pressable, Text, View } from "react-native";
+import { Image, LayoutAnimation, Pressable, Text, View } from "react-native";
 import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import { useDoctorStore } from "../../store/doctor.store";
@@ -76,13 +76,11 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
           )}
         >
           <View className="flex-row items-center">
-            <Ionicons name="medical" size={20} className="text-primary" />
-
-            {!isCollapsed && (
-              <Text className="ml-2 text-[15px] font-semibold text-foreground">
-                MedLink
-              </Text>
-            )}
+            <Image
+              source={require('../../../assets/images/logo.png')}
+              style={isCollapsed ? { width: 40, height: 40 } : { width: 120, height: 36 }}
+              resizeMode="contain"
+            />
           </View>
 
           {/* Toggle Button */}

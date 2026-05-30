@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Image, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { useTheme } from '../../theme';
 import { Navbar } from './Navbar';
 
@@ -16,8 +16,11 @@ export function MobileWebNav({ onNotificationsPress }: MobileWebNavProps) {
     <>
       <View style={[styles.header, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
         <View style={styles.logoContainer}>
-          <Ionicons name="medical" size={24} color={theme.colors.primary} />
-          <Text style={[styles.logoText, { color: theme.colors.primary }]}>MedLink</Text>
+          <Image
+            source={require('../../../assets/images/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={onNotificationsPress} style={styles.menuButton}>
@@ -59,14 +62,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     zIndex: 50,
   },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginLeft: 8,
+  logoImage: {
+    width: 120,
+    height: 36,
   },
   menuButton: {
     padding: 8,

@@ -1,5 +1,5 @@
-import { DoctorProfileForm } from '../../src/features/doctor';
+import { DoctorProfileView } from '../../src/features/doctor';
 
 export default function DoctorProfileRoute() {
-  return <DoctorProfileForm />;
+  return <DoctorProfileView />;
 }

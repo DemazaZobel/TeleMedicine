@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import logo from '../../assets/images/logo.png';
 import { ScreenContainer } from '../../src/components/ui';
 import { useTheme } from '../../src/theme';
-import logo from '../../assets/images/logo.png';
 
 const TEAM = [
   {
@@ -66,7 +66,7 @@ export default function AboutScreen() {
 
         {/* Hero banner */}
         <View style={{ backgroundColor: isDark ? '#0a5c4e' : '#ecfdf5', paddingHorizontal: isMobile ? 24 : 64, paddingVertical: isMobile ? 40 : 64, alignItems: 'center', gap: 16, borderBottomWidth: 1, borderBottomColor: isDark ? theme.colors.border : '#bbf7d0' }}>
-          
+
           <Text style={{ fontSize: isMobile ? 28 : 36, fontWeight: '800', color: isDark ? '#fff' : '#065f46', textAlign: 'center', lineHeight: isMobile ? 36 : 46 }}>
             About Medlink
           </Text>

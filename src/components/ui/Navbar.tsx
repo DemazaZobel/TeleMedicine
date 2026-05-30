@@ -3,7 +3,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
 import React, { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import { useDiscoveryStore } from "../../store/discovery.store";
@@ -59,9 +59,12 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
     <View className="bg-background border-b border-border px-6 h-14 flex-row items-center justify-between w-full">
 
       {/* LEFT: Logo */}
-      <View className="flex-row items-center gap-2">
-        <Ionicons name="medical" size={20} className="text-primary" />
-        <Text className="text-[15px] font-semibold text-foreground">MedLink</Text>
+      <View className="flex-row items-center">
+        <Image
+          source={require('../../../assets/images/logo.png')}
+          style={{ width: 120, height: 36 }}
+          resizeMode="contain"
+        />
       </View>
 
       {/* CENTER: Nav Tabs */}
