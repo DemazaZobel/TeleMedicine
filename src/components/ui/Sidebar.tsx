@@ -63,24 +63,34 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
         borderRightColor: theme.colors.border,
       }}
       className={cn(
-        "py-6 px-4 justify-between transition-all",
-        isCollapsed ? "w-16 items-center px-0" : "w-60",
+        "py-6 justify-between transition-all",
+        isCollapsed ? "w-16 items-center px-0" : "w-60 px-4",
       )}
     >
       {/* HEADER */}
-      <View>
+      <View className="w-full">
         <View
           className={cn(
-            "flex-row items-center justify-between h-10 mb-4 px-2",
-            isCollapsed && "px-0 justify-center gap-1",
+            "mb-4 px-2",
+            isCollapsed ? "flex-col items-center gap-3 mb-6" : "flex-row items-center justify-between h-10"
           )}
         >
           <View className="flex-row items-center">
-            <Image
-              source={require('../../../assets/images/logo.png')}
-              style={isCollapsed ? { width: 40, height: 40 } : { width: 120, height: 36 }}
-              resizeMode="contain"
-            />
+            {isCollapsed ? (
+              <View style={{ width: 32, height: 32, overflow: "hidden", borderRadius: 6 }}>
+                <Image
+                  source={require("../../../assets/images/logo.png")}
+                  style={{ width: 107, height: 32 }}
+                  resizeMode="cover"
+                />
+              </View>
+            ) : (
+              <Image
+                source={require("../../../assets/images/logo.png")}
+                style={{ width: 120, height: 36 }}
+                resizeMode="contain"
+              />
+            )}
           </View>
 
           {/* Toggle Button */}
@@ -100,7 +110,7 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
         </View>
 
         {/* NAVIGATION */}
-        <View className="mt-2">
+        <View className={cn("mt-2", isCollapsed && "items-center w-full")}>
           {!isCollapsed && (
             <Text className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1.5 px-1.5">
               Overview
@@ -171,9 +181,9 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
       </View>
 
       {/* FOOTER */}
-      <View>
+      <View className={cn(isCollapsed && "items-center w-full")}>
         {/* Account Switcher */}
-        <View className="mb-2">
+        <View className="mb-2 w-full">
           <AccountSwitcher
             isCollapsed={isCollapsed}
             onCreatePatient={() => setIsCreatePatientVisible(true)}
@@ -181,9 +191,12 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
           />
         </View>
 
-        <View className="border-t border-border pt-3">
+        <View className={cn("border-t border-border pt-3 w-full", isCollapsed && "items-center")}>
           <Pressable
-            className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
+            className={cn(
+              "flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted",
+              isCollapsed && "px-0 justify-center w-10"
+            )}
             onPress={onNotificationsPress}
           >
             <Ionicons
@@ -199,7 +212,10 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
           </Pressable>
 
           <Pressable
-            className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted"
+            className={cn(
+              "flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted",
+              isCollapsed && "px-0 justify-center w-10"
+            )}
             onPress={toggleTheme}
           >
             <Ionicons
@@ -215,7 +231,10 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
           </Pressable>
 
           <Pressable
-            className="flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10"
+            className={cn(
+              "flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-destructive/10",
+              isCollapsed && "px-0 justify-center w-10"
+            )}
             onPress={handleLogout}
           >
             <Ionicons
