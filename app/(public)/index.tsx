@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -27,6 +26,7 @@ import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
 import { transliterateAmharic } from '../../src/utils';
+ 
 import { useAmharicInput } from '../../src/hooks/useAmharicInput';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -52,15 +52,9 @@ const TESTIMONIALS = [
   { id: 'tm-4', name: 'Yonas A.', rating: 5, text: 'The best healthcare app in Ethiopia. Simple, fast, and reliable.' },
 ];
 
-
-const SPECIALTY_KEYS = [
-  { key: 'All', translationKey: 'common:specialtyAll' },
-  { key: 'Cardiologist', translationKey: 'common:specialtyCardiologist' },
-  { key: 'Dermatologist', translationKey: 'common:specialtyDermatologist' },
-  { key: 'Pediatrician', translationKey: 'common:specialtyPediatrician' },
-  { key: 'Gynecologist', translationKey: 'common:specialtyGynecologist' },
-  { key: 'General', translationKey: 'common:specialtyGeneral' },
-] as const;
+// Specialty keys used for i18n lookup — values come from translation files
+const SPECIALTY_KEYS = ['All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Gynecologist', 'General'] as const;
+type SpecialtyKey = typeof SPECIALTY_KEYS[number];
 
 const SPECIALTY_COLORS: Record<string, string> = {
   Cardiologist: '#EF4444',
@@ -571,20 +565,20 @@ function SearchSection({
   setTranslitEnabled,
 }: SearchSectionProps) {
   const { t } = useTranslation();
-
+ 
   const { displayValue, handleChange, reset } = useAmharicInput({
     enabled: translitEnabled,
     onChangeText: (amharicText, _latinText) => {
       setSearchQuery?.(amharicText);
     },
   });
-
+ 
   const handleToggleTranslit = () => {
     setTranslitEnabled?.(!translitEnabled);
     reset();
     setSearchQuery?.('');
   };
-
+ 
   return (
     <View style={{ paddingHorizontal: isMobile ? 16 : 32, marginTop: isMobile ? 20 : 32 }}>
       <View style={{
@@ -599,7 +593,7 @@ function SearchSection({
         <Text style={{ fontSize: 13, color: '#047857', marginBottom: 18, lineHeight: 20 }}>
           {t('patient:desc')}
         </Text>
-
+ 
         <View style={{ gap: 12 }}>
           <View style={{
             flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -607,7 +601,7 @@ function SearchSection({
             paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff',
           }}>
             <Ionicons name="search-outline" size={17} color="#047857" />
-
+ 
             <TextInput
               placeholder={t('common:searchPlaceholder')}
               placeholderTextColor="#6ee7b7"
@@ -618,7 +612,7 @@ function SearchSection({
                 ...Platform.select({ web: { outlineStyle: 'none' } as any }),
               }}
             />
-
+ 
             <TouchableOpacity
               onPress={handleToggleTranslit}
               activeOpacity={0.8}
@@ -653,71 +647,71 @@ function SearchSection({
 
 function DoctorCard({ doctor, index, theme, isDark, onPress, onBook }: { doctor: any; index: number; theme: Theme; isDark: boolean; onPress: () => void; onBook: () => void }) {
   const { t } = useTranslation();
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const isWeb = Platform.OS === 'web';
   const isAvailable = index % 3 !== 2;
   const specKey = Object.keys(SPECIALTY_COLORS).find((k) => (doctor.specialization || '').toLowerCase().includes(k.toLowerCase())) || 'default';
   const specColor = SPECIALTY_COLORS[specKey];
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.92}
-    >
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <View style={{ width: 200, borderRadius: 20, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 12, elevation: 3 }}>
-          <View style={{ width: '100%', height: 180, backgroundColor: isDark ? '#1a2e2a' : '#e9fbf4', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden' }}>
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, backgroundColor: specColor }} />
-            <View style={{ position: 'absolute', top: 14, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: isAvailable ? '#D1FAE5' : '#FEF3C7' }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: isAvailable ? '#10B981' : '#F59E0B' }} />
-              <Text style={{ fontSize: 10, fontWeight: '700', color: isAvailable ? '#065F46' : '#92400E' }}>
-                {isAvailable ? t('common:available') : t('common:busy')}
-              </Text>
-            </View>
-            <View style={{ width: 130, height: 160, borderRadius: 12, backgroundColor: specColor + '22', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' }}>
-              {doctor.profile_image ? (
-                <Image source={{ uri: doctor.profile_image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-              ) : (
-                <Ionicons name="person" size={110} color={specColor + 'bb'} style={{ marginBottom: -10 }} />
-              )}
-            </View>
+    <TouchableOpacity onPress={onBook} activeOpacity={0.92}>
+      <View style={{ width: 200, borderRadius: 20, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 12, elevation: 3 }}>
+        <View style={{ width: '100%', height: 180, backgroundColor: isDark ? '#1a2e2a' : '#e9fbf4', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden' }}>
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, backgroundColor: specColor }} />
+          <View style={{ position: 'absolute', top: 14, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: isAvailable ? '#D1FAE5' : '#FEF3C7' }}>
+            
           </View>
-          <View style={{ padding: 14, gap: 6, backgroundColor: theme.colors.background }}>
-            <Text style={{ fontSize: 14, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }} numberOfLines={1}>
-              Dr. {doctor.first_name} {doctor.last_name}
-            </Text>
-            <View style={{ alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: specColor, textAlign: 'center' }} numberOfLines={1}>
-                {doctor.specialization || 'General Practitioner'}
-              </Text>
-              <View style={{ width: 32, height: 2, borderRadius: 1, backgroundColor: specColor }} />
-            </View>
-            <Text style={{ fontSize: 11, color: theme.colors.textSecondary, textAlign: 'center' }} numberOfLines={1}>
-              {doctor.hospital || 'Tikur Anbessa Hospital'}
-            </Text>
-            <Text style={{ fontSize: 11, color: theme.colors.textSecondary, textAlign: 'center' }}>
-              {doctor.years_of_experience || 8}+ {t('common:yearsExperience')}
-            </Text>
-            <View style={{ alignItems: 'center', marginVertical: 2 }}>
-              <StarRating rating={Number(doctor.average_rating || 4.7)} size={13} />
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginVertical: 4 }}>
-              {(['logo-linkedin', 'logo-facebook', 'logo-twitter', 'logo-instagram'] as const).map((icon) => (
-                <TouchableOpacity key={icon} activeOpacity={0.6}>
-                  <Ionicons name={icon} size={16} color={theme.colors.textSecondary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity
-              onPress={onBook}
-              activeOpacity={0.85}
-              style={{ width: '100%', backgroundColor: theme.colors.primary, borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 4 }}
-            >
-              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('common:bookAppointment')}</Text>
-            </TouchableOpacity>
+          <View style={{ width: 130, height: 160, borderRadius: 12, backgroundColor: specColor + '22', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' }}>
+            {doctor.profile_image ? (
+              <Image source={{ uri: doctor.profile_image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+            ) : (
+              <Ionicons name="person" size={110} color={specColor + 'bb'} style={{ marginBottom: -10 }} />
+            )}
           </View>
         </View>
-      </Animated.View>
+        <View style={{ padding: 14, gap: 6, backgroundColor: theme.colors.background }}>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }} numberOfLines={1}>
+            Dr. {doctor.first_name} {doctor.last_name}
+          </Text>
+          <View style={{ alignItems: 'center', gap: 4 }}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: specColor, textAlign: 'center' }} numberOfLines={1}>
+              {doctor.specialization || 'General Practitioner'}
+            </Text>
+            <View style={{ width: 32, height: 2, borderRadius: 1, backgroundColor: specColor }} />
+          </View>
+          <Text style={{ fontSize: 11, color: theme.colors.textSecondary, textAlign: 'center' }} numberOfLines={1}>
+            {doctor.hospital || 'Tikur Anbessa Hospital'}
+          </Text>
+          <Text style={{ fontSize: 11, color: theme.colors.textSecondary, textAlign: 'center' }}>
+            {doctor.years_of_experience || 8}+ {t('common:yearsExperience')}
+          </Text>
+          <View style={{ alignItems: 'center', marginVertical: 2 }}>
+            <StarRating rating={Number(doctor.average_rating || 4.7)} size={13} />
+          </View>
+          {(() => {
+            const socialLinks = [
+              { icon: 'logo-linkedin' as const, url: doctor.linkedin },
+              { icon: 'logo-facebook' as const, url: doctor.facebook },
+              { icon: 'logo-twitter' as const, url: doctor.twitter },
+              { icon: 'logo-instagram' as const, url: doctor.instagram },
+            ].filter((s) => !!s.url);
+            return socialLinks.length > 0 ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginVertical: 4 }}>
+                {socialLinks.map(({ icon, url }) => (
+                  <TouchableOpacity key={icon} activeOpacity={0.6}>
+                    <Ionicons name={icon} size={16} color={theme.colors.textSecondary} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null;
+          })()}
+          <TouchableOpacity
+            onPress={onBook}
+            activeOpacity={0.85}
+            style={{ width: '100%', backgroundColor: theme.colors.primary, borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 4 }}
+          >
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('common:bookAppointment')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -725,13 +719,14 @@ function DoctorCard({ doctor, index, theme, isDark, onPress, onBook }: { doctor:
 // ─── Doctors Section ──────────────────────────────────────────────────────────
 
 function DoctorsSection({
-  theme, isDark, isMobile, doctors, isLoading, backendFailed, selectedSpecialty,
-  onSelectSpecialty, onSelectDoctor, onBook, onViewAll, hasMore, isLoadingMore, onLoadMore,
-  searchQuery,
+  theme, isDark, isMobile, doctors, isLoading, hasFetchError,
+  searchQuery, selectedSpecialty, onSelectSpecialty, onSelectDoctor,
+  onBook, onViewAll, hasMore, isLoadingMore, onLoadMore,
 }: SectionProps & {
   doctors: any[];
   isLoading: boolean;
-  backendFailed: boolean;
+  hasFetchError: boolean;
+  searchQuery: string;
   selectedSpecialty: string;
   onSelectSpecialty: (s: string) => void;
   onSelectDoctor: (d: any) => void;
@@ -740,18 +735,21 @@ function DoctorsSection({
   hasMore: boolean;
   isLoadingMore: boolean;
   onLoadMore: () => void;
-  searchQuery: string;
 }) {
   const { t } = useTranslation();
 
-  // Build translated specialty labels
-  const specialtyLabels = SPECIALTY_KEYS.map(({ key, translationKey }) => ({
-    key,
-    label: t(translationKey),
-  }));
+  // Translated specialty labels — keys map to i18n translation keys
+  const specialtyLabels: Record<SpecialtyKey, string> = {
+    All: t('common:specialtyAll'),
+    Cardiologist: t('common:specialtyCardiologist'),
+    Dermatologist: t('common:specialtyDermatologist'),
+    Pediatrician: t('common:specialtyPediatrician'),
+    Gynecologist: t('common:specialtyGynecologist'),
+    General: t('common:specialtyGeneral'),
+  };
 
-  const showEmpty = !isLoading && doctors.length === 0;
   const isSearching = searchQuery.trim().length > 0;
+  const hasResults = doctors.length > 0;
 
   return (
     <View style={{ marginTop: isMobile ? 28 : 44, paddingHorizontal: isMobile ? 16 : 32 }}>
@@ -759,41 +757,23 @@ function DoctorsSection({
         <Text style={{ fontSize: isMobile ? 20 : 24, fontWeight: '800', color: theme.colors.text }}>
           {t('common:availableDoctors')}
         </Text>
-        <TouchableOpacity
-          onPress={onViewAll}
-          activeOpacity={0.7}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-        >
+        <TouchableOpacity onPress={onViewAll} activeOpacity={0.7} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '600' }}>{t('common:viewAllBtn')}</Text>
           <Ionicons name="arrow-forward" size={13} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Fallback notice when using fake doctors */}
-      {backendFailed && (
-        <View style={{
-          flexDirection: 'row', alignItems: 'center', gap: 8,
-          backgroundColor: '#FEF3C7', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-          borderWidth: 1, borderColor: '#FCD34D', marginBottom: 12,
-        }}>
-          <Ionicons name="warning-outline" size={15} color="#92400E" />
-          <Text style={{ fontSize: 12, color: '#92400E', fontWeight: '600', flex: 1 }}>
-            {t('common:offlineMode')}
-          </Text>
-        </View>
-      )}
-
-      {/* Specialty filter chips */}
+      {/* Specialty filter pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 2 }}>
-          {specialtyLabels.map(({ key, label }) => {
-            const isActive = key === 'All'
+          {SPECIALTY_KEYS.map((s) => {
+            const isActive = s === 'All'
               ? !selectedSpecialty || selectedSpecialty === 'All'
-              : selectedSpecialty === key;
+              : selectedSpecialty === s;
             return (
               <TouchableOpacity
-                key={key}
-                onPress={() => onSelectSpecialty(key)}
+                key={s}
+                onPress={() => onSelectSpecialty(s)}
                 activeOpacity={0.8}
                 style={{
                   paddingHorizontal: 16,
@@ -805,7 +785,7 @@ function DoctorsSection({
                 }}
               >
                 <Text style={{ fontSize: 12, fontWeight: '700', color: isActive ? '#fff' : theme.colors.textSecondary }}>
-                  {label}
+                  {specialtyLabels[s]}
                 </Text>
               </TouchableOpacity>
             );
@@ -813,52 +793,64 @@ function DoctorsSection({
         </View>
       </ScrollView>
 
-      {/* Empty state */}
-      {showEmpty ? (
-        <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
-          <Ionicons name="search-outline" size={48} color={theme.colors.border} />
-          <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.text, textAlign: 'center' }}>
-            {isSearching ? t('common:noSearchResults') : t('common:noDoctorsAvailable')}
-          </Text>
-          <Text style={{ fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', maxWidth: 260, lineHeight: 20 }}>
-            {isSearching ? t('common:tryDifferentSearch') : t('common:checkBackLater')}
-          </Text>
-        </View>
-      ) : (
+      {/* Loading skeletons */}
+      {isLoading && (
         <FlatList
           horizontal
-          data={isLoading ? Array.from({ length: 5 }) : doctors}
+          data={Array.from({ length: 5 })}
           keyExtractor={(_, i) => String(i)}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 14, paddingVertical: 8, paddingRight: 16 }}
-          renderItem={({ item: doctor, index }) => {
-            if (isLoading || !doctor) {
-              return (
-                <Card style={{ width: 200, borderRadius: 20, overflow: 'hidden' }}>
-                  <View style={{ width: '100%', height: 180, backgroundColor: theme.colors.border }} />
-                  <View style={{ padding: 14, gap: 8 }}>
-                    <View style={{ height: 11, width: '80%', borderRadius: 6, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
-                    <View style={{ height: 9, width: '55%', borderRadius: 5, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
-                    <View style={{ height: 32, width: '100%', borderRadius: 10, backgroundColor: theme.colors.border, marginTop: 4 }} />
-                  </View>
-                </Card>
-              );
-            }
-            return (
-              <DoctorCard
-                doctor={doctor}
-                index={index}
-                theme={theme}
-                isDark={isDark}
-                onPress={() => onSelectDoctor(doctor)}
-                onBook={onBook}
-              />
-            );
-          }}
+          renderItem={() => (
+            <Card style={{ width: 200, borderRadius: 20, overflow: 'hidden' }}>
+              <View style={{ width: '100%', height: 180, backgroundColor: theme.colors.border }} />
+              <View style={{ padding: 14, gap: 8 }}>
+                <View style={{ height: 11, width: '80%', borderRadius: 6, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
+                <View style={{ height: 9, width: '55%', borderRadius: 5, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
+                <View style={{ height: 32, width: '100%', borderRadius: 10, backgroundColor: theme.colors.border, marginTop: 4 }} />
+              </View>
+            </Card>
+          )}
         />
       )}
 
-      {hasMore && !isLoadingMore && !showEmpty && (
+      {/* Empty / no-results state */}
+      {!isLoading && !hasResults && (
+        <View style={{ alignItems: 'center', paddingVertical: 40, gap: 10 }}>
+          <Ionicons name="search-outline" size={40} color={theme.colors.textSecondary} />
+          <Text style={{ fontSize: 15, fontWeight: '700', color: theme.colors.text }}>
+            {isSearching ? t('common:noSearchResults') : t('common:noDoctorsFound')}
+          </Text>
+          <Text style={{ fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', maxWidth: 260, lineHeight: 20 }}>
+            {isSearching
+              ? t('common:noSearchResultsDesc')
+              : t('common:noDoctorsFoundDesc')}
+          </Text>
+        </View>
+      )}
+
+      {/* Doctor cards */}
+      {!isLoading && hasResults && (
+        <FlatList
+          horizontal
+          data={doctors}
+          keyExtractor={(item, i) => item?.id ?? String(i)}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 14, paddingVertical: 8, paddingRight: 16 }}
+          renderItem={({ item: doctor, index }) => (
+            <DoctorCard
+              doctor={doctor}
+              index={index}
+              theme={theme}
+              isDark={isDark}
+              onPress={() => onSelectDoctor(doctor)}
+              onBook={onBook}
+            />
+          )}
+        />
+      )}
+
+      {hasMore && !isLoadingMore && !isLoading && hasResults && (
         <TouchableOpacity
           onPress={onLoadMore}
           activeOpacity={0.8}
@@ -876,6 +868,7 @@ function DoctorsSection({
           <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '600' }}>{t('common:viewAllBtn')}</Text>
         </TouchableOpacity>
       )}
+
       {isLoadingMore && (
         <View style={{ alignItems: 'center', marginTop: 16 }}>
           <Text style={{ fontSize: 13, color: theme.colors.textSecondary }}>{t('common:loading')}</Text>
@@ -1202,7 +1195,7 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
               <View style={{ height: 8, width: '60%', borderRadius: 4, backgroundColor: isDark ? '#2a2a2a' : '#f1f5f9', marginBottom: 10 }} />
               <View style={{ height: 72, width: '100%', borderRadius: 14, backgroundColor: isDark ? '#222' : '#f8fafc', borderWidth: 1, borderColor: isDark ? '#333' : '#e2e8f0' }} />
             </View>
-            
+            <Text style={{ color: '#dcfce766', fontSize: 11 }}>{t('common:appScreenshotPlaceholder')}</Text>
           </View>
         )}
       </View>
@@ -1233,6 +1226,7 @@ function CTABannerSection({ theme, isMobile, onSignup, onLogin }: SectionProps &
               {t('common:signUp')}
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={onLogin}
@@ -1349,8 +1343,8 @@ export default function PublicHomeScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<ProviderSearchResult | null>(null);
   const [searchTranslitEnabled, setSearchTranslitEnabled] = useState(i18n.language === 'am');
-  // Track whether the backend fetch has failed so we know to fall back to fake doctors
-  const [backendFailed, setBackendFailed] = useState(false);
+  // Track whether the backend fetch succeeded at least once
+  const [fetchFailed, setFetchFailed] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const menuAnim = useRef(new Animated.Value(0)).current;
@@ -1365,43 +1359,18 @@ export default function PublicHomeScreen() {
   const sectionProps: SectionProps = { theme, isDark, isMobile, width };
 
   useEffect(() => {
-    fetchDoctors().catch(() => {
-      setBackendFailed(true);
-    });
+    fetchDoctors().catch(() => setFetchFailed(true));
   }, [fetchDoctors]);
 
   useEffect(() => { setSearchTranslitEnabled(i18n.language === 'am'); }, [i18n.language]);
 
   // ── Doctor list logic ────────────────────────────────────────────────────────
-  // 1. If backend succeeded (doctors.length > 0 OR fetch finished without error): use real doctors only.
-  //    Show empty state if filters/search yield nothing.
-  // 2. If backend failed: fall back to fake doctors, filtered by specialty/search.
+  // Only fall back to fake doctors when the API call actually failed.
+  // When doctors is empty due to search/filter returning no results, show empty state.
   const displayDoctors = useMemo(() => {
-    if (!backendFailed) {
-      // Real data — respect whatever the store returns (already filtered by backend)
-      return doctors;
-    }
-
-    // Fallback: filter fake doctors client-side
-    let list = FAKE_DOCTORS;
-
-    if (selectedSpecialization && selectedSpecialization !== 'All') {
-      list = list.filter((d) =>
-        (d.specialization || '').toLowerCase().includes(selectedSpecialization.toLowerCase())
-      );
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter((d) =>
-        `${d.first_name} ${d.last_name}`.toLowerCase().includes(q) ||
-        (d.specialization || '').toLowerCase().includes(q) ||
-        (d.hospital || '').toLowerCase().includes(q)
-      );
-    }
-
-    return list;
-  }, [doctors, backendFailed, selectedSpecialization, searchQuery]);
+    if (fetchFailed && doctors.length === 0) return FAKE_DOCTORS;
+    return doctors;
+  }, [doctors, fetchFailed]);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearchChange = useCallback((text: string) => {
@@ -1411,7 +1380,7 @@ export default function PublicHomeScreen() {
       setSearchQuery(text);
     }, 500);
   }, [setSearchQuery]);
-
+  
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -1470,17 +1439,17 @@ export default function PublicHomeScreen() {
           <DoctorsSection
             {...sectionProps}
             doctors={displayDoctors}
-            isLoading={isLoading && doctors.length === 0 && !backendFailed}
-            backendFailed={backendFailed}
+            isLoading={isLoading && doctors.length === 0 && !fetchFailed}
+            hasFetchError={fetchFailed}
+            searchQuery={searchQuery}
             selectedSpecialty={selectedSpecialization || 'All'}
             onSelectSpecialty={(s) => setSelectedSpecialization(s === 'All' ? null : s)}
             onSelectDoctor={(d) => setSelectedDoctor(d)}
             onBook={promptAuth}
             onViewAll={promptAuth}
-            hasMore={!backendFailed && hasMore}
+            hasMore={hasMore}
             isLoadingMore={isLoadingMore}
             onLoadMore={fetchMoreDoctors}
-            searchQuery={searchQuery}
           />
         </View>
 
