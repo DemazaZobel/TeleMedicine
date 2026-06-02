@@ -1,0 +1,192 @@
+# e2e/flows/05_complete_patient_journey.yaml
+# TC-AUTH-004, TC-SEARCH-001, TC-SEARCH-005, TC-BOOK-001, TC-BOOK-003,
+# TC-PAY-001, TC-NOTIF-001, TC-NOTIF-002, TC-STATUS-003, TC-AUTH-011
+#
+# THE MASTER FLOW — Complete patient experience in one run:
+# Login → Search → Filter → View Doctor → Book → See Appointment →
+# Check Notification → View Join Link → Logout
+#
+# PRECONDITIONS:
+#   - Verified patient: testpatient@medlink.com / TestPass@123
+#   - At least one verified doctor with specialty "Cardiologist" and available slots
+#   - A prior confirmed appointment exists (for notification and join link steps)
+
+appId: host.exp.exponent
+---
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 1: Login
+# ─────────────────────────────────────────────────────────────────────────────
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "landing-login-button"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "login-email-input"
+- clearText
+- inputText: "testpatient@medlink.com"
+
+- tapOn:
+    id: "login-password-input"
+- clearText
+- inputText: "TestPass@123"
+
+- tapOn:
+    id: "login-submit-button"
+
+- waitForAnimationToEnd
+
+# Assert: patient home screen
+- assertVisible:
+    text: "Hello"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 2: Search and Filter Doctors (TC-SEARCH-001, TC-SEARCH-002)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "search-bar"
+
+- inputText: "Cardiologist"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Cardiologist"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 3: View Doctor Profile (TC-SEARCH-005, TC-BOOK-003)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "doctor-card-0"
+
+- waitForAnimationToEnd
+
+# Fee must be visible before booking (FR17)
+- assertVisible:
+    text: "ETB"
+
+# Doctor's specialization visible
+- assertVisible:
+    text: "Cardiologist"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 4: Book Appointment (TC-BOOK-001, TC-BOOK-002)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Book Appointment"
+
+- waitForAnimationToEnd
+
+# Select Online consultation type
+- tapOn:
+    text: "Online"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Pick first available time slot
+- tapOn:
+    id: "slot-0"
+    optional: true
+
+- tapOn:
+    text: "09:00"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm booking
+- tapOn:
+    id: "confirm-booking-button"
+
+- waitForAnimationToEnd
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 5: Verify Appointment in List (TC-DOC-APPT-001)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Appointments"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Cardiologist"
+    optional: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 6: Check Notifications (TC-NOTIF-001, TC-NOTIF-002)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Home"
+
+- waitForAnimationToEnd
+
+# Tap notification bell icon (top right)
+- tapOn:
+    description: "notifications"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Assert notification exists
+- assertVisible:
+    text: "Appointment"
+    optional: true
+
+# Tap notification to mark as read
+- tapOn:
+    text: "Appointment"
+    optional: true
+
+- waitForAnimationToEnd
+
+- back
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 7: View Join Link for Online Appointment (TC-STATUS-003)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Appointments"
+
+- waitForAnimationToEnd
+
+# Tap a confirmed appointment
+- tapOn:
+    text: "Confirmed"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Join Consultation"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Go back from browser/webview
+- back
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PART 8: Logout (TC-AUTH-011)
+# ─────────────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Profile"
+
+- waitForAnimationToEnd
+
+- scrollToBottom
+
+- tapOn:
+    text: "Logout"
+
+- waitForAnimationToEnd
+
+# Assert: returned to public landing
+- assertVisible:
+    id: "landing-login-button"

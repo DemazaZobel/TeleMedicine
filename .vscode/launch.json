@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "View Coverage Report",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5500/index.html",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "serve-coverage"
+    },
+    {
+      "name": "View Allure Report",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:5501/index.html",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "allure:serve"
+    },
+    {
+      "name": "Launch Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Coverage: generate + view",
+      "preLaunchTask": "test:coverage",
+      "configurations": ["View Coverage Report"],
+      "stopAll": true
+    },
+    {
+      "name": "Allure: generate + view",
+      "preLaunchTask": "allure:build",
+      "configurations": ["View Allure Report"],
+      "stopAll": true
+    }
+  ]
+}

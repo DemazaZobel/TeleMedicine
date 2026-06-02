@@ -1,0 +1,32 @@
+{
+    "back": "Back",
+    "lastUpdated": "Last updated: May 2026",
+    "intro": "This Privacy Policy describes how Medlink collects, uses, and protects your personal and medical information when you use our platform.",
+  
+    "section1Title": "1. Information We Collect",
+    "section1Body": "We collect the following types of information when you use Medlink:\n\n- Personal Information: Name, email address, phone number, date of birth, and gender when you register.\n- Health Information: Medical history, appointment details, consultation notes, and any information you share with doctors through the platform.\n- Usage Data: Device type, operating system, IP address, pages visited, and actions taken within the app to improve our services.\n- Payment Information: Transaction references processed through Chapa. We do not store full card numbers or bank account details.",
+  
+    "section2Title": "2. How We Use Your Information",
+    "section2Body": "We use your information to:\n\n- Provide and operate the Medlink platform and its features.\n- Facilitate appointment bookings between patients and doctors.\n- Send appointment confirmations, reminders, and updates.\n- Process payments securely through our payment partner Chapa.\n- Improve our platform through analytics and user feedback.\n- Comply with legal obligations under Ethiopian law.\n\nWe do not use your personal or medical information for advertising purposes.",
+  
+    "section3Title": "3. How We Share Your Information",
+    "section3Body": "We share your information only in the following circumstances:\n\n- With Doctors: Relevant medical and appointment information is shared with the doctor you book with, solely for the purpose of providing healthcare services.\n- With Payment Processors: Transaction information is shared with Chapa to process payments securely.\n- Legal Requirements: We may disclose information if required by Ethiopian law, court order, or government authority.\n- Business Transfers: In the event of a merger or acquisition, your data may be transferred to the new entity under the same privacy protections.\n\nWe never sell your personal or medical information to third parties.",
+  
+    "section4Title": "4. Data Security",
+    "section4Body": "Medlink implements industry-standard security measures to protect your information:\n\n- All data is transmitted using TLS 1.3 encryption.\n- Passwords are hashed using bcrypt and never stored in plain text.\n- Medical records are stored on secure servers with access controls.\n- Regular security audits are conducted to identify and address vulnerabilities.\n\nWhile we implement strong safeguards, no digital system is 100% immune to breaches. We will notify you promptly in the event of a data breach affecting your information.",
+  
+    "section5Title": "5. Your Rights",
+    "section5Body": "As a Medlink user, you have the right to:\n\n- Access: Request a copy of the personal data we hold about you.\n- Correction: Request corrections to inaccurate or incomplete data.\n- Deletion: Request the deletion of your account and associated data.\n- Portability: Request your data in a structured, machine-readable format.\n- Withdrawal of Consent: Withdraw consent for data processing at any time.\n\nTo exercise any of these rights, contact us at privacy@medlink.et.",
+  
+    "section6Title": "6. Data Retention",
+    "section6Body": "We retain your personal information for as long as your account is active or as needed to provide services. Medical records are retained for a minimum of 7 years in accordance with Ethiopian healthcare regulations. Upon account deletion, personal data is removed within 30 days, except where retention is legally required.",
+  
+    "section7Title": "7. Children's Privacy",
+    "section7Body": "Medlink is not intended for use by individuals under the age of 18 without parental consent. We do not knowingly collect personal information from minors. If you believe a child has provided us with their information, please contact us immediately at support@medlink.et.",
+  
+    "section8Title": "8. Changes to This Policy",
+    "section8Body": "We may update this Privacy Policy periodically to reflect changes in our practices or legal requirements. We will notify you of significant changes via email or in-app notification. Continued use of Medlink after changes are posted constitutes acceptance of the updated policy.",
+  
+    "section9Title": "9. Contact Us",
+    "section9Body": "If you have any questions, concerns, or requests regarding this Privacy Policy or your data, please contact our Data Protection Officer at:\n\nEmail: privacy@medlink.et\nPhone: +251 911 234 567\nAddress: Addis Ababa, Ethiopia"
+  }

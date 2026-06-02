@@ -1,0 +1,263 @@
+(node:22135) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/__tests__/integration/LoginForm.test.tsx
+  TC-AUTH-004: login with valid credentials
+    ✓ authenticates user and sets tokens in store (2 ms)
+    ✓ trims whitespace from email before calling login (1 ms)
+  TC-AUTH-005: login with wrong password
+    ✓ sets error and does not authenticate
+  TC-AUTH-006: login with unverified email
+    ✓ rejects login and surfaces unverified error
+  LoginForm empty field guard
+    ✓ does not call login when email is empty
+    ✓ does not call login when password is empty
+    ✓ does not call login when both fields are whitespace only
+  clearError
+    ✓ clears the error field in store
+  TC-AUTH-009: token refresh
+    ✓ calls refreshToken when a stored refresh token exists (1 ms)
+    ✓ stays logged out when no refresh token is in storage
+
+PASS src/__tests__/unit/services/authService.test.ts
+  authService.login
+    ✓ TC-AUTH-004: POST /auth/login/ returns tokens and user (2 ms)
+    ✓ TC-AUTH-005: POST /auth/login/ returns 401 on wrong password (21 ms)
+  authService.register
+    ✓ TC-AUTH-001: POST /auth/register/ returns success message
+    ✓ TC-AUTH-003: POST /auth/register/ returns 400 on duplicate email
+  authService.verifyEmail
+    ✓ TC-AUTH-001: POST /auth/verify-email/ verifies OTP
+  authService.forgotPassword + resetPassword
+    ✓ TC-AUTH-008: sends forgot-password OTP
+    ✓ TC-AUTH-008: resets password with OTP
+  authService profile
+    ✓ TC-PROFILE-001: GET /auth/profile/ returns user
+    ✓ TC-PROFILE-002: PUT /auth/profile/ updates and returns user (1 ms)
+  bookingService.book
+    ✓ TC-BOOK-001: POST /appointments/book/ creates appointment
+  bookingService.cancel
+    ✓ TC-BOOK-005: POST /appointments/{id}/cancel/ returns cancelled appointment (1 ms)
+  bookingService.doctorDecision
+    ✓ TC-DOC-APPT-002: accepts appointment
+  patientApi medical info
+    ✓ TC-MEDICAL-001: GET /patients/me/medical-info/
+    ✓ TC-MEDICAL-002: PUT /patients/me/medical-info/
+  TC-NFR-005: password sanitization in logs
+    ✓ does not log plaintext password in API payload
+
+PASS src/__tests__/unit/stores/authStore.test.ts
+  TC-AUTH-004: login with valid credentials
+    ✓ stores tokens, sets user, and marks authenticated (2 ms)
+  TC-AUTH-005: login with wrong password
+    ✓ sets error message and does not authenticate (1 ms)
+  TC-AUTH-001: patient registration
+    ✓ calls register service and clears loading on success
+  TC-AUTH-003: duplicate email registration
+    ✓ sets error and rejects
+  TC-AUTH-011: logout
+    ✓ blacklists token, clears store, and removes from SecureStore (1 ms)
+    ✓ still clears local state even if logout API call fails
+  TC-AUTH-010: session bootstrap
+    ✓ restores authenticated session from SecureStore
+    ✓ clears state if no refresh token found
+    ✓ clears state and logs out if token refresh fails
+  TC-AUTH-012: change password
+    ✓ calls change password service successfully (1 ms)
+  TC-AUTH-013: account switching
+    ✓ replaces tokens and user on successful switch
+  TC-PROFILE-002: update profile
+    ✓ merges updated profile while preserving role
+
+PASS src/__tests__/unit/stores/bookingStore.test.ts
+  TC-BOOK-001: book appointment
+    ✓ adds new appointment to store on success (1 ms)
+    ✓ sets error state when booking fails
+  TC-BOOK-005: cancel appointment
+    ✓ updates appointment status to CANCELLED in store
+  TC-DOC-APPT-002: doctor accepts appointment
+    ✓ updates appointment status to CONFIRMED
+  TC-NOTIF-001: fetch notifications
+    ✓ loads notifications into store (1 ms)
+  TC-NOTIF-002: mark notification as read
+    ✓ marks the notification as read in store
+  TC-PAY-004: fetch doctor wallet
+    ✓ loads wallet balance into store
+  TC-DOC-APPT-005: fetch availability rules
+    ✓ loads doctor availability rules into store
+
+PASS src/__tests__/unit/stores/discoveryStore.test.ts
+  TC-SEARCH-001: search doctors by specialization
+    ✓ calls search API with query and populates doctors (1 ms)
+  TC-SEARCH-002: filter by fee range
+    ✓ sends min_fee and max_fee params to API
+  TC-SEARCH-003: filter by minimum rating
+    ✓ sends min_rating param to API
+  TC-SEARCH-006: no results
+    ✓ sets empty doctors array without error when no results found (1 ms)
+  clearFilters
+    ✓ resets all filter state and triggers a new fetch
+
+---------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------
+File                             | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                           
+---------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------
+All files                        |    6.53 |     2.84 |    5.41 |    6.69 |                                                                             
+ src                             |       0 |        0 |       0 |       0 |                                                                             
+  i18n.ts                        |       0 |        0 |       0 |       0 | 24-71                                                                       
+ src/components                  |       0 |      100 |       0 |       0 |                                                                             
+  themed-view.tsx                |       0 |      100 |       0 |       0 | 11-13                                                                       
+ src/components/chat             |       0 |        0 |       0 |       0 |                                                                             
+  ChatInput.tsx                  |       0 |        0 |       0 |       0 | 10-58                                                                       
+  ChatList.tsx                   |       0 |        0 |       0 |       0 | 19-69                                                                       
+  ChatMessage.tsx                |       0 |        0 |       0 |       0 | 11-32                                                                       
+ src/components/ui               |       0 |        0 |       0 |       0 |                                                                             
+  AccountSwitcher.tsx            |       0 |        0 |       0 |       0 | 17-217                                                                      
+  AuthContainer.styles.ts        |       0 |      100 |       0 |       0 | 4-7                                                                         
+  AuthContainer.tsx              |       0 |        0 |       0 |       0 | 26-148                                                                      
+  Banner.tsx                     |       0 |        0 |       0 |       0 | 19-82                                                                       
+  Button.styles.ts               |       0 |      100 |       0 |       0 | 7-8                                                                         
+  Button.tsx                     |       0 |        0 |       0 |       0 | 29-91                                                                       
+  Card.styles.ts                 |       0 |      100 |       0 |       0 | 4-5                                                                         
+  Card.tsx                       |       0 |        0 |       0 |       0 | 13-38                                                                       
+  CheckBox.tsx                   |       0 |        0 |       0 |       0 | 11-25                                                                       
+  ComingSoon.styles.ts           |       0 |      100 |       0 |       0 | 4-5                                                                         
+  ComingSoon.tsx                 |       0 |        0 |       0 |       0 | 17-43                                                                       
+  CreateLinkedPatientModal.tsx   |       0 |        0 |       0 |       0 | 18-196                                                                      
+  EmptyState.tsx                 |       0 |        0 |       0 |       0 | 18-50                                                                       
+  GoogleSignInButton.tsx         |       0 |        0 |       0 |       0 | 10-28                                                                       
+  Input.styles.ts                |       0 |        0 |       0 |       0 | 4-5                                                                         
+  Input.tsx                      |       0 |        0 |       0 |       0 | 29-231                                                                      
+  LinkExistingAccountModal.tsx   |       0 |        0 |       0 |       0 | 20-245                                                                      
+  Loader.styles.ts               |       0 |      100 |       0 |       0 | 4-5                                                                         
+  Loader.tsx                     |       0 |        0 |       0 |       0 | 12-20                                                                       
+  MobileWebNav.tsx               |       0 |      100 |       0 |       0 | 13-57                                                                       
+  ModalBase.tsx                  |       0 |        0 |       0 |       0 | 28-101                                                                      
+  Navbar.tsx                     |       0 |        0 |       0 |       0 | 21-86                                                                       
+  NotificationsDrawer.tsx        |       0 |        0 |       0 |       0 | 17-142                                                                      
+  PageHeader.tsx                 |       0 |        0 |       0 |       0 | 19-53                                                                       
+  RightDrawer.tsx                |       0 |        0 |       0 |       0 | 26-88                                                                       
+  ScreenContainer.styles.ts      |       0 |      100 |       0 |       0 | 4-5                                                                         
+  ScreenContainer.tsx            |       0 |        0 |       0 |       0 | 19-61                                                                       
+  Sidebar.styles.ts              |       0 |      100 |       0 |       0 | 4-5                                                                         
+  Sidebar.tsx                    |       0 |        0 |       0 |       0 | 22-262                                                                      
+  StarRating.tsx                 |       0 |        0 |       0 |       0 | 14-44                                                                       
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+ src/constants                   |       0 |      100 |     100 |       0 |                                                                             
+  index.ts                       |       0 |      100 |     100 |       0 | 2-17                                                                        
+  theme.ts                       |       0 |      100 |     100 |       0 | 3-30                                                                        
+ src/features/auth               |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+ src/features/auth/components    |       0 |        0 |       0 |       0 |                                                                             
+  LoginForm.tsx                  |       0 |        0 |       0 |       0 | 11-155                                                                      
+  RegisterForm.tsx               |       0 |        0 |       0 |       0 | 15-238                                                                      
+  Terms.tsx                      |       0 |      100 |       0 |       0 | 7-93                                                                        
+ src/features/auth/hooks         |       0 |        0 |       0 |       0 |                                                                             
+  useLogin.ts                    |       0 |        0 |       0 |       0 | 6-33                                                                        
+  useRegister.ts                 |       0 |        0 |       0 |       0 | 7-62                                                                        
+ src/features/auth/services      |   48.48 |      100 |   43.75 |   48.48 |                                                                             
+  authService.ts                 |   48.48 |      100 |   43.75 |   48.48 | 47-56,92-96,116-166                                                         
+ src/features/auth/styles        |       0 |      100 |       0 |       0 |                                                                             
+  forgotPassword.styles.ts       |       0 |      100 |       0 |       0 | 4-5                                                                         
+  login.styles.ts                |       0 |      100 |       0 |       0 | 4-5                                                                         
+  register.styles.ts             |       0 |      100 |       0 |       0 | 4-5                                                                         
+  verifyEmail.styles.ts          |       0 |      100 |       0 |       0 | 4-5                                                                         
+ src/features/auth/types         |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+ src/features/booking/components |       0 |        0 |       0 |       0 |                                                                             
+  AddAvailabilityModal.tsx       |       0 |        0 |       0 |       0 | 20-301                                                                      
+  AppointmentCard.tsx            |       0 |        0 |       0 |       0 | 35-536                                                                      
+  BookingModal.tsx               |       0 |        0 |       0 |       0 | 19-352                                                                      
+  CancelAppointmentModal.tsx     |       0 |      100 |       0 |       0 | 22-71                                                                       
+  DeleteAvailabilityModal.tsx    |       0 |      100 |       0 |       0 | 21-60                                                                       
+  RescheduleModal.tsx            |       0 |        0 |       0 |       0 | 33-257                                                                      
+ src/features/booking/services   |   17.39 |       25 |   13.63 |   17.39 |                                                                             
+  bookingService.ts              |   17.39 |       25 |   13.63 |   17.39 | 27-30,69-88,118-272                                                         
+ src/features/booking/types      |       0 |        0 |       0 |       0 |                                                                             
+  bookingTypes.ts                |       0 |        0 |       0 |       0 |                                                                             
+ src/features/doctor             |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+ src/features/doctor/components  |       0 |        0 |       0 |       0 |                                                                             
+  DoctorDocumentsModal.tsx       |       0 |        0 |       0 |       0 | 28-396                                                                      
+  DoctorProfileEditModal.tsx     |       0 |        0 |       0 |       0 | 16-202                                                                      
+  DoctorProfileForm.tsx          |       0 |        0 |       0 |       0 | 17-243                                                                      
+  DoctorProfileModal.tsx         |       0 |        0 |       0 |       0 | 51-842                                                                      
+  DoctorProfileView.tsx          |       0 |        0 |       0 |       0 | 25-289                                                                      
+  DocumentList.tsx               |       0 |        0 |       0 |       0 | 11-107                                                                      
+  DocumentUpload.tsx             |       0 |        0 |       0 |       0 | 12-122                                                                      
+  PendingApproval.tsx            |       0 |        0 |       0 |       0 | 19-163                                                                      
+ src/features/doctor/services    |    9.52 |      100 |       0 |    9.52 |                                                                             
+  doctor.api.ts                  |    9.52 |      100 |       0 |    9.52 | 22-85                                                                       
+ src/features/doctor/styles      |       0 |      100 |       0 |       0 |                                                                             
+  doctorProfile.styles.ts        |       0 |      100 |       0 |       0 | 4-5                                                                         
+  documentList.styles.ts         |       0 |      100 |       0 |       0 | 4-5                                                                         
+  documentUpload.styles.ts       |       0 |      100 |       0 |       0 | 4-5                                                                         
+  pendingApproval.styles.ts      |       0 |      100 |       0 |       0 | 4-5                                                                         
+ src/features/doctor/types       |       0 |        0 |       0 |       0 |                                                                             
+  doctor.types.ts                |       0 |        0 |       0 |       0 |                                                                             
+ src/features/patient            |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+ src/features/patient/components |       0 |        0 |       0 |       0 |                                                                             
+  AdvancedFilterModal.tsx        |       0 |        0 |       0 |       0 | 24-146                                                                      
+  DiscoverySidebar.tsx           |       0 |        0 |       0 |       0 | 9-355                                                                       
+  DoctorCard.tsx                 |       0 |        0 |       0 |       0 | 15-76                                                                       
+  DoctorDetailsModal.tsx         |       0 |        0 |       0 |       0 | 19-160                                                                      
+  FilterChips.tsx                |       0 |        0 |       0 |       0 | 6-64                                                                        
+  MedicalInfoForm.tsx            |       0 |        0 |       0 |       0 | 12-272                                                                      
+  MedicalInfoModal.tsx           |       0 |        0 |       0 |       0 | 18-382                                                                      
+  MedicalInfoView.tsx            |       0 |        0 |       0 |       0 | 13-187                                                                      
+  SearchBar.tsx                  |       0 |        0 |       0 |       0 | 14-73                                                                       
+ src/features/patient/services   |     100 |       50 |     100 |     100 |                                                                             
+  patient.api.ts                 |     100 |       50 |     100 |     100 | 18                                                                          
+ src/features/patient/types      |       0 |        0 |       0 |       0 |                                                                             
+  patient.types.ts               |       0 |        0 |       0 |       0 |                                                                             
+ src/features/profile/components |       0 |        0 |       0 |       0 |                                                                             
+  ChangePasswordModal.tsx        |       0 |        0 |       0 |       0 | 15-143                                                                      
+  EditProfileModal.tsx           |       0 |        0 |       0 |       0 | 24-323                                                                      
+ src/hooks                       |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+ src/lib                         |       0 |      100 |       0 |       0 |                                                                             
+  utils.ts                       |       0 |      100 |       0 |       0 | 5                                                                           
+ src/screens/chat                |       0 |        0 |       0 |       0 |                                                                             
+  ChatListScreen.tsx             |       0 |        0 |       0 |       0 | 13-102                                                                      
+  ChatScreen.tsx                 |       0 |        0 |       0 |       0 | 14-130                                                                      
+ src/services                    |   13.73 |    16.21 |    7.54 |   13.96 |                                                                             
+  api.ts                         |    37.5 |    48.88 |    37.5 |   36.61 | 31-38,66,71-72,91,93,109-167                                                
+  appointmentService.ts          |       0 |        0 |       0 |       0 | 22-136                                                                      
+  authService.ts                 |       0 |      100 |       0 |       0 | 5-40                                                                        
+  chatService.ts                 |       0 |        0 |       0 |       0 | 7-141                                                                       
+  storage.ts                     |   27.77 |       25 |   33.33 |   27.77 | 17-20,27-47                                                                 
+  tokenStorage.ts                |       0 |        0 |       0 |       0 | 4-41                                                                        
+  translationService.ts          |       0 |        0 |       0 |       0 | 6-62                                                                        
+ src/store                       |   27.33 |    16.66 |   25.21 |   27.91 |                                                                             
+  appointmentStore.ts            |       0 |        0 |       0 |       0 | 39-174                                                                      
+  authStore.ts                   |   44.97 |    16.88 |   61.11 |   47.43 | 118,122-123,148-153,188-195,216-224,257-295,313-317,330-345,362-427,468-473 
+  booking.store.ts               |   24.02 |    12.12 |      30 |   22.89 | 83-88,125-160,170-249,272-298,308,329-452,462-478                           
+  bookingStore.ts                |       0 |      100 |       0 |       0 | 13-21                                                                       
+  chatStore.ts                   |       0 |      100 |       0 |       0 | 13-21                                                                       
+  discovery.store.ts             |   49.36 |    44.89 |   36.36 |   50.74 | 55-66,85-89,120,125,161-205                                                 
+  doctor.store.ts                |       0 |        0 |       0 |       0 | 39-161                                                                      
+  patient.store.ts               |       0 |        0 |       0 |       0 | 26-67                                                                       
+  resetAllStores.ts              |       0 |      100 |       0 |       0 | 12-14                                                                       
+ src/theme                       |       0 |        0 |       0 |       0 |                                                                             
+  ThemeProvider.tsx              |       0 |        0 |       0 |       0 | 6-80                                                                        
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+  tokens.ts                      |       0 |      100 |     100 |       0 | 4-274                                                                       
+  useTheme.ts                    |       0 |        0 |       0 |       0 | 9-13                                                                        
+ src/types                       |       0 |      100 |     100 |       0 |                                                                             
+  api.ts                         |       0 |        0 |       0 |       0 |                                                                             
+  appointment.ts                 |       0 |        0 |       0 |       0 |                                                                             
+  auth.ts                        |       0 |        0 |       0 |       0 |                                                                             
+  chat.ts                        |       0 |        0 |       0 |       0 |                                                                             
+  doctor.ts                      |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 |                                                                             
+  models.ts                      |       0 |        0 |       0 |       0 |                                                                             
+  navigation.ts                  |       0 |      100 |     100 |       0 | 15                                                                          
+ src/utils                       |       0 |        0 |       0 |       0 |                                                                             
+  index.ts                       |       0 |        0 |       0 |       0 | 5-139                                                                       
+  translit.ts                    |       0 |        0 |       0 |       0 | 1-164                                                                       
+  translitSuggestions.ts         |       0 |        0 |       0 |       0 | 4-79                                                                        
+---------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------
+Test Suites: 5 passed, 5 total
+Tests:       50 passed, 50 total
+Snapshots:   0 total
+Time:        2.803 s
+Ran all test suites.

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Text, View, StyleSheet, Pressable } from 'react-native';
+import { Text, View, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { AuthContainer, Button, Input } from '../../src/components/ui';
 import { authService } from '../../src/features/auth/services/authService';
 import { useTheme, Theme } from '../../src/theme';
@@ -17,6 +17,16 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const { width } = useWindowDimensions();
+  const isMobileLayout = width <= 768;
+
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(auth)/login');
+    }
+  };
 
   const handleSubmit = async () => {
     if (!email.trim()) {
@@ -38,8 +48,8 @@ export default function ForgotPasswordScreen() {
   return (
     <AuthContainer
       illustration={require('../../assets/images/forgot-password-illustration.png')}
-      showBackButton
-      onBack={() => router.back()}
+      showBackButton={isMobileLayout}
+      onBack={goBack}
     >
       <View style={styles.container}>
         {/* Icon */}

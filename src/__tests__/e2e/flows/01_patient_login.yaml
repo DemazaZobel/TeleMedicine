@@ -1,0 +1,64 @@
+# e2e/flows/01_patient_login.yaml
+# TC-AUTH-004, TC-AUTH-005, TC-AUTH-011
+
+appId: host.exp.exponent
+---
+
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# ── Navigate to Login ─────────────────────────────────────────────────────────
+- tapOn:
+    id: "landing-login-button"
+
+- waitForAnimationToEnd
+
+# ── TC-AUTH-005: Wrong password shows error ───────────────────────────────────
+- tapOn:
+    id: "login-email-input"
+
+- inputText: "testpatient@medlink.com"
+
+- tapOn:
+    id: "login-password-input"
+
+- inputText: "WrongPassword123"
+
+- tapOn:
+    id: "login-submit-button"
+
+- waitForAnimationToEnd
+
+# ── TC-AUTH-004: Correct credentials → home screen ───────────────────────────
+- tapOn:
+    id: "login-password-input"
+
+- eraseText: 20
+
+- inputText: "TestPass@123"
+
+- tapOn:
+    id: "login-submit-button"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Hello"
+
+# ── TC-AUTH-011: Logout ───────────────────────────────────────────────────────
+- tapOn:
+    text: "Profile"
+
+- waitForAnimationToEnd
+
+- scrollToBottom
+
+- tapOn:
+    text: "Logout"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: "landing-login-button"

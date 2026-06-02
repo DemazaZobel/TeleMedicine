@@ -6,13 +6,12 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export const createButtonStyles = (theme: Theme) =>
   StyleSheet.create({
-    // ── Base ──────────────────────────────────────
+    // ─── Base ──────────────────────────────────────
     base: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: theme.radius.md,
-      gap: theme.spacing.sm,
     },
 
     // ── Sizes ─────────────────────────────────────

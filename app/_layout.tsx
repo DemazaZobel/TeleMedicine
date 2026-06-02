@@ -1,14 +1,14 @@
 import { useFonts } from 'expo-font';
-import { useTranslation } from '../src/i18n';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import '../global.css';
 import { Loader } from '../src/components/ui';
+import "../src/i18n";
+import { useTranslation } from '../src/i18n';
+import { getItemAsync } from '../src/services/storage';
 import { useAuthStore } from '../src/store/authStore';
 import { ThemeProvider, useTheme } from '../src/theme';
-import "../src/i18n";
-import { getItemAsync } from '../src/services/storage';
 
 // Prevent the splash screen from auto-hiding (no-op on web)
 SplashScreen.preventAutoHideAsync().catch(() => { });
@@ -98,7 +98,7 @@ export default function RootLayout() {
   const { t } = useTranslation();
   const bootstrap = useAuthStore((state) => state.bootstrap);
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     // Add custom fonts here if needed
   });
   const [langLoaded, setLangLoaded] = useState(false);
@@ -128,17 +128,21 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, langLoaded]);
 
-  if (!fontsLoaded || !langLoaded) {
-    return null;
+  if (fontError) {
+    console.error('Error loading fonts:', fontError);
   }
 
   return (
     <ThemeProvider>
-      <WebLayoutWrapper>
-        <AuthGate>
-          <Slot />
-        </AuthGate>
-      </WebLayoutWrapper>
+      {(!fontsLoaded || !langLoaded) ? (
+        <Loader />
+      ) : (
+        <WebLayoutWrapper>
+          <AuthGate>
+            <Slot />
+          </AuthGate>
+        </WebLayoutWrapper>
+      )}
     </ThemeProvider>
   );
 }

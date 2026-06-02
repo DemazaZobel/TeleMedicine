@@ -103,7 +103,7 @@ export interface AppointmentChangeRequestCreatePayload {
 }
 
 export interface AppointmentDoctorDecisionPayload {
-  action: 'accept' | 'propose_change';
+  action: 'accept' | 'propose_change' | 'reject';
   // If proposing change:
   proposed_start?: string;
   proposed_end?: string;

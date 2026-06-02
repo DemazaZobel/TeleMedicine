@@ -1,0 +1,41 @@
+{
+    "back": "Back",
+    "lastUpdated": "Last updated: May 2026",
+    "intro": "Please read these Terms of Service carefully before using the Medlink platform.",
+  
+    "section1Title": "1. Acceptance of Terms",
+    "section1Body": "By accessing or using Medlink, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, you may not use the platform. These terms apply to all users including patients, doctors, and visitors.",
+  
+    "section2Title": "2. Description of Services",
+    "section2Body": "Medlink provides a digital healthcare platform that enables:\n\n- Patients to discover, evaluate, and book appointments with verified doctors.\n- Doctors to manage their profiles, availability, and patient appointments.\n- Online and in-person consultations between patients and healthcare providers.\n- Secure health record management and appointment tracking.\n\nMedlink is a technology platform and is not itself a healthcare provider. We do not provide medical advice, diagnosis, or treatment.",
+  
+    "section3Title": "3. User Accounts",
+    "section3Body": "To use Medlink's core features, you must create an account. You agree to:\n\n- Provide accurate, current, and complete registration information.\n- Maintain the security of your password and not share it with others.\n- Notify us immediately of any unauthorized use of your account.\n- Take responsibility for all activities that occur under your account.\n\nMedlink reserves the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity.",
+  
+    "section4Title": "4. Doctor Verification and Responsibility",
+    "section4Body": "Medlink verifies doctor credentials through a multi-step process. However:\n\n- Medlink does not guarantee the accuracy or completeness of doctor-provided information.\n- Doctors are independent healthcare professionals and are solely responsible for the medical advice and treatment they provide.\n- Medlink is not liable for any medical outcomes resulting from consultations arranged through the platform.\n- Patients should exercise independent judgment when selecting a healthcare provider.",
+  
+    "section5Title": "5. Appointments and Cancellations",
+    "section5Body": "By booking an appointment, you agree to:\n\n- Attend at the scheduled time or cancel at least 24 hours in advance for a full refund.\n- Provide accurate health information relevant to your consultation.\n- Respect the doctor's time and professional boundaries.\n\nDoctors reserve the right to cancel appointments at their discretion. In such cases, patients receive a full refund.",
+  
+    "section6Title": "6. Payments",
+    "section6Body": "All payments are processed securely through Chapa. By completing a payment, you authorize Medlink to charge the stated amount. Refund eligibility is governed by our cancellation policy. Medlink is not responsible for errors or delays caused by the payment processor.",
+  
+    "section7Title": "7. Prohibited Conduct",
+    "section7Body": "You agree not to:\n\n- Use Medlink for any unlawful purpose or in violation of applicable Ethiopian law.\n- Impersonate any person or entity, including medical professionals.\n- Upload false, misleading, or fraudulent information.\n- Interfere with or disrupt the integrity of the platform.\n- Attempt to gain unauthorized access to any part of Medlink's systems.\n- Use the platform to send unsolicited communications or spam.\n\nViolations may result in immediate account suspension and legal action.",
+  
+    "section8Title": "8. Intellectual Property",
+    "section8Body": "All content on Medlink, including the logo, design, text, and software, is the property of Medlink and protected by Ethiopian copyright law. You may not reproduce, distribute, or create derivative works from our content without written permission.",
+  
+    "section9Title": "9. Limitation of Liability",
+    "section9Body": "To the maximum extent permitted by law, Medlink shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform, including but not limited to medical outcomes, data loss, or service interruptions. Our total liability shall not exceed the amount paid by you in the 12 months preceding the claim.",
+  
+    "section10Title": "10. Changes to Terms",
+    "section10Body": "Medlink reserves the right to update these Terms of Service at any time. Significant changes will be communicated via email or in-app notification. Continued use of the platform after changes are posted constitutes acceptance of the updated terms.",
+  
+    "section11Title": "11. Governing Law",
+    "section11Body": "These Terms of Service are governed by the laws of the Federal Democratic Republic of Ethiopia. Any disputes arising from these terms shall be resolved in the courts of Addis Ababa, Ethiopia.",
+  
+    "section12Title": "12. Contact",
+    "section12Body": "For questions about these Terms of Service, contact us at:\n\nEmail: legal@medlink.et\nPhone: +251 911 234 567\nAddress: Addis Ababa, Ethiopia"
+  }

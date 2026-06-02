@@ -1,0 +1,273 @@
+(node:84167) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/__tests__/integration/BookingFlow.test.ts
+  FLOW 1: Search doctor → Book appointment → See in list
+    ✓ Step 1 (TC-SEARCH-001): patient searches for a doctor (1 ms)
+    ✓ Step 2 (TC-SEARCH-005): patient views doctor detail
+    ✓ Step 3 (TC-BOOK-001): patient books appointment (1 ms)
+    ✓ Step 4 (TC-DOC-APPT-001): appointment appears in patient list
+    ✓ Full flow: search → view fee → book → in list
+  FLOW 2: Book → Cancel
+    ✓ booking then cancellation updates status to CANCELLED (1 ms)
+  FLOW 3: Book → Pay
+    ✓ payment initiation returns Chapa checkout URL (1 ms)
+    ✓ payment history loads after payment completes
+  FLOW 4: Book → Reschedule Proposed → Patient Accepts
+    ✓ change request flow updates appointment to new time
+  FLOW 5: Appointment confirmed → Notification → Mark read
+    ✓ notification appears after doctor confirms appointment (1 ms)
+    ✓ patient marks notification as read
+    ✓ full flow: notification arrives then gets marked read
+  FLOW 6: Combined search filters
+    ✓ applies fee + rating filters together in one search (1 ms)
+    ✓ clearing filters resets all filter state
+
+PASS src/__tests__/integration/DoctorFlow.test.ts
+  FLOW 1: Doctor registration → profile setup → pending approval
+    ✓ Step 1 (TC-AUTH-002): doctor logs in with unverified account (1 ms)
+    ✓ Step 2 (TC-DOCTOR-001): doctor fills in profile details
+    ✓ Step 3 (TC-DOCTOR-002): doctor uploads verification document (1 ms)
+    ✓ Step 4 (TC-DOCTOR-003): isDoctorVerified returns false before admin approval
+    ✓ Full flow: login → profile → document → still not verified
+  FLOW 2: Admin approves doctor → full dashboard access
+    ✓ isDoctorVerified becomes true after admin approval
+    ✓ auth store reflects approved doctor user (1 ms)
+  FLOW 3: Doctor manages availability
+    ✓ adds availability rule then deletes it
+  FLOW 4: Doctor accepts appointment → wallet updated
+    ✓ accepts appointment then fetches updated wallet balance
+  FLOW 5: Doctor proposes reschedule → patient rejects
+    ✓ rejected change request leaves appointment unchanged (1 ms)
+  FLOW 6: TC-DOC-APPT-003 — Doctor rejects appointment request
+    ✓ rejected appointment status becomes CANCELLED
+
+PASS src/__tests__/unit/services/authService.test.ts
+  authService.login
+    ✓ TC-AUTH-004: POST /auth/login/ returns tokens and user (2 ms)
+    ✓ TC-AUTH-005: POST /auth/login/ returns 401 on wrong password (22 ms)
+  authService.register
+    ✓ TC-AUTH-001: POST /auth/register/ returns success message (1 ms)
+    ✓ TC-AUTH-003: POST /auth/register/ returns 400 on duplicate email
+  authService.verifyEmail
+    ✓ TC-AUTH-001: POST /auth/verify-email/ verifies OTP
+  authService.forgotPassword + resetPassword
+    ✓ TC-AUTH-008: sends forgot-password OTP
+    ✓ TC-AUTH-008: resets password with OTP (1 ms)
+  authService profile
+    ✓ TC-PROFILE-001: GET /auth/profile/ returns user
+    ✓ TC-PROFILE-002: PUT /auth/profile/ updates and returns user
+  bookingService.book
+    ✓ TC-BOOK-001: POST /appointments/book/ creates appointment (1 ms)
+  bookingService.cancel
+    ✓ TC-BOOK-005: POST /appointments/{id}/cancel/ returns cancelled appointment
+  bookingService.doctorDecision
+    ✓ TC-DOC-APPT-002: accepts appointment
+  patientApi medical info
+    ✓ TC-MEDICAL-001: GET /patients/me/medical-info/
+    ✓ TC-MEDICAL-002: PUT /patients/me/medical-info/ (1 ms)
+  TC-NFR-005: password sanitization in logs
+    ✓ does not log plaintext password in API payload
+
+PASS src/__tests__/unit/stores/authStore.test.ts
+  TC-AUTH-004: login with valid credentials
+    ✓ stores tokens, sets user, and marks authenticated
+  TC-AUTH-005: login with wrong password
+    ✓ sets error message and does not authenticate (1 ms)
+  TC-AUTH-001: patient registration
+    ✓ calls register service and clears loading on success
+  TC-AUTH-003: duplicate email registration
+    ✓ sets error and rejects (2 ms)
+  TC-AUTH-011: logout
+    ✓ blacklists token, clears store, and removes from SecureStore
+    ✓ still clears local state even if logout API call fails
+  TC-AUTH-010: session bootstrap
+    ✓ restores authenticated session from SecureStore
+    ✓ clears state if no refresh token found
+    ✓ clears state and logs out if token refresh fails
+  TC-AUTH-012: change password
+    ✓ calls change password service successfully
+  TC-AUTH-013: account switching
+    ✓ replaces tokens and user on successful switch
+  TC-PROFILE-002: update profile
+    ✓ merges updated profile while preserving role (1 ms)
+
+PASS src/__tests__/unit/services/doctorAndPaymentService.test.ts
+  TC-SEARCH-001: doctorApi.searchProviders
+    ✓ GET /providers/search/ returns paginated results
+    ✓ returns empty results for unknown specialization (1 ms)
+    ✓ passes fee filter params correctly
+    ✓ passes rating filter params correctly
+  TC-SEARCH-005: doctorApi.getProviderDetail
+    ✓ GET /providers/provider/{id}/ returns full doctor profile
+  TC-DOCTOR-001: doctorApi.getDoctorProfile / updateDoctorProfile
+    ✓ GET /providers/profile/ returns doctor profile
+    ✓ PUT /providers/profile/ updates doctor profile (2 ms)
+  TC-DOCTOR-002: document upload and fetch
+    ✓ POST /providers/documents/ uploads document
+    ✓ GET /providers/documents/list/ returns documents list
+  TC-STATUS-003: bookingService.getJoinLink
+    ✓ GET /appointments/{id}/join/ returns meeting link (1 ms)
+  TC-PAY-001: bookingService.initiatePayment
+    ✓ POST /payments/initiate/{id}/ returns checkout URL
+  TC-PAY-002: bookingService.getPaymentHistory
+    ✓ GET /payments/history/ returns payment records
+  TC-PAY-004: bookingService.getWallet
+    ✓ GET /payments/wallet/ returns wallet details
+  TC-NOTIF-001: bookingService.getNotifications
+    ✓ GET /appointments/notifications/ returns list
+  TC-NOTIF-002: bookingService.markNotificationRead
+    ✓ POST /appointments/notifications/{id}/read/ marks as read (1 ms)
+  TC-NOTIF-004: bookingService.updateNotificationPreferences
+    ✓ PUT /appointments/notification-preferences/ saves preferences
+  TC-BOOK-006/007: bookingService.respondToChangeRequest
+    ✓ accept: POST /appointments/change-requests/{id}/respond/
+    ✓ reject: returns REJECTED change request
+  TC-DOC-APPT-004: bookingService.createChangeRequest
+    ✓ POST /appointments/{id}/change-request/ creates change request
+  TC-NFR-003: HTTPS enforcement
+    ✓ apiClient baseURL uses HTTPS
+  TC-NFR-009: request timeout configured
+    ✓ apiClient has a timeout set (1 ms)
+    ✓ timeout is 15 seconds or less
+
+PASS src/__tests__/integration/AuthFlow.test.ts
+  FLOW 1: Register → Login → Bootstrap → Logout
+    ✓ Step 1 (TC-AUTH-001): register creates account without authenticating (1 ms)
+    ✓ Step 2 (TC-AUTH-004): login authenticates and stores tokens
+    ✓ Step 3 (TC-AUTH-010): app restart restores session via bootstrap
+    ✓ Step 4 (TC-AUTH-011): logout clears all state and tokens (1 ms)
+    ✓ Full flow: all four steps run in sequence correctly
+  FLOW 2: TC-AUTH-008 — Forgot password end-to-end
+    ✓ request OTP → reset password → login with new password
+  FLOW 3: TC-AUTH-012 — Change password mid-session
+    ✓ session remains active after password change (1 ms)
+  FLOW 4: TC-PROFILE-002 — Update profile mid-session
+    ✓ profile update reflects in auth store without changing role
+  FLOW 5: TC-AUTH-013 — Doctor switches to linked patient account
+    ✓ switches account and all stores reflect new patient context
+  FLOW 6: TC-AUTH-010 — Bootstrap with expired token
+    ✓ clears state when refresh token is expired
+
+PASS src/__tests__/unit/stores/doctorStore.test.ts
+  TC-DOCTOR-003: verificationStage when no profile
+    ✓ returns NEW_DOCTOR when profile is null
+    ✓ returns NEW_DOCTOR when profile is incomplete
+  TC-DOCTOR-001: verificationStage after profile filled
+    ✓ returns PROFILE_FILLED when profile is complete but no documents
+  TC-DOCTOR-002: verificationStage after document upload
+    ✓ returns DOCUMENT_UPLOADED when documents are pending review
+  TC-DOCTOR-004: isDoctorVerified
+    ✓ returns true when profile.is_verified is true (1 ms)
+    ✓ returns false when profile.is_verified is false
+    ✓ returns false when profile is null
+  TC-DOCTOR-001: fetch doctor profile
+    ✓ loads profile into store
+    ✓ sets error when fetch fails
+  TC-DOCTOR-001: update doctor profile
+    ✓ updates profile in store on success
+  TC-DOCTOR-002: upload verification document
+    ✓ adds uploaded document to store (1 ms)
+  TC-DOCTOR-002: fetch doctor documents
+    ✓ loads documents list into store
+  TC-DOCTOR-004: verificationStage APPROVED
+    ✓ returns APPROVED when profile is verified
+
+PASS src/__tests__/unit/stores/bookingStore.test.ts
+  TC-BOOK-001: book appointment
+    ✓ adds new appointment to store on success (1 ms)
+    ✓ sets error state when booking fails
+  TC-BOOK-005: cancel appointment
+    ✓ updates appointment status to CANCELLED in store
+  TC-DOC-APPT-002: doctor accepts appointment
+    ✓ updates appointment status to CONFIRMED (1 ms)
+  TC-NOTIF-001: fetch notifications
+    ✓ loads notifications into store
+  TC-NOTIF-002: mark notification as read
+    ✓ marks the notification as read in store
+  TC-PAY-004: fetch doctor wallet
+    ✓ loads wallet balance into store
+  TC-DOC-APPT-005: fetch availability rules
+    ✓ loads doctor availability rules into store
+
+PASS src/__tests__/unit/stores/appointmentLifecycle.test.ts
+  TC-STATUS-001: full appointment lifecycle
+    ✓ REQUESTED → CONFIRMED: doctor accepts
+    ✓ CONFIRMED → CANCELLED: patient cancels
+    ✓ REQUESTED → CANCELLED: doctor rejects (1 ms)
+  TC-BOOK-002: book in-person appointment
+    ✓ creates appointment with IN_PERSON mode
+  TC-BOOK-004: booking fails when no slots available
+    ✓ sets error and does not add appointment when API returns 400
+  TC-DOC-APPT-005: create availability rule
+    ✓ adds new availability rule to store
+  TC-DOC-APPT-006: delete availability rule
+    ✓ removes rule from store
+  TC-REVIEW-004: review only allowed for completed appointments
+    ✓ identifies COMPLETED appointments correctly (1 ms)
+  fetchMyAppointments
+    ✓ TC-DOC-APPT-001: loads appointments into store
+    ✓ sets error on API failure
+  TC-STATUS-002: payment status tracking
+    ✓ unpaid appointment has payment_status of unpaid
+    ✓ paid appointment reflects correct payment_status
+  notifications drawer
+    ✓ opens and closes the notifications drawer
+
+PASS src/__tests__/integration/LoginForm.test.tsx
+  TC-AUTH-004: login with valid credentials
+    ✓ authenticates user and sets tokens in store (1 ms)
+    ✓ trims whitespace from email before calling login (1 ms)
+  TC-AUTH-005: login with wrong password
+    ✓ sets error and does not authenticate
+  TC-AUTH-006: login with unverified email
+    ✓ rejects login and surfaces unverified error
+  LoginForm empty field guard
+    ✓ does not call login when email is empty
+    ✓ does not call login when password is empty
+    ✓ does not call login when both fields are whitespace only
+  clearError
+    ✓ clears the error field in store
+  TC-AUTH-009: token refresh
+    ✓ calls refreshToken when a stored refresh token exists
+    ✓ stays logged out when no refresh token is in storage
+
+PASS src/__tests__/unit/stores/rbac.test.ts
+  TC-NAV-003: unauthenticated user
+    ✓ resolves to /(public) when not authenticated
+    ✓ resolves to /(public) while bootstrapping
+  TC-NAV-001: patient resolves to /(tabs)
+    ✓ routes authenticated patient to /(tabs)
+    ✓ does not route patient to /(doctor)
+  TC-NAV-002: verified doctor resolves to /(doctor)
+    ✓ routes verified doctor to /(doctor)
+    ✓ does not route doctor to /(tabs)
+  TC-NAV-005: unverified doctor sees pending
+    ✓ routes unverified doctor to pending screen
+    ✓ isDoctorVerified returns false before admin approval
+  TC-NFR-008: role-based access control
+    ✓ patient role never resolves to /(doctor)
+    ✓ doctor role never resolves to /(tabs)
+    ✓ unknown role resolves to /(public)
+  auth store role checks
+    ✓ correctly reads PATIENT role from store
+    ✓ correctly reads DOCTOR role from store
+    ✓ user is null when not authenticated
+
+PASS src/__tests__/unit/stores/discoveryStore.test.ts
+  TC-SEARCH-001: search doctors by specialization
+    ✓ calls search API with query and populates doctors (1 ms)
+  TC-SEARCH-002: filter by fee range
+    ✓ sends min_fee and max_fee params to API
+  TC-SEARCH-003: filter by minimum rating
+    ✓ sends min_rating param to API
+  TC-SEARCH-006: no results
+    ✓ sets empty doctors array without error when no results found (1 ms)
+  clearFilters
+    ✓ resets all filter state and triggers a new fetch
+
+Test Suites: 12 passed, 12 total
+Tests:       147 passed, 147 total
+Snapshots:   0 total
+Time:        2.968 s
+Ran all test suites.
+Test results written to: test-results/results.json

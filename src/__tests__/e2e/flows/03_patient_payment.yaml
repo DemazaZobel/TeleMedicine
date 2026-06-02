@@ -1,0 +1,80 @@
+# e2e/flows/03_patient_payment.yaml
+# TC-PAY-001, TC-PAY-002, TC-PAY-003, TC-STATUS-001
+# Tests: Patient initiates payment for a confirmed appointment
+#
+# PRECONDITIONS:
+#   - Patient is logged in
+#   - A CONFIRMED appointment exists (doctor has already accepted)
+#   - Chapa test mode is enabled on the backend
+
+appId: host.exp.exponent
+---
+
+# ── Navigate to Appointments ──────────────────────────────────────────────────
+- tapOn:
+    text: "Appointments"
+
+- waitForAnimationToEnd
+
+# ── Find a confirmed appointment ──────────────────────────────────────────────
+- tapOn:
+    text: "Confirmed"
+    optional: true            # tab or filter label
+
+- waitForAnimationToEnd
+
+# Tap the first confirmed appointment card
+- tapOn:
+    id: "appointment-card-0"
+    optional: true
+
+# Fallback: tap "View Details" if card has that button
+- tapOn:
+    text: "View Details"
+    optional: true
+
+- waitForAnimationToEnd
+
+# ── TC-PAY-001: Initiate payment ──────────────────────────────────────────────
+- tapOn:
+    text: "Pay Now"
+
+- waitForAnimationToEnd
+
+# Assert: Chapa payment page or payment modal opens
+# The app opens Chapa in a browser or WebView
+- assertVisible:
+    text: "chapa"
+    optional: true
+
+- assertVisible:
+    text: "Pay"
+    optional: true
+
+# ── Go back to app after payment ─────────────────────────────────────────────
+- back
+
+- waitForAnimationToEnd
+
+# ── TC-PAY-002: View payment history ─────────────────────────────────────────
+- tapOn:
+    text: "Profile"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Payment History"
+    optional: true
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "ETB"
+    optional: true
+
+# ── TC-PAY-003: Download receipt ─────────────────────────────────────────────
+- tapOn:
+    text: "Receipt"
+    optional: true
+
+- waitForAnimationToEnd

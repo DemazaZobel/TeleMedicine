@@ -1,0 +1,57 @@
+# e2e/flows/01_patient_login_and_search.yaml
+# TC-AUTH-004, TC-SEARCH-001, TC-SEARCH-005
+# Full flow: App opens → Patient logs in → Searches for doctor → Views profile
+
+appId: com.medlink.app   # change to match your app.json ios.bundleIdentifier / android.package
+---
+- launchApp:
+    clearState: true
+
+# ── Wait for public landing page ───────────────────────────────────────────
+- waitForAnimationToEnd
+
+# ── Navigate to Login ───────────────────────────────────────────────────────
+- tapOn:
+    text: "Login"
+
+# ── TC-AUTH-004: Fill login form ─────────────────────────────────────────────
+- tapOn:
+    id: "email-input"           # set testID="email-input" on the email Input component
+- inputText: "tigist@test.com"
+
+- tapOn:
+    id: "password-input"        # set testID="password-input" on the password Input
+- inputText: "Test@1234"
+
+- tapOn:
+    text: "Login"               # matches t("auth:login") resolved to "Login" in English
+
+- waitForAnimationToEnd
+
+# ── Assert: landed on patient home ───────────────────────────────────────────
+- assertVisible:
+    text: "Find a Doctor"       # Adjust to the actual header text on your home screen
+
+# ── TC-SEARCH-001: Search for Cardiologist ───────────────────────────────────
+- tapOn:
+    id: "search-bar"            # set testID="search-bar" on SearchBar component
+- inputText: "Cardiologist"
+
+- waitForAnimationToEnd
+
+# ── Assert: at least one doctor card appears ─────────────────────────────────
+- assertVisible:
+    text: "Cardiologist"
+
+# ── TC-SEARCH-005: View doctor profile ────────────────────────────────────────
+- tapOn:
+    index: 0                    # tap the first doctor card
+
+- waitForAnimationToEnd
+
+# ── Assert: doctor profile details visible ───────────────────────────────────
+- assertVisible:
+    text: "Book Appointment"
+
+- assertVisible:
+    text: "ETB"                 # Fee label must be visible (FR17)

@@ -1,0 +1,81 @@
+{
+    "about": {
+      "back": "Back",
+  
+      "title": "About Medlink",
+      "subtitle": "Medlink is Ethiopia's modern digital healthcare platform that connects patients with verified doctors, making healthcare accessible, fast, and reliable for everyone.",
+  
+      "ourStory": "Our Story",
+      "story1": "Medlink was created in response to the challenges of fragmented healthcare access in Ethiopia, where patients often struggle to find the right specialists, book appointments, and access timely care.",
+      "story2": "As a team of five Software Engineering graduates, we came together with a shared vision to build a unified digital healthcare system that simplifies doctor discovery, appointment booking, and remote consultations.",
+  
+      "whatWeBuilt": "What We Built",
+  
+      "features": [
+        {
+          "icon": "phone-portrait-outline",
+          "title": "Cross-Platform App",
+          "desc": "Built with React Native and Expo, running seamlessly on iOS, Android, and Web from a single codebase."
+        },
+        {
+          "icon": "server-outline",
+          "title": "Robust Backend",
+          "desc": "A Django REST Framework API powers secure authentication, appointment management, and doctor data handling."
+        },
+        {
+          "icon": "shield-checkmark-outline",
+          "title": "Doctor Verification",
+          "desc": "A multi-step verification process ensures all doctors are licensed, authenticated, and trusted."
+        },
+        {
+          "icon": "videocam-outline",
+          "title": "Online Consultations",
+          "desc": "Secure video and messaging features allow patients to consult doctors remotely."
+        },
+        {
+          "icon": "notifications-outline",
+          "title": "Smart Reminders",
+          "desc": "Automated reminders and notifications help patients stay updated with appointments."
+        },
+        {
+          "icon": "card-outline",
+          "title": "Payment Integration",
+          "desc": "Secure and seamless payments powered by Chapa."
+        }
+      ],
+  
+      "meetTeam": "Meet the Team",
+      "teamIntro": "Five Software Engineering graduates who turned a shared vision into a working digital healthcare platform.",
+  
+      "team": [
+        {
+          "name": "Bemnet Beyene",
+          "role": "Frontend Developer",
+          "desc": "Specializes in React Native and modern mobile UI development with a focus on usability and performance."
+        },
+        {
+          "name": "Birtukan Kussa",
+          "role": "Frontend Developer",
+          "desc": "Focused on UX design, component architecture, and building intuitive user experiences."
+        },
+        {
+          "name": "Betelhem Seleshi",
+          "role": "Frontend Developer",
+          "desc": "Passionate about testing, accessibility, and building visually polished UI systems."
+        },
+        {
+          "name": "Beni Fessiha",
+          "role": "Backend Developer",
+          "desc": "Specializes in API design, system architecture, and scalable backend development."
+        },
+        {
+          "name": "Bekalu Bekele",
+          "role": "Backend Developer",
+          "desc": "Focused on database design, server infrastructure, and backend optimization."
+        }
+      ],
+  
+      "missionTitle": "Our Mission",
+      "missionBody": "To make quality healthcare accessible to every Ethiopian through technology — removing barriers of distance, cost, and complexity so healthcare becomes simple and reachable for all."
+    }
+  }

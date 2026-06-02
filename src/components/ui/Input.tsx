@@ -1,19 +1,19 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Platform,
+  Pressable,
+  ScrollView,
   Text,
   TextInput,
   TextInputProps,
   TextStyle,
   View,
   ViewStyle,
-  ScrollView,
-  Pressable,
 } from 'react-native';
-import { useTheme } from '../../theme';
-import { createInputStyles } from './Input.styles';
 import { useTranslation } from '../../i18n';
+import { useTheme } from '../../theme';
 import { getTranslitSuggestions } from '../../utils/translitSuggestions';
+import { createInputStyles } from './Input.styles';
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;

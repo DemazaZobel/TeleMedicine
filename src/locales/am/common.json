@@ -231,12 +231,18 @@
   "termsIntro": "እባክዎ ሜድሊንክን ከመጠቀምዎ በፊት እነዚህን የአገልግሎት ውሎች በጥንቃቄ ያንብቡ።",
 
 
-"bookAppointmentLink": "ቀጠሮ ያዝ",
-"onlineConsultation": "የመስመር ላይ ምክክር",
-"healthPackages": "የጤና ፓኬጆች",
-"copyright": "© 2026 ሜድሊንክ። መብቱ በህግ የተጠበቀ ነው።",
-"loginRequired": "መግባት ያስፈልጋል",
-"loginRequiredDesc": "ቀጠሮ ለማስያዝ እባክዎ ይግቡ ወይም ይመዝገቡ።",
-"phone": "+251 911 234 567",
-"emailContact": "support@medlink.et"
+  "bookAppointmentLink": "ቀጠሮ ያዝ",
+  "onlineConsultation": "የመስመር ላይ ምክክር",
+  "healthPackages": "የጤና ፓኬጆች",
+  "copyright": "© 2026 ሜድሊንክ። መብቱ በህግ የተጠበቀ ነው።",
+  "loginRequired": "መግባት ያስፈልጋል",
+  "loginRequiredDesc": "ቀጠሮ ለማስያዝ እባክዎ ይግቡ ወይም ይመዝገቡ።",
+  "phone": "+251 911 234 567",
+  "emailContact": "support@medlink.et",
+  "specialtyAll": "ሁሉም",
+  "specialtyCardiologist": "የልብ ሐኪም",
+  "specialtyDermatologist": "የቆዳ ሐኪም",
+  "specialtyPediatrician": "የሕፃናት ሐኪም",
+  "specialtyGynecologist": "የማህፀን ሐኪም",
+  "specialtyGeneral": "ጠቅላላ ሐኪም"
 }

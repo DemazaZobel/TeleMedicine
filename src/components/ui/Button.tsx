@@ -1,18 +1,19 @@
 import React, { useCallback, useMemo } from 'react';
 import {
-  ActivityIndicator,
-  Pressable,
-  PressableProps,
-  StyleProp,
-  Text,
-  TextStyle,
-  ViewStyle,
+    ActivityIndicator,
+    Pressable,
+    PressableProps,
+    StyleProp,
+    Text,
+    TextStyle,
+    View,
+    ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../theme';
 import {
-  ButtonSize,
-  ButtonVariant,
-  createButtonStyles,
+    ButtonSize,
+    ButtonVariant,
+    createButtonStyles,
 } from './Button.styles';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
@@ -109,7 +110,8 @@ export const Button = React.memo(function Button({
         />
       ) : (
         <>
-          {icon}
+          {icon && <React.Fragment>{icon}</React.Fragment>}
+          {icon && <View style={{ width: theme.spacing.sm }} />}
           <Text style={getTextStyle()}>{title}</Text>
         </>
       )}

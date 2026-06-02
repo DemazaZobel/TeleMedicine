@@ -5,10 +5,22 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "coverage": "npm run test:coverage && npm run coverage:view",
+    "coverage:view": "node scripts/serve-coverage.mjs",
+    "coverage:lcov": "node scripts/serve-static.mjs coverage/lcov-report",
+    "test:allure": "rm -rf allure-results && jest",
+    "allure:generate": "allure generate allure-results -o allure-report --clean",
+    "allure:open": "allure open allure-report",
+    "allure:serve": "node scripts/serve-static.mjs allure-report",
+    "allure:build": "npm run test:allure && npm run allure:generate",
+    "allure": "npm run allure:build && npm run allure:open"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -54,10 +66,22 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
+    "@types/react-test-renderer": "^19.1.0",
+    "allure-commandline": "^2.42.0",
+    "allure-jest": "^3.9.0",
+    "axios-mock-adapter": "^2.1.0",
     "babel-preset-expo": "~54.0.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "jest": "^29.7.0",
+    "jest-circus": "^30.4.2",
+    "jest-expo": "~54.0.13",
+    "jest-html-reporter": "^4.4.0",
+    "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },
   "private": true

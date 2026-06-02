@@ -9,7 +9,11 @@ import enDoctor from "./locales/en/doctor.json";
 import enPatient from "./locales/en/patient.json";
 import enAppointment from "./locales/en/appointment.json";
 import enErrors from "./locales/en/errors.json";
-
+import enTerms from "./locales/en/terms.json"
+import enPrivacy from "./locales/en/privacy.json";
+import enHelp from "./locales/en/help.json";
+import enFaq from "./locales/en/faq.json";
+import enAbout from "./locales/en/about.json";
 // Amharic namespaces
 import amCommon from "./locales/am/common.json";
 import amAuth from "./locales/am/auth.json";
@@ -18,7 +22,11 @@ import amDoctor from "./locales/am/doctor.json";
 import amPatient from "./locales/am/patient.json";
 import amAppointment from "./locales/am/appointment.json";
 import amErrors from "./locales/am/errors.json";
-
+import amTerms from "./locales/am/terms.json";
+import amPrivacy from "./locales/am/privacy.json";
+import amHelp from "./locales/am/help.json";
+import amFaq from "./locales/am/faq.json";
+import amAbout from "./locales/am/about.json";
 import { translationService } from './services/translationService';
 
 i18n.use(initReactI18next).init({
@@ -30,7 +38,12 @@ i18n.use(initReactI18next).init({
       doctor: enDoctor,
       patient: enPatient,
       appointment: enAppointment,
-      errors: enErrors
+      errors: enErrors,
+      terms: enTerms,
+      privacy: enPrivacy,
+      help: enHelp,
+      faq: enFaq,
+      about: enAbout,
     },
     am: {
       common: amCommon,
@@ -39,7 +52,12 @@ i18n.use(initReactI18next).init({
       doctor: amDoctor,
       patient: amPatient,
       appointment: amAppointment,
-      errors: amErrors
+      errors: amErrors,
+      terms: amTerms,
+      privacy: amPrivacy,
+      help: amHelp,
+      faq: amFaq,
+      about: amAbout,
     }
   },
   lng: "en",

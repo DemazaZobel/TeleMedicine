@@ -1,0 +1,31 @@
+{
+    "q1": "What is Medlink?",
+    "a1": "Medlink is Ethiopia's digital healthcare platform that connects patients with verified doctors for in-person and online appointments. We make it easy to find the right specialist, book appointments instantly, and manage your health records in one place.",
+  
+    "q2": "Is Medlink free to use?",
+    "a2": "Creating an account and browsing doctors on Medlink is completely free. Appointment fees are set by individual doctors and vary by specialty and consultation type. You only pay when you confirm a booking.",
+  
+    "q3": "How are doctors verified on Medlink?",
+    "a3": "Every doctor on Medlink goes through a multi-step verification process including license verification, credential review, and identity confirmation. Verified doctors display a blue checkmark on their profile.",
+  
+    "q4": "Can I book same-day appointments?",
+    "a4": "Yes, if a doctor has same-day availability slots open, you can book them instantly. Filter by 'Available Today' in the search section to find doctors with immediate openings.",
+  
+    "q5": "What happens if a doctor cancels my appointment?",
+    "a5": "If a doctor cancels your confirmed appointment, you will receive a full refund within 3–5 business days and a notification to rebook. We prioritize your time and aim to notify you as early as possible.",
+  
+    "q6": "Is my medical information private?",
+    "a6": "Yes. All your health data is encrypted and stored securely. Medlink complies with Ethiopian health data regulations and never shares or sells your personal medical information to third parties.",
+  
+    "q7": "Can I use Medlink outside Addis Ababa?",
+    "a7": "Yes. Medlink is available across Ethiopia. Online consultations can be accessed from anywhere with an internet connection. In-person appointments are available at the doctor's listed location.",
+  
+    "q8": "How do I become a doctor on Medlink?",
+    "a8": "Doctors can register through the Sign Up page by selecting the Doctor role. After completing your profile and submitting your credentials, our team reviews and verifies your account within 2–5 business days.",
+  
+    "q9": "What languages does Medlink support?",
+    "a9": "Medlink currently supports English. Amharic language support is planned for a future update.",
+  
+    "q10": "How do I contact Medlink support?",
+    "a10": "You can reach us via the Contact Us section, email at support@medlink.et, or call +251 911 234 567 during working hours (Mon–Fri, 8am–6pm EAT)."
+  }

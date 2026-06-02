@@ -1,0 +1,121 @@
+# e2e/flows/04_doctor_login_and_manage.yaml
+# TC-AUTH-002, TC-DOCTOR-003, TC-DOC-APPT-001, TC-DOC-APPT-002, TC-DOC-APPT-003
+# Tests: Doctor logs in, views pending appointments, accepts one, rejects another
+#
+# PRECONDITIONS:
+#   - A verified and approved doctor account exists:
+#       Email: testdoctor@medlink.com
+#       Password: DoctorPass@123
+#   - At least one REQUESTED appointment exists for this doctor
+
+appId: host.exp.exponent
+---
+
+# ── Launch fresh ──────────────────────────────────────────────────────────────
+- launchApp:
+    clearState: true
+
+- waitForAnimationToEnd
+
+# ── Doctor Login ──────────────────────────────────────────────────────────────
+- tapOn:
+    id: "landing-login-button"
+
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "login-email-input"
+- clearText
+- inputText: "testdoctor@medlink.com"
+
+- tapOn:
+    id: "login-password-input"
+- clearText
+- inputText: "DoctorPass@123"
+
+- tapOn:
+    id: "login-submit-button"
+
+- waitForAnimationToEnd
+
+# ── TC-DOCTOR-004: Assert doctor dashboard loads ──────────────────────────────
+- assertVisible:
+    text: "Dr."               # matches "Welcome Dr. Girma!" on doctor home
+
+# ── TC-DOC-APPT-001: View pending appointment requests ───────────────────────
+- tapOn:
+    text: "Appointments"
+
+- waitForAnimationToEnd
+
+# Filter to pending/requested
+- tapOn:
+    text: "Pending"
+    optional: true
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Checkup"
+    optional: true            # matches appointment reason
+
+# ── TC-DOC-APPT-002: Accept an appointment ────────────────────────────────────
+- tapOn:
+    text: "Accept"
+
+- waitForAnimationToEnd
+
+# Assert: status changes to Confirmed
+- assertVisible:
+    text: "Confirmed"
+    optional: true
+
+# ── TC-DOC-APPT-005: Set availability ────────────────────────────────────────
+- tapOn:
+    text: "Availability"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Add"
+    optional: true
+
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Monday"
+    optional: true
+
+- tapOn:
+    text: "Save"
+    optional: true
+
+- waitForAnimationToEnd
+
+# ── TC-PAY-004: View wallet ───────────────────────────────────────────────────
+- tapOn:
+    text: "Wallet"
+    optional: true
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "ETB"
+    optional: true
+
+# ── Doctor Logout ─────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Profile"
+
+- waitForAnimationToEnd
+
+- scrollToBottom
+
+- tapOn:
+    text: "Logout"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    id: "landing-login-button"

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View, useWindowDimensions, ImageBackground } from 'react-native';
 import logo from '../../assets/images/logo.png';
 import { ScreenContainer } from '../../src/components/ui';
 import { useTheme } from '../../src/theme';
@@ -10,38 +10,71 @@ import { useTheme } from '../../src/theme';
 const TEAM = [
   {
     name: 'Bemnet Beyene',
-    role: 'Frontend Developer',
+    roleKey: 'frontendDeveloper',
     gender: 'F',
     color: '#8B5CF6',
-    desc: 'Software Engineering graduate specializing in React Native and mobile UI design.',
+    
   },
   {
     name: 'Birtukan Kussa',
-    role: 'Frontend Developer',
+    roleKey: 'frontendDeveloper',
     gender: 'F',
     color: '#EC4899',
-    desc: 'Software Engineering graduate focused on user experience and component architecture.',
+    
   },
   {
     name: 'Betlehem Seleshi',
-    role: 'Frontend Developer',
+    roleKey: 'frontendDeveloper',
     gender: 'F',
     color: '#F59E0B',
-    desc: 'Software Engineering graduate passionate about accessible and beautiful interfaces.',
+    
   },
   {
-    name: 'Beno Fessiha',
-    role: 'Backend Developer',
+    name: 'Beni Fessiha',
+    roleKey: 'backendDeveloper',
     gender: 'M',
     color: '#3B82F6',
-    desc: 'Software Engineering graduate specializing in API design and system architecture.',
+    
   },
   {
     name: 'Bekalu Bekele',
-    role: 'Backend Developer',
+    roleKey: 'backendDeveloper',
     gender: 'M',
     color: '#10B981',
-    desc: 'Software Engineering graduate focused on database design and server infrastructure.',
+    
+  },
+];
+
+const FEATURES = [
+  {
+    icon: 'phone-portrait-outline',
+    titleKey: 'crossPlatformTitle',
+    descKey: 'crossPlatformDesc',
+  },
+  {
+    icon: 'server-outline',
+    titleKey: 'backendTitle',
+    descKey: 'backendDesc',
+  },
+  {
+    icon: 'shield-checkmark-outline',
+    titleKey: 'verificationTitle',
+    descKey: 'verificationDesc',
+  },
+  {
+    icon: 'videocam-outline',
+    titleKey: 'onlineTitle',
+    descKey: 'onlineDesc',
+  },
+  {
+    icon: 'notifications-outline',
+    titleKey: 'remindersTitle',
+    descKey: 'remindersDesc',
+  },
+  {
+    icon: 'card-outline',
+    titleKey: 'paymentTitle',
+    descKey: 'paymentDesc',
   },
 ];
 
@@ -50,6 +83,7 @@ export default function AboutScreen() {
   const { theme, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
+
   const isMobile = width < 768;
 
   return (
@@ -57,60 +91,109 @@ export default function AboutScreen() {
       <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
-        <View style={{ paddingHorizontal: isMobile ? 16 : 48, paddingTop: 24, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: theme.colors.border }}>
+        <View style={{
+          paddingHorizontal: isMobile ? 16 : 48,
+          paddingTop: 24,
+          paddingBottom: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border
+        }}>
           <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name="arrow-back" size={20} color={theme.colors.primary} />
-            <Text style={{ fontSize: 14, color: theme.colors.primary, fontWeight: '600' }}>Back</Text>
+            <Text style={{ fontSize: 14, color: theme.colors.primary, fontWeight: '600' }}>
+              {t('about:back')}
+            </Text>
           </Pressable>
+
           <Image source={logo} style={{ width: 100, height: 32, resizeMode: 'contain' }} />
           <View style={{ width: 60 }} />
         </View>
 
-        {/* Hero banner */}
-        <View style={{ backgroundColor: isDark ? '#0a5c4e' : '#ecfdf5', paddingHorizontal: isMobile ? 24 : 64, paddingVertical: isMobile ? 40 : 64, alignItems: 'center', gap: 16, borderBottomWidth: 1, borderBottomColor: isDark ? theme.colors.border : '#bbf7d0' }}>
-
-          <Text style={{ fontSize: isMobile ? 28 : 36, fontWeight: '800', color: isDark ? '#fff' : '#065f46', textAlign: 'center', lineHeight: isMobile ? 36 : 46 }}>
-            About Medlink
+        {/* Hero */}
+        <View style={{
+          backgroundColor: isDark ? '#0a5c4e' : '#ecfdf5',
+          paddingHorizontal: isMobile ? 24 : 64,
+          paddingVertical: isMobile ? 40 : 64,
+          alignItems: 'center',
+          gap: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: isDark ? theme.colors.border : '#bbf7d0'
+        }}>
+          <Image source={logo} style={{ width: 300, height: 50, resizeMode: 'contain' }} />
+          <Text style={{
+            fontSize: isMobile ? 28 : 36,
+            fontWeight: '800',
+            color: isDark ? '#fff' : '#065f46',
+            textAlign: 'center'
+          }}>
+            {t('about:title')}
           </Text>
-          <Text style={{ fontSize: 15, color: isDark ? '#dcfce7' : '#047857', textAlign: 'center', lineHeight: 24, maxWidth: 600 }}>
-            Medlink is Ethiopia's modern digital healthcare platform built to connect patients with trusted doctors — making quality healthcare accessible, fast, and reliable for everyone, anywhere.
+
+          <Text style={{
+            fontSize: 15,
+            color: isDark ? '#dcfce7' : '#047857',
+            textAlign: 'center',
+            lineHeight: 24,
+            maxWidth: 600
+          }}>
+            {t('about:subtitle')}
           </Text>
         </View>
 
         <View style={{ paddingHorizontal: isMobile ? 16 : 64, paddingVertical: isMobile ? 32 : 56, gap: 48 }}>
 
-          {/* Our Story */}
+          {/* Story */}
           <View style={{ gap: 16 }}>
-            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>{t("common:ourStory")}</Text>
-            <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary }} />
-            <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 26 }}>
-              Medlink was born out of a shared frustration with the fragmented state of healthcare access in Ethiopia. As a team of five Software Engineering graduates, we witnessed firsthand how difficult it was for patients to find the right doctor, book appointments, and manage their health records — all without a unified digital system.
+            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>
+              {t('about:ourStory')}
             </Text>
+
+            <View style={{ width: 48, height: 3, backgroundColor: theme.colors.primary }} />
+
             <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 26 }}>
-              We set out to build a platform that bridges this gap — a place where patients can discover verified specialists, book appointments in seconds, and consult remotely when needed. Medlink is our answer to that challenge: a full-stack healthcare platform built with modern technology, Ethiopian patients in mind, and a deep commitment to improving lives through better access to care.
+              {t('about:story1')}
+            </Text>
+
+            <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 26 }}>
+              {t('about:story2')}
             </Text>
           </View>
 
-          {/* What We Built */}
+          {/* Features */}
           <View style={{ gap: 16 }}>
-            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>{t("common:whatWeBuilt")}</Text>
-            <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary }} />
+            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>
+              {t('about:whatWeBuilt')}
+            </Text>
+
+            <View style={{ width: 48, height: 3, backgroundColor: theme.colors.primary }} />
+
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
-              {[
-                { icon: 'phone-portrait-outline', title: 'Cross-Platform App', desc: 'Built with React Native and Expo, Medlink runs on iOS, Android, and web from a single codebase.' },
-                { icon: 'server-outline', title: 'Robust Backend', desc: 'A Django REST Framework API powers secure authentication, appointment management, and doctor profiles.' },
-                { icon: 'shield-checkmark-outline', title: 'Doctor Verification', desc: 'A multi-step verification system ensures every doctor on the platform is authenticated and trusted.' },
-                { icon: 'videocam-outline', title: 'Online Consultations', desc: 'Patients can consult with doctors remotely through secure video and messaging features.' },
-                { icon: 'notifications-outline', title: 'Smart Reminders', desc: 'Automated appointment reminders and follow-ups keep patients on track with their healthcare.' },
-                { icon: 'card-outline', title: 'Payment Integration', desc: 'Chapa payment integration enables seamless appointment payments within the platform.' },
-              ].map((item) => (
-                <View key={item.title} style={{ width: isMobile ? '100%' : '47%', flexDirection: 'row', gap: 14, backgroundColor: theme.colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: theme.colors.border }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: isDark ? theme.colors.background : '#ecfdf5', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Ionicons name={item.icon as any} size={22} color={theme.colors.primary} />
-                  </View>
+              {FEATURES.map((item) => (
+                <View
+                  key={item.titleKey}
+                  style={{
+                    width: isMobile ? '100%' : '47%',
+                    flexDirection: 'row',
+                    gap: 14,
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: 16,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border
+                  }}
+                >
+                  <Ionicons name={item.icon as any} size={22} color={theme.colors.primary} />
+
                   <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: theme.colors.text }}>{item.title}</Text>
-                    <Text style={{ fontSize: 13, color: theme.colors.textSecondary, lineHeight: 20 }}>{item.desc}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: theme.colors.text }}>
+                      {t(`about:${item.titleKey}`)}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: theme.colors.textSecondary, lineHeight: 20 }}>
+                      {t(`about:${item.descKey}`)}
+                    </Text>
                   </View>
                 </View>
               ))}
@@ -119,31 +202,50 @@ export default function AboutScreen() {
 
           {/* Team */}
           <View style={{ gap: 16 }}>
-            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>{t("common:meetTheTeam")}</Text>
-            <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary }} />
-            <Text style={{ fontSize: 15, color: theme.colors.textSecondary, lineHeight: 24 }}>
-              Five Software Engineering graduates who turned a shared vision into a working product.
+            <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text }}>
+              {t('about:meetTeam')}
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 8 }}>
-              {TEAM.map((member) => (
-                <View key={member.name} style={{ width: isMobile ? '100%' : '30%', backgroundColor: theme.colors.surface, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.border }}>
-                  {/* Color top bar */}
-                  <View style={{ height: 6, backgroundColor: member.color }} />
-                  <View style={{ padding: 20, gap: 10, alignItems: 'center' }}>
-                    {/* Avatar */}
-                    <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: member.color + '22', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: member.color + '44' }}>
-                      <Ionicons name={member.gender === 'F' ? 'person' : 'person'} size={36} color={member.color} />
+
+            <Text style={{ fontSize: 15, color: theme.colors.textSecondary }}>
+              {t('about:teamIntro')}
+            </Text>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+              {TEAM.map((m) => (
+                <View
+                  key={m.name}
+                  style={{
+                    width: isMobile ? '100%' : '30%',
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: 20,
+                    overflow: 'hidden',
+                    borderWidth: 1,
+                    borderColor: theme.colors.border
+                  }}
+                >
+                  <View style={{ height: 6, backgroundColor: m.color }} />
+
+                  <View style={{ padding: 20, alignItems: 'center', gap: 8 }}>
+                    <View style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 36,
+                      backgroundColor: m.color + '22',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Ionicons name="person" size={36} color={m.color} />
                     </View>
-                    <View style={{ alignItems: 'center', gap: 4 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>{member.name}</Text>
-                      <View style={{ backgroundColor: member.color + '18', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: member.color }}>{member.role}</Text>
-                      </View>
-                    </View>
-                    <Text style={{ fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>{member.desc}</Text>
-                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                      <Text style={{ fontSize: 11, color: theme.colors.textSecondary, backgroundColor: theme.colors.background, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, overflow: 'hidden' }}>Software Engineering</Text>
-                    </View>
+
+                    <Text style={{ fontWeight: '800', color: theme.colors.text }}>
+                      {m.name}
+                    </Text>
+
+                    <Text style={{ fontSize: 12, color: m.color, fontWeight: '700' }}>
+                      {t(`about:${m.roleKey}`)}
+                    </Text>
+
+                   
                   </View>
                 </View>
               ))}
@@ -151,13 +253,19 @@ export default function AboutScreen() {
           </View>
 
           {/* Mission */}
-          <View style={{ backgroundColor: isDark ? '#0a5c4e' : '#ecfdf5', borderRadius: 20, padding: isMobile ? 24 : 36, gap: 12, borderWidth: 1, borderColor: isDark ? theme.colors.border : '#bbf7d0' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Ionicons name="heart" size={24} color={theme.colors.primary} />
-              <Text style={{ fontSize: 20, fontWeight: '800', color: isDark ? '#fff' : '#065f46' }}>{t("common:ourMission")}</Text>
-            </View>
-            <Text style={{ fontSize: 15, color: isDark ? '#dcfce7' : '#047857', lineHeight: 26 }}>
-              To make quality healthcare accessible to every Ethiopian through technology — breaking down barriers of distance, cost, and complexity so that finding and connecting with the right doctor is as simple as a few taps.
+          <View style={{
+            backgroundColor: isDark ? '#0a5c4e' : '#ecfdf5',
+            padding: isMobile ? 24 : 36,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: isDark ? theme.colors.border : '#bbf7d0'
+          }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: theme.colors.text }}>
+              {t('about:missionTitle')}
+            </Text>
+
+            <Text style={{ marginTop: 8, color: theme.colors.textSecondary, lineHeight: 26 }}>
+              {t('about:missionBody')}
             </Text>
           </View>
 

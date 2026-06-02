@@ -1,4 +1,10 @@
-import i18n from '../i18n';
+import type { i18n as I18nInstance } from 'i18next';
+
+// Lazy access breaks require cycle: i18n.ts -> translationService.ts -> i18n.ts
+function getI18n(): I18nInstance {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require('../i18n').default;
+}
 
 // A Set to track untranslated or missing keys queried during this session
 const untranslatedKeys = new Set<string>();
@@ -9,6 +15,8 @@ export const translationService = {
    */
   t(key: string, options?: Record<string, any>): string {
     if (!key) return '';
+
+    const i18n = getI18n();
     
     // Check if key exists in resource bundle
     if (!i18n.exists(key)) {
@@ -30,14 +38,14 @@ export const translationService = {
    * Returns the current active language code.
    */
   getLanguage(): string {
-    return i18n.language || 'en';
+    return getI18n().language || 'en';
   },
 
   /**
    * Changes the active language dynamically.
    */
   async changeLanguage(lang: string): Promise<void> {
-    await i18n.changeLanguage(lang);
+    await getI18n().changeLanguage(lang);
   },
 
   /**

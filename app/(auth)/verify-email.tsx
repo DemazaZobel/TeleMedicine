@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../src/i18n';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Text, View, StyleSheet, Pressable } from 'react-native';
+import { Text, View, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { Button, Input, AuthContainer } from '../../src/components/ui';
 import { authService } from '../../src/features/auth/services/authService';
 import { useTheme, Theme } from '../../src/theme';
@@ -18,6 +18,16 @@ export default function VerifyEmailScreen() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
+  const { width } = useWindowDimensions();
+  const isMobileLayout = width <= 768;
+
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(auth)/login');
+    }
+  };
 
   const handleVerify = async () => {
     if (!otp.trim()) {
@@ -50,8 +60,8 @@ export default function VerifyEmailScreen() {
   return (
     <AuthContainer
       illustration={require('../../assets/images/verify-email-illustration.png')}
-      showBackButton
-      onBack={() => router.back()}
+      showBackButton={isMobileLayout}
+      onBack={goBack}
     >
       <View style={styles.container}>
         {/* Icon */}

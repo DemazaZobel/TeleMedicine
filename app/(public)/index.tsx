@@ -1,3 +1,4 @@
+
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,25 +8,26 @@ import {
   FlatList,
   Image,
   Platform,
-  Pressable,
   ScrollView,
   Share,
   Text,
   TextInput,
   View,
   useWindowDimensions,
+  TouchableOpacity
 } from 'react-native';
+import femaleDoc from '../../assets/images/femaleDoc.jpeg';
+import logo from '../../assets/images/logo.png';
 import { Card, ScreenContainer } from '../../src/components/ui';
 import type { ProviderSearchResult } from '../../src/features/doctor/types/doctor.types';
 import { DoctorDetailsModal } from '../../src/features/patient';
+import { useTranslation } from '../../src/i18n';
+import { setItemAsync } from '../../src/services/storage';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
-import logo from '../../assets/images/logo.png';
-import femaleDoc from '../../assets/images/femaleDoc.jpeg';
-import { useTranslation } from '../../src/i18n';
 import { transliterateAmharic } from '../../src/utils';
-import { setItemAsync } from '../../src/services/storage';
+import { useAmharicInput } from '../../src/hooks/useAmharicInput';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -50,7 +52,15 @@ const TESTIMONIALS = [
   { id: 'tm-4', name: 'Yonas A.', rating: 5, text: 'The best healthcare app in Ethiopia. Simple, fast, and reliable.' },
 ];
 
-const SPECIALTIES = ['All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Gynecologist', 'General'];
+
+const SPECIALTY_KEYS = [
+  { key: 'All', translationKey: 'common:specialtyAll' },
+  { key: 'Cardiologist', translationKey: 'common:specialtyCardiologist' },
+  { key: 'Dermatologist', translationKey: 'common:specialtyDermatologist' },
+  { key: 'Pediatrician', translationKey: 'common:specialtyPediatrician' },
+  { key: 'Gynecologist', translationKey: 'common:specialtyGynecologist' },
+  { key: 'General', translationKey: 'common:specialtyGeneral' },
+] as const;
 
 const SPECIALTY_COLORS: Record<string, string> = {
   Cardiologist: '#EF4444',
@@ -103,80 +113,185 @@ interface NavBarProps extends SectionProps {
 
 function NavBar({ theme, isMobile, menuOpen, onToggleMenu, onLogin, onSignup, menuAnim, navItems }: NavBarProps) {
   const { i18n, t } = useTranslation();
+  const { isDark, toggleTheme } = useTheme();
 
   const menuOpacity = menuAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
   const menuTranslateY = menuAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] });
 
+  const ThemeToggle = () => (
+    <TouchableOpacity
+      onPress={toggleTheme}
+      activeOpacity={0.8}
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        marginRight: 6,
+      }}
+    >
+      <Ionicons
+        name={isDark ? 'sunny-outline' : 'moon-outline'}
+        size={18}
+        color={isDark ? '#139746ff' : '#287552ff'}
+      />
+    </TouchableOpacity>
+  );
+
   const LanguageButton = ({ label, value }: { label: string; value: string }) => {
     const active = i18n.language === value;
     return (
-      <Pressable
+      <TouchableOpacity
         onPress={() => {
           i18n.changeLanguage(value);
           setItemAsync('preferred_language', value);
         }}
-        style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: active ? theme.colors.primary : theme.colors.border, backgroundColor: active ? theme.colors.primary + '15' : 'transparent' }}
+        activeOpacity={0.8}
+        style={{
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: active ? theme.colors.primary : theme.colors.border,
+          backgroundColor: active ? theme.colors.primary + '15' : 'transparent',
+        }}
       >
-        <Text style={{ fontSize: 12, fontWeight: '700', color: active ? theme.colors.primary : theme.colors.text }}>{label}</Text>
-      </Pressable>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: active ? theme.colors.primary : theme.colors.text }}>
+          {label}
+        </Text>
+      </TouchableOpacity>
     );
   };
 
   return (
     <>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: isMobile ? 16 : 32, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, backgroundColor: theme.colors.background, zIndex: 100 }}>
-        <Image source={logo} style={{ width: 110, height: 36 }} resizeMode="contain" />
-
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <LanguageButton label={t('common:langEN')} value="en" />
-          <LanguageButton label="አማ" value="am" />
-        </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: isMobile ? 12 : 32, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, backgroundColor: theme.colors.background, zIndex: 100 }}>
+        <Image source={logo} style={{ width: isMobile ? 96 : 110, height: isMobile ? 32 : 36, flexShrink: 0 }} resizeMode="contain" />
 
         {!isMobile && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 28 }}>
-            {navItems.map((item) => (
-              <Pressable key={item.label} onPress={item.onPress}>
-                {({ pressed }) => (
-                  <Text style={{ fontSize: 13, color: pressed ? theme.colors.primary : theme.colors.text, fontWeight: '500' }}>{item.label}</Text>
-                )}
-              </Pressable>
-            ))}
-          </View>
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <LanguageButton label={t('common:langEN')} value="en" />
+              <LanguageButton label="አማ" value="am" />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {navItems.map((item, index) => (
+                <TouchableOpacity
+                  key={item.label}
+                  onPress={item.onPress}
+                  activeOpacity={0.7}
+                  style={{ marginLeft: index === 0 ? 0 : 28 }}
+                >
+                  <Text style={{ fontSize: 13, color: theme.colors.text, fontWeight: '500' }}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <ThemeToggle />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={onLogin}
+                style={{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: theme.colors.primary, marginRight: 10 }}
+              >
+                <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '700' }}>
+                  {t('common:login')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={onSignup}
+                style={{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10, backgroundColor: theme.colors.primary }}
+              >
+                <Text style={{ fontSize: 13, color: '#fff', fontWeight: '700' }}>
+                  {t('common:signUp')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
         )}
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {isMobile ? (
-            <Pressable onPress={onToggleMenu} style={{ width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }}>
+        {isMobile && (
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <ThemeToggle />
+            <TouchableOpacity
+              onPress={onLogin}
+              activeOpacity={0.8}
+              style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: theme.colors.primary, minHeight: 36, justifyContent: 'center', marginRight: 6 }}
+            >
+              <Text style={{ fontSize: 12, color: theme.colors.primary, fontWeight: '700' }}>
+                {t('common:login')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onSignup}
+              activeOpacity={0.8}
+              style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, backgroundColor: theme.colors.primary, minHeight: 36, justifyContent: 'center', marginRight: 6 }}
+            >
+              <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>
+                {t('common:signUp')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onToggleMenu}
+              activeOpacity={0.8}
+              style={{ width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }}
+            >
               <Ionicons name={menuOpen ? 'close' : 'menu'} size={22} color={theme.colors.text} />
-            </Pressable>
-          ) : (
-            <>
-              <Pressable style={({ pressed }) => [{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: theme.colors.primary }, pressed && { opacity: 0.8 }]} onPress={onLogin}>
-                <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '700' }}>{t('common:login')}</Text>
-              </Pressable>
-              <Pressable style={({ pressed }) => [{ paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10, backgroundColor: theme.colors.primary }, pressed && { opacity: 0.8 }]} onPress={onSignup}>
-                <Text style={{ fontSize: 13, color: '#fff', fontWeight: '700' }}>{t('common:signUp')}</Text>
-              </Pressable>
-            </>
-          )}
-        </View>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      {menuOpen && (
-        <Animated.View style={{ backgroundColor: theme.colors.background, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingHorizontal: 20, paddingVertical: 12, gap: 2, zIndex: 99, opacity: menuOpacity, transform: [{ translateY: menuTranslateY }] }}>
-          {navItems.map((item) => (
-            <Pressable key={item.label} onPress={item.onPress} style={({ pressed }) => [{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border + '55' }, pressed && { opacity: 0.7 }]}>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: theme.colors.text }}>{item.label}</Text>
-            </Pressable>
-          ))}
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-            <Pressable style={{ flex: 1, paddingVertical: 11, borderRadius: 10, borderWidth: 1.5, borderColor: theme.colors.primary, alignItems: 'center' }} onPress={onLogin}>
-              <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '700' }}>{t('common:login')}</Text>
-            </Pressable>
-            <Pressable style={{ flex: 1, paddingVertical: 11, borderRadius: 10, backgroundColor: theme.colors.primary, alignItems: 'center' }} onPress={onSignup}>
-              <Text style={{ fontSize: 13, color: '#fff', fontWeight: '700' }}>{t('common:signUp')}</Text>
-            </Pressable>
+      {menuOpen && isMobile && (
+        <Animated.View style={{ backgroundColor: theme.colors.background, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingHorizontal: 20, paddingVertical: 12, zIndex: 99, opacity: menuOpacity, transform: [{ translateY: menuTranslateY }] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <LanguageButton label={t('common:langEN')} value="en" />
+            <LanguageButton label="አማ" value="am" />
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              onPress={toggleTheme}
+              activeOpacity={0.8}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+              }}
+            >
+              <Ionicons
+                name={isDark ? 'sunny-outline' : 'moon-outline'}
+                size={14}
+                color={isDark ? '#0d8c2dff' : '#111117ff'}
+                style={{ marginRight: 5 }}
+              />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: isDark ? '#087d37ff' : '#020203ff' }}>
+                {isDark ? 'Light' : 'Dark'}
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {navItems.map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              onPress={item.onPress}
+              activeOpacity={0.7}
+              style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border + '55' }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '600', color: theme.colors.text }}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </Animated.View>
       )}
     </>
@@ -206,54 +321,129 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
 
   if (isMobile) {
     return (
-      <Animated.View style={{ opacity: fadeAnim }}>
-        <View style={{ height: 480, position: 'relative', overflow: 'hidden' }}>
-          <Image source={femaleDoc} style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }} resizeMode="cover" />
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, backgroundColor: '#00000033' }} />
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 320, justifyContent: 'flex-end' }}>
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.colors.background, opacity: 0.92 }} />
-            <View style={{ padding: 24, gap: 14, zIndex: 2 }}>
-              <Text style={{ fontSize: 28, fontWeight: '800', color: theme.colors.primary, lineHeight: 36, letterSpacing: -0.5 }}>
-                {t('common:qualityHealthcare')}
+      <Animated.View style={{ opacity: fadeAnim, backgroundColor: theme.colors.background }}>
+        <View style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
+          <Image
+            source={femaleDoc}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+          />
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#00000018' }} />
+        </View>
+
+        <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 28 }}>
+          <Text style={{ fontSize: 28, fontWeight: '800', color: theme.colors.primary, lineHeight: 36, letterSpacing: -0.5, marginBottom: 12 }}>
+            {t('common:qualityHealthcare')}
+          </Text>
+
+          <Text style={{ fontSize: 14, color: theme.colors.textSecondary, lineHeight: 22, marginBottom: 16 }}>
+            {t('common:heroSubtitle')}{' '}
+            <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>{t('common:anytimeAnywhere')}</Text>
+          </Text>
+
+          <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+            <TouchableOpacity
+              onPress={onGetStarted}
+              activeOpacity={0.85}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+                backgroundColor: '#10B981',
+                paddingVertical: 14,
+                borderRadius: 14,
+                minHeight: 48,
+                elevation: 5,
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, marginRight: 6 }}>
+                {t('common:getStarted')}
               </Text>
-              <Text style={{ fontSize: 14, color: theme.colors.textSecondary, lineHeight: 22 }}>
-                {t('common:heroSubtitle')}{' '}
-                <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>{t('common:anytimeAnywhere')}</Text>
+              <Ionicons name="arrow-forward" size={17} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={onLogin}
+              activeOpacity={0.85}
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 14,
+                borderRadius: 14,
+                minHeight: 48,
+                borderWidth: 2,
+                borderColor: '#10B981',
+                backgroundColor: theme.colors.background,
+              }}
+            >
+              <Text style={{ color: '#10B981', fontWeight: '800', fontSize: 15 }}>
+                {t('common:login')}
               </Text>
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
-                <Pressable onPress={onGetStarted} style={({ pressed }) => [{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: theme.colors.primary, paddingVertical: 15, borderRadius: 14, shadowColor: theme.colors.primary, shadowOpacity: 0.35, shadowRadius: 10, elevation: 5 }, pressed && { opacity: 0.85 }]}>
-                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>{t('common:getStarted')}</Text>
-                  <Ionicons name="arrow-forward" size={17} color="#fff" />
-                </Pressable>
-                <Pressable onPress={onLogin} style={({ pressed }) => [{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 15, borderRadius: 14, borderWidth: 2, borderColor: theme.colors.primary, backgroundColor: theme.colors.background }, pressed && { opacity: 0.85 }]}>
-                  <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 15 }}>{t('common:login')}</Text>
-                </Pressable>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
+            {[
+              { icon: 'shield-checkmark-outline', label: t('common:trustedDoctors') },
+              { icon: 'lock-closed-outline', label: t('common:securePrivate') },
+              { icon: 'location-outline', label: t('common:acrossEthiopia') },
+            ].map((item) => (
+              <View
+                key={item.label}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: 20,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  marginRight: 6,
+                  marginBottom: 6,
+                }}
+              >
+                <Ionicons name={item.icon as any} size={11} color="#10B981" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 11, fontWeight: '600', color: theme.colors.textSecondary }}>
+                  {item.label}
+                </Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                {[
-                  { icon: 'shield-checkmark-outline', label: t('common:trustedDoctors') },
-                  { icon: 'lock-closed-outline', label: t('common:securePrivate') },
-                  { icon: 'location-outline', label: t('common:acrossEthiopia') },
-                ].map((item) => (
-                  <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: theme.colors.border }}>
-                    <Ionicons name={item.icon as any} size={11} color={theme.colors.primary} />
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: theme.colors.textSecondary }}>{item.label}</Text>
-                  </View>
-                ))}
+            ))}
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {[
+              { dot: '#10B981', label: t('common:patients') },
+              { icon: 'star', iconColor: '#F59E0B', label: t('common:rating') },
+              { icon: 'medical', iconColor: '#EF4444', label: t('common:doctors') },
+            ].map((item) => (
+              <View
+                key={item.label}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: 20,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  marginRight: 6,
+                  marginBottom: 6,
+                }}
+              >
+                {item.dot
+                  ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: item.dot, marginRight: 4 }} />
+                  : <Ionicons name={item.icon as any} size={11} color={item.iconColor} style={{ marginRight: 4 }} />
+                }
+                <Text style={{ fontSize: 11, fontWeight: '700', color: theme.colors.text }}>
+                  {item.label}
+                </Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                {[
-                  { dot: '#10B981', label: t('common:patients') },
-                  { icon: 'star', iconColor: '#F59E0B', label: t('common:rating') },
-                  { icon: 'medical', iconColor: '#EF4444', label: t('common:doctors') },
-                ].map((item) => (
-                  <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: theme.colors.border }}>
-                    {item.dot ? <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: item.dot }} /> : <Ionicons name={item.icon as any} size={11} color={item.iconColor} />}
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: theme.colors.text }}>{item.label}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            ))}
           </View>
         </View>
       </Animated.View>
@@ -271,13 +461,21 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
           <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>{t('common:anytimeAnywhere')}</Text>
         </Text>
         <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', paddingRight: 22 }}>
-          <Pressable onPress={onGetStarted} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 16, borderRadius: 14, shadowColor: theme.colors.primary, shadowOpacity: 0.3, shadowRadius: 12, elevation: 5 }, pressed && { opacity: 0.85 }]}>
+          <TouchableOpacity
+            onPress={onGetStarted}
+            activeOpacity={0.85}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 16, borderRadius: 14, shadowColor: theme.colors.primary, shadowOpacity: 0.3, shadowRadius: 12, elevation: 5 }}
+          >
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{t('common:getStarted')}</Text>
             <Ionicons name="arrow-forward" size={18} color="#fff" />
-          </Pressable>
-          <Pressable onPress={onLogin} style={({ pressed }) => [{ paddingHorizontal: 48, paddingVertical: 16, borderRadius: 14, borderWidth: 2, borderColor: theme.colors.primary }, pressed && { opacity: 0.85 }]}>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onLogin}
+            activeOpacity={0.85}
+            style={{ paddingHorizontal: 48, paddingVertical: 16, borderRadius: 14, borderWidth: 2, borderColor: theme.colors.primary }}
+          >
             <Text style={{ color: theme.colors.text, fontWeight: '700', fontSize: 16 }}>{t('common:login')}</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
         <View style={{ flexDirection: 'row', gap: 20, flexWrap: 'wrap' }}>
           {[
@@ -364,46 +562,86 @@ interface SearchSectionProps extends SectionProps {
   setTranslitEnabled?: (b: boolean) => void;
 }
 
-function SearchSection({ theme, isMobile, searchQuery = '', setSearchQuery, translitEnabled = false, setTranslitEnabled }: SearchSectionProps) {
+function SearchSection({
+  theme,
+  isMobile,
+  searchQuery = '',
+  setSearchQuery,
+  translitEnabled = false,
+  setTranslitEnabled,
+}: SearchSectionProps) {
   const { t } = useTranslation();
+
+  const { displayValue, handleChange, reset } = useAmharicInput({
+    enabled: translitEnabled,
+    onChangeText: (amharicText, _latinText) => {
+      setSearchQuery?.(amharicText);
+    },
+  });
+
+  const handleToggleTranslit = () => {
+    setTranslitEnabled?.(!translitEnabled);
+    reset();
+    setSearchQuery?.('');
+  };
+
   return (
     <View style={{ paddingHorizontal: isMobile ? 16 : 32, marginTop: isMobile ? 20 : 32 }}>
-      <View style={{ backgroundColor: '#ecfdf5', borderRadius: 20, padding: isMobile ? 18 : 26, borderWidth: 1, borderColor: '#bbf7d0', shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 4 }}>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: '#065f46', marginBottom: 4 }}>{t('common:findRightDoctor')}</Text>
-        <Text style={{ fontSize: 13, color: '#047857', marginBottom: 18, lineHeight: 20 }}>{t('patient:desc')}</Text>
+      <View style={{
+        backgroundColor: '#ecfdf5', borderRadius: 20, padding: isMobile ? 18 : 26,
+        borderWidth: 1, borderColor: '#bbf7d0',
+        shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08, shadowRadius: 16, elevation: 4,
+      }}>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: '#065f46', marginBottom: 4 }}>
+          {t('common:findRightDoctor')}
+        </Text>
+        <Text style={{ fontSize: 13, color: '#047857', marginBottom: 18, lineHeight: 20 }}>
+          {t('patient:desc')}
+        </Text>
+
         <View style={{ gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff' }}>
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', gap: 10,
+            borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 12,
+            paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff',
+          }}>
             <Ionicons name="search-outline" size={17} color="#047857" />
+
             <TextInput
               placeholder={t('common:searchPlaceholder')}
               placeholderTextColor="#6ee7b7"
-              value={searchQuery}
-              onChangeText={(text) => setSearchQuery?.(translitEnabled ? transliterateAmharic(text) : text)}
-              style={{ flex: 1, fontSize: 14, color: '#065f46', ...Platform.select({ web: { outlineStyle: 'none' } as any }) }}
+              value={translitEnabled ? displayValue : searchQuery}
+              onChangeText={translitEnabled ? handleChange : setSearchQuery}
+              style={{
+                flex: 1, fontSize: 14, color: '#065f46',
+                ...Platform.select({ web: { outlineStyle: 'none' } as any }),
+              }}
             />
-            <Pressable
-              onPress={() => setTranslitEnabled?.(!translitEnabled)}
-              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', backgroundColor: translitEnabled ? '#ecfdf5' : '#f1f5f9', borderWidth: 1.5, borderColor: translitEnabled ? '#10b981' : '#cbd5e1', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5, gap: 5 }, pressed && { opacity: 0.8 }]}
+
+            <TouchableOpacity
+              onPress={handleToggleTranslit}
+              activeOpacity={0.8}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: translitEnabled ? '#ecfdf5' : '#f1f5f9',
+                borderWidth: 1.5,
+                borderColor: translitEnabled ? '#10b981' : '#cbd5e1',
+                borderRadius: 10,
+                paddingHorizontal: 8,
+                paddingVertical: 5,
+                gap: 5,
+              }}
             >
-              <Text style={{ fontSize: 12, fontWeight: '800', color: translitEnabled ? '#059669' : '#94a3b8' }}>ሀ</Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: translitEnabled ? '#059669' : '#94a3b8' }}>
+                Ha
+              </Text>
               <Text style={{ fontSize: 10, color: translitEnabled ? '#6ee7b7' : '#cbd5e1' }}>|</Text>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: !translitEnabled ? '#475569' : '#a7f3d0' }}>{t('common:letterA')}</Text>
-            </Pressable>
-          </View>
-          <View style={[{ gap: 10 }, !isMobile && { flexDirection: 'row', alignItems: 'center' }]}>
-            {[
-              { label: t('common:allSpecialties'), value: t('common:allSpecialties') },
-              { label: t('common:allLocations'), value: t('common:allLocations') },
-              { label: t('common:availableToday'), value: t('common:availableToday') },
-            ].map((f) => (
-              <View key={f.label} style={{ flex: isMobile ? undefined : 1, borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#fff' }}>
-                <Text style={{ fontSize: 9, color: '#047857', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>{f.label}</Text>
-                <Text style={{ fontSize: 13, color: '#065f46', fontWeight: '600' }}>{f.value}</Text>
-              </View>
-            ))}
-            <Pressable style={({ pressed }) => [{ backgroundColor: '#065f46', paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, pressed && { opacity: 0.85 }]}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{t('common:search')}</Text>
-            </Pressable>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: !translitEnabled ? '#475569' : '#a7f3d0' }}>
+                {t('common:letterA')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -422,11 +660,9 @@ function DoctorCard({ doctor, index, theme, isDark, onPress, onBook }: { doctor:
   const specColor = SPECIALTY_COLORS[specKey];
 
   return (
-    <Pressable
+    <TouchableOpacity
       onPress={onPress}
-      // @ts-ignore
-      onHoverIn={() => isWeb && Animated.spring(scaleAnim, { toValue: 1.03, useNativeDriver: true, tension: 200, friction: 10 }).start()}
-      onHoverOut={() => isWeb && Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }).start()}
+      activeOpacity={0.92}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <View style={{ width: 200, borderRadius: 20, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 12, elevation: 3 }}>
@@ -467,65 +703,184 @@ function DoctorCard({ doctor, index, theme, isDark, onPress, onBook }: { doctor:
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginVertical: 4 }}>
               {(['logo-linkedin', 'logo-facebook', 'logo-twitter', 'logo-instagram'] as const).map((icon) => (
-                <Pressable key={icon} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+                <TouchableOpacity key={icon} activeOpacity={0.6}>
                   <Ionicons name={icon} size={16} color={theme.colors.textSecondary} />
-                </Pressable>
+                </TouchableOpacity>
               ))}
             </View>
-            <Pressable onPress={onBook} style={({ pressed }) => [{ width: '100%', backgroundColor: theme.colors.primary, borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 4 }, pressed && { opacity: 0.85 }]}>
+            <TouchableOpacity
+              onPress={onBook}
+              activeOpacity={0.85}
+              style={{ width: '100%', backgroundColor: theme.colors.primary, borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 4 }}
+            >
               <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t('common:bookAppointment')}</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
       </Animated.View>
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
 // ─── Doctors Section ──────────────────────────────────────────────────────────
 
-function DoctorsSection({ theme, isDark, isMobile, doctors, isLoading, selectedSpecialty, onSelectSpecialty, onSelectDoctor, onBook }: SectionProps & { doctors: any[]; isLoading: boolean; selectedSpecialty: string; onSelectSpecialty: (s: string) => void; onSelectDoctor: (d: any) => void; onBook: () => void }) {
+function DoctorsSection({
+  theme, isDark, isMobile, doctors, isLoading, backendFailed, selectedSpecialty,
+  onSelectSpecialty, onSelectDoctor, onBook, onViewAll, hasMore, isLoadingMore, onLoadMore,
+  searchQuery,
+}: SectionProps & {
+  doctors: any[];
+  isLoading: boolean;
+  backendFailed: boolean;
+  selectedSpecialty: string;
+  onSelectSpecialty: (s: string) => void;
+  onSelectDoctor: (d: any) => void;
+  onBook: () => void;
+  onViewAll: () => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+  searchQuery: string;
+}) {
   const { t } = useTranslation();
+
+  // Build translated specialty labels
+  const specialtyLabels = SPECIALTY_KEYS.map(({ key, translationKey }) => ({
+    key,
+    label: t(translationKey),
+  }));
+
+  const showEmpty = !isLoading && doctors.length === 0;
+  const isSearching = searchQuery.trim().length > 0;
+
   return (
     <View style={{ marginTop: isMobile ? 28 : 44, paddingHorizontal: isMobile ? 16 : 32 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={{ fontSize: isMobile ? 20 : 24, fontWeight: '800', color: theme.colors.text }}>{t('common:availableDoctors')}</Text>
-        <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Text style={{ fontSize: isMobile ? 20 : 24, fontWeight: '800', color: theme.colors.text }}>
+          {t('common:availableDoctors')}
+        </Text>
+        <TouchableOpacity
+          onPress={onViewAll}
+          activeOpacity={0.7}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+        >
           <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '600' }}>{t('common:viewAllBtn')}</Text>
           <Ionicons name="arrow-forward" size={13} color={theme.colors.primary} />
-        </Pressable>
+        </TouchableOpacity>
       </View>
+
+      {/* Fallback notice when using fake doctors */}
+      {backendFailed && (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: 8,
+          backgroundColor: '#FEF3C7', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+          borderWidth: 1, borderColor: '#FCD34D', marginBottom: 12,
+        }}>
+          <Ionicons name="warning-outline" size={15} color="#92400E" />
+          <Text style={{ fontSize: 12, color: '#92400E', fontWeight: '600', flex: 1 }}>
+            {t('common:offlineMode')}
+          </Text>
+        </View>
+      )}
+
+      {/* Specialty filter chips */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 2 }}>
-          {SPECIALTIES.map((s) => (
-            <Pressable key={s} onPress={() => onSelectSpecialty(s)} style={[{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: selectedSpecialty === s ? theme.colors.primary : theme.colors.border, backgroundColor: selectedSpecialty === s ? theme.colors.primary : theme.colors.background }]}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: selectedSpecialty === s ? '#fff' : theme.colors.textSecondary }}>{s}</Text>
-            </Pressable>
-          ))}
+          {specialtyLabels.map(({ key, label }) => {
+            const isActive = key === 'All'
+              ? !selectedSpecialty || selectedSpecialty === 'All'
+              : selectedSpecialty === key;
+            return (
+              <TouchableOpacity
+                key={key}
+                onPress={() => onSelectSpecialty(key)}
+                activeOpacity={0.8}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 999,
+                  borderWidth: 1.5,
+                  borderColor: isActive ? theme.colors.primary : theme.colors.border,
+                  backgroundColor: isActive ? theme.colors.primary : theme.colors.background,
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '700', color: isActive ? '#fff' : theme.colors.textSecondary }}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
-      <FlatList
-        horizontal
-        data={isLoading ? Array.from({ length: 5 }) : doctors}
-        keyExtractor={(_, i) => String(i)}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 14, paddingVertical: 8, paddingRight: 16 }}
-        renderItem={({ item: doctor, index }) => {
-          if (isLoading || !doctor) {
+
+      {/* Empty state */}
+      {showEmpty ? (
+        <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
+          <Ionicons name="search-outline" size={48} color={theme.colors.border} />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.text, textAlign: 'center' }}>
+            {isSearching ? t('common:noSearchResults') : t('common:noDoctorsAvailable')}
+          </Text>
+          <Text style={{ fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', maxWidth: 260, lineHeight: 20 }}>
+            {isSearching ? t('common:tryDifferentSearch') : t('common:checkBackLater')}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          horizontal
+          data={isLoading ? Array.from({ length: 5 }) : doctors}
+          keyExtractor={(_, i) => String(i)}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 14, paddingVertical: 8, paddingRight: 16 }}
+          renderItem={({ item: doctor, index }) => {
+            if (isLoading || !doctor) {
+              return (
+                <Card style={{ width: 200, borderRadius: 20, overflow: 'hidden' }}>
+                  <View style={{ width: '100%', height: 180, backgroundColor: theme.colors.border }} />
+                  <View style={{ padding: 14, gap: 8 }}>
+                    <View style={{ height: 11, width: '80%', borderRadius: 6, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
+                    <View style={{ height: 9, width: '55%', borderRadius: 5, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
+                    <View style={{ height: 32, width: '100%', borderRadius: 10, backgroundColor: theme.colors.border, marginTop: 4 }} />
+                  </View>
+                </Card>
+              );
+            }
             return (
-              <Card style={{ width: 200, borderRadius: 20, overflow: 'hidden' }}>
-                <View style={{ width: '100%', height: 180, backgroundColor: theme.colors.border }} />
-                <View style={{ padding: 14, gap: 8 }}>
-                  <View style={{ height: 11, width: '80%', borderRadius: 6, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
-                  <View style={{ height: 9, width: '55%', borderRadius: 5, backgroundColor: theme.colors.border, alignSelf: 'center' }} />
-                  <View style={{ height: 32, width: '100%', borderRadius: 10, backgroundColor: theme.colors.border, marginTop: 4 }} />
-                </View>
-              </Card>
+              <DoctorCard
+                doctor={doctor}
+                index={index}
+                theme={theme}
+                isDark={isDark}
+                onPress={() => onSelectDoctor(doctor)}
+                onBook={onBook}
+              />
             );
-          }
-          return <DoctorCard doctor={doctor} index={index} theme={theme} isDark={isDark} onPress={() => onSelectDoctor(doctor)} onBook={onBook} />;
-        }}
-      />
+          }}
+        />
+      )}
+
+      {hasMore && !isLoadingMore && !showEmpty && (
+        <TouchableOpacity
+          onPress={onLoadMore}
+          activeOpacity={0.8}
+          style={{
+            alignSelf: 'center',
+            marginTop: 16,
+            paddingHorizontal: 24,
+            paddingVertical: 10,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: theme.colors.primary + '66',
+            backgroundColor: theme.colors.surface,
+          }}
+        >
+          <Text style={{ fontSize: 13, color: theme.colors.primary, fontWeight: '600' }}>{t('common:viewAllBtn')}</Text>
+        </TouchableOpacity>
+      )}
+      {isLoadingMore && (
+        <View style={{ alignItems: 'center', marginTop: 16 }}>
+          <Text style={{ fontSize: 13, color: theme.colors.textSecondary }}>{t('common:loading')}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -646,9 +1001,9 @@ function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 20 }}>
         {TESTIMONIALS.map((_, idx) => (
-          <Pressable key={idx} onPress={() => slideTo(idx)}>
+          <TouchableOpacity key={idx} onPress={() => slideTo(idx)} activeOpacity={0.7}>
             <View style={{ width: idx === activeIndex ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: idx === activeIndex ? theme.colors.primary : theme.colors.border }} />
-          </Pressable>
+          </TouchableOpacity>
         ))}
       </View>
     </View>
@@ -690,14 +1045,15 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
         <View style={{ backgroundColor: theme.colors.surface, borderRadius: 20, padding: isMobile ? 20 : 28, borderWidth: 1, borderColor: theme.colors.border, gap: 14 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: theme.colors.text }}>{t('common:sendAMessage')}</Text>
-            <Pressable
+            <TouchableOpacity
               onPress={() => setTranslitEnabled(!translitEnabled)}
-              style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', backgroundColor: translitEnabled ? '#ecfdf5' : '#f1f5f9', borderWidth: 1.5, borderColor: translitEnabled ? '#10b981' : '#cbd5e1', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5, gap: 5 }, pressed && { opacity: 0.8 }]}
+              activeOpacity={0.8}
+              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: translitEnabled ? '#ecfdf5' : '#f1f5f9', borderWidth: 1.5, borderColor: translitEnabled ? '#10b981' : '#cbd5e1', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5, gap: 5 }}
             >
               <Text style={{ fontSize: 12, fontWeight: '800', color: translitEnabled ? '#059669' : '#94a3b8' }}>ሀ</Text>
               <Text style={{ fontSize: 10, color: translitEnabled ? '#6ee7b7' : '#cbd5e1' }}>|</Text>
               <Text style={{ fontSize: 11, fontWeight: '800', color: !translitEnabled ? '#475569' : '#a7f3d0' }}>{t('common:letterA')}</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
           {sent && (
@@ -728,10 +1084,15 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
             <TextInput value={message} onChangeText={(text) => setMessage(translitEnabled ? transliterateAmharic(text) : text)} placeholder={t('common:placeholderMessage')} placeholderTextColor={theme.colors.textSecondary} multiline numberOfLines={5} textAlignVertical="top" style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background, minHeight: 120 }} />
           </View>
 
-          <Pressable onPress={handleSend} disabled={sending} style={({ pressed }) => [{ backgroundColor: sending ? theme.colors.primary + '88' : theme.colors.primary, borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }, pressed && { opacity: 0.85 }]}>
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={sending}
+            activeOpacity={0.85}
+            style={{ backgroundColor: sending ? theme.colors.primary + '88' : theme.colors.primary, borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+          >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{sending ? t('common:sending') : t('common:sendMessage')}</Text>
             {!sending && <Ionicons name="send" size={16} color="#fff" />}
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -755,7 +1116,7 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
         <Text style={{ fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 6 }}>{t('common:enjoyingMedlink')}</Text>
         <Text style={{ fontSize: 13, color: '#dcfce7', lineHeight: 20, marginBottom: 20 }}>{t('common:appPromoMessage')}</Text>
         <View style={{ gap: 12 }}>
-          <Pressable style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#ffffff22', borderRadius: 14, padding: 14 }, pressed && { opacity: 0.8 }]}>
+          <TouchableOpacity activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#ffffff22', borderRadius: 14, padding: 14 }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F59E0B', alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="star" size={20} color="#fff" />
             </View>
@@ -764,9 +1125,9 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
               <Text style={{ color: '#dcfce7', fontSize: 12 }}>{t('common:rateMedlinkSub')}</Text>
             </View>
             <Ionicons name="arrow-forward" size={16} color="#dcfce7" />
-          </Pressable>
+          </TouchableOpacity>
 
-          <Pressable onPress={handleShare} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#ffffff22', borderRadius: 14, padding: 14 }, pressed && { opacity: 0.8 }]}>
+          <TouchableOpacity onPress={handleShare} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#ffffff22', borderRadius: 14, padding: 14 }}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#3B82F6', alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="share-social" size={20} color="#fff" />
             </View>
@@ -775,16 +1136,16 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
               <Text style={{ color: '#dcfce7', fontSize: 12 }}>{t('common:sharePromoDesc')}</Text>
             </View>
             <Ionicons name="arrow-forward" size={16} color="#dcfce7" />
-          </Pressable>
+          </TouchableOpacity>
 
           <View style={{ backgroundColor: '#ffffff11', borderRadius: 14, padding: 14 }}>
             <Text style={{ color: '#dcfce7', fontSize: 12, fontWeight: '600', marginBottom: 10 }}>{t('common:followUsOn')}</Text>
             <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
               {SOCIAL_LINKS.map((s) => (
-                <Pressable key={s.label} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ffffff22', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }, pressed && { opacity: 0.8 }]}>
+                <TouchableOpacity key={s.label} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ffffff22', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 }}>
                   <Ionicons name={s.icon as any} size={16} color="#fff" />
                   <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{s.label}</Text>
-                </Pressable>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -802,29 +1163,29 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
           <Text style={{ fontSize: isMobile ? 22 : 28, fontWeight: '800', color: '#fff', lineHeight: isMobile ? 30 : 36 }}>{t('common:getAppTitle')}</Text>
           <Text style={{ fontSize: 14, color: '#dcfce7', lineHeight: 22 }}>{t('common:appPromoMessage')}</Text>
           <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
-            <Pressable style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 }, pressed && { opacity: 0.8 }]}>
+            <TouchableOpacity activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 }}>
               <Ionicons name="logo-apple" size={22} color="#fff" />
               <View>
                 <Text style={{ color: '#ffffff99', fontSize: 10 }}>{t('common:downloadOnThe')}</Text>
                 <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{t('common:appStore')}</Text>
               </View>
-            </Pressable>
-            <Pressable style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 }, pressed && { opacity: 0.8 }]}>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#ffffff22', borderWidth: 1, borderColor: '#ffffff33', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 }}>
               <Ionicons name="logo-google-playstore" size={22} color="#fff" />
               <View>
                 <Text style={{ color: '#ffffff99', fontSize: 10 }}>Get it on</Text>
                 <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>{t('common:googlePlay')}</Text>
               </View>
-            </Pressable>
+            </TouchableOpacity>
           </View>
           <View style={{ gap: 10 }}>
             <Text style={{ color: '#dcfce7', fontSize: 13, fontWeight: '600' }}>{t('common:followUsOn')}</Text>
             <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
               {SOCIAL_LINKS.map((s) => (
-                <Pressable key={s.label} style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ffffff1a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 }, pressed && { opacity: 0.8 }]}>
+                <TouchableOpacity key={s.label} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ffffff1a', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 }}>
                   <Ionicons name={s.icon as any} size={17} color="#fff" />
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{s.label}</Text>
-                </Pressable>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -841,7 +1202,7 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
               <View style={{ height: 8, width: '60%', borderRadius: 4, backgroundColor: isDark ? '#2a2a2a' : '#f1f5f9', marginBottom: 10 }} />
               <View style={{ height: 72, width: '100%', borderRadius: 14, backgroundColor: isDark ? '#222' : '#f8fafc', borderWidth: 1, borderColor: isDark ? '#333' : '#e2e8f0' }} />
             </View>
-            <Text style={{ color: '#dcfce766', fontSize: 11 }}>{t('common:appScreenshotPlaceholder')}</Text>
+            
           </View>
         )}
       </View>
@@ -862,13 +1223,25 @@ function CTABannerSection({ theme, isMobile, onSignup, onLogin }: SectionProps &
           <Text style={{ fontSize: isMobile ? 24 : 30, fontWeight: '800', color: '#fff', lineHeight: isMobile ? 32 : 40 }}>{t('common:yourHealthJourney')}</Text>
           <Text style={{ fontSize: 14, color: '#dcfce7', lineHeight: 22 }}>{t('common:joinThousands')}</Text>
         </View>
-        <View style={{ gap: 12, minWidth: 160 }}>
-          <Pressable style={({ pressed }) => [{ backgroundColor: '#fff', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }, pressed && { opacity: 0.85 }]} onPress={onSignup}>
-            <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 15 }}>{t('common:signUp')}</Text>
-          </Pressable>
-          <Pressable style={({ pressed }) => [{ backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#ffffff88', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }, pressed && { opacity: 0.85 }]} onPress={onLogin}>
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t('common:login')}</Text>
-          </Pressable>
+        <View style={{ minWidth: 160 }}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onSignup}
+            style={{ backgroundColor: '#fff', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 12 }}
+          >
+            <Text style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 15 }}>
+              {t('common:signUp')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onLogin}
+            style={{ backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#ffffff88', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+              {t('common:login')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -888,21 +1261,21 @@ function FooterSection({ theme, isDark, isMobile, onContactPress, onNavigate }: 
           <Text style={{ fontSize: 12, color: theme.colors.textSecondary, lineHeight: 20 }}>{t('common:subtitle')}</Text>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
             {SOCIAL_LINKS.map((s) => (
-              <Pressable key={s.label} style={({ pressed }) => [{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border }, pressed && { opacity: 0.7 }]}>
+              <TouchableOpacity key={s.label} activeOpacity={0.7} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border }}>
                 <Ionicons name={s.icon as any} size={15} color={theme.colors.textSecondary} />
-              </Pressable>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
 
         <View style={{ width: isMobile ? '45%' : '14%', gap: 10 }}>
           <Text style={{ fontSize: 13, fontWeight: '700', color: theme.colors.text, marginBottom: 4 }}>{t('common:company')}</Text>
-          <Pressable onPress={() => onNavigate('/(public)/about')}>
+          <TouchableOpacity onPress={() => onNavigate('/(public)/about')} activeOpacity={0.7}>
             <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{t('common:aboutUs')}</Text>
-          </Pressable>
-          <Pressable onPress={onContactPress}>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onContactPress} activeOpacity={0.7}>
             <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{t('common:contact')}</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
 
         <View style={{ width: isMobile ? '45%' : '14%', gap: 10 }}>
@@ -925,9 +1298,9 @@ function FooterSection({ theme, isDark, isMobile, onContactPress, onNavigate }: 
             { label: t('common:privacyPolicy'), path: '/(public)/privacy' },
             { label: t('common:termsOfService'), path: '/(public)/terms' },
           ].map((item) => (
-            <Pressable key={item.label} onPress={() => onNavigate(item.path)}>
+            <TouchableOpacity key={item.label} onPress={() => onNavigate(item.path)} activeOpacity={0.7}>
               <Text style={{ fontSize: 12, color: theme.colors.textSecondary }}>{item.label}</Text>
-            </Pressable>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -960,12 +1333,24 @@ export default function PublicHomeScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
 
-  const { doctors, isLoading, fetchDoctors } = useDiscoveryStore();
-  const [selectedDoctor, setSelectedDoctor] = useState<ProviderSearchResult | null>(null);
-  const [selectedSpecialty, setSelectedSpecialty] = useState('All');
+  const {
+    doctors,
+    isLoading,
+    hasMore,
+    isLoadingMore,
+    searchQuery,
+    setSearchQuery,
+    selectedSpecialization,
+    setSelectedSpecialization,
+    fetchDoctors,
+    fetchMoreDoctors,
+  } = useDiscoveryStore();
+
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState<ProviderSearchResult | null>(null);
   const [searchTranslitEnabled, setSearchTranslitEnabled] = useState(i18n.language === 'am');
+  // Track whether the backend fetch has failed so we know to fall back to fake doctors
+  const [backendFailed, setBackendFailed] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const menuAnim = useRef(new Animated.Value(0)).current;
@@ -979,25 +1364,59 @@ export default function PublicHomeScreen() {
   const isMobile = width < 768;
   const sectionProps: SectionProps = { theme, isDark, isMobile, width };
 
-  useEffect(() => { fetchDoctors(); }, [fetchDoctors]);
+  useEffect(() => {
+    fetchDoctors().catch(() => {
+      setBackendFailed(true);
+    });
+  }, [fetchDoctors]);
+
   useEffect(() => { setSearchTranslitEnabled(i18n.language === 'am'); }, [i18n.language]);
 
+  // ── Doctor list logic ────────────────────────────────────────────────────────
+  // 1. If backend succeeded (doctors.length > 0 OR fetch finished without error): use real doctors only.
+  //    Show empty state if filters/search yield nothing.
+  // 2. If backend failed: fall back to fake doctors, filtered by specialty/search.
   const displayDoctors = useMemo(() => {
-    let source = doctors.length > 0 ? doctors : FAKE_DOCTORS;
-    if (selectedSpecialty !== 'All') {
-      source = source.filter((d: any) => (d.specialization || '').toLowerCase().includes(selectedSpecialty.toLowerCase()));
+    if (!backendFailed) {
+      // Real data — respect whatever the store returns (already filtered by backend)
+      return doctors;
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      source = source.filter((d: any) =>
-        (d.first_name || '').toLowerCase().includes(q) ||
-        (d.last_name || '').toLowerCase().includes(q) ||
-        (d.specialization || '').toLowerCase().includes(q) ||
-        (d.hospital || '').toLowerCase().includes(q),
+
+    // Fallback: filter fake doctors client-side
+    let list = FAKE_DOCTORS;
+
+    if (selectedSpecialization && selectedSpecialization !== 'All') {
+      list = list.filter((d) =>
+        (d.specialization || '').toLowerCase().includes(selectedSpecialization.toLowerCase())
       );
     }
-    return source;
-  }, [doctors, selectedSpecialty, searchQuery]);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((d) =>
+        `${d.first_name} ${d.last_name}`.toLowerCase().includes(q) ||
+        (d.specialization || '').toLowerCase().includes(q) ||
+        (d.hospital || '').toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }, [doctors, backendFailed, selectedSpecialization, searchQuery]);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((text: string) => {
+    useDiscoveryStore.setState({ searchQuery: text });
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchQuery(text);
+    }, 500);
+  }, [setSearchQuery]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const scrollToSection = useCallback((yRef: React.MutableRefObject<number>) => {
     scrollViewRef.current?.scrollTo({ y: yRef.current, animated: true });
@@ -1012,16 +1431,8 @@ export default function PublicHomeScreen() {
   }, [menuOpen, menuAnim]);
 
   const promptAuth = useCallback(() => {
-    Alert.alert(
-      t('common:loginRequired'),
-      t('common:loginRequiredDesc'),
-      [
-        { text: t('common:cancel'), style: 'cancel' },
-        { text: t('common:login'), onPress: () => router.push('/(auth)/login') },
-        { text: t('common:signUp'), onPress: () => router.push('/(auth)/register') },
-      ],
-    );
-  }, [router, t]);
+    router.push('/(auth)/login');
+  }, [router]);
 
   const NAV_ITEMS = [
     { label: t('common:home'), onPress: () => scrollToSection(heroY) },
@@ -1047,10 +1458,30 @@ export default function PublicHomeScreen() {
           <HeroSection {...sectionProps} onGetStarted={() => router.push('/(auth)/register')} onLogin={() => router.push('/(auth)/login')} />
         </View>
 
-        <SearchSection {...sectionProps} searchQuery={searchQuery} setSearchQuery={setSearchQuery} translitEnabled={searchTranslitEnabled} setTranslitEnabled={setSearchTranslitEnabled} />
+        <SearchSection
+          {...sectionProps}
+          searchQuery={searchQuery}
+          setSearchQuery={handleSearchChange}
+          translitEnabled={searchTranslitEnabled}
+          setTranslitEnabled={setSearchTranslitEnabled}
+        />
 
         <View onLayout={(e) => { doctorsY.current = e.nativeEvent.layout.y; }}>
-          <DoctorsSection {...sectionProps} doctors={displayDoctors} isLoading={isLoading && doctors.length === 0} selectedSpecialty={selectedSpecialty} onSelectSpecialty={setSelectedSpecialty} onSelectDoctor={(d) => setSelectedDoctor(d)} onBook={promptAuth} />
+          <DoctorsSection
+            {...sectionProps}
+            doctors={displayDoctors}
+            isLoading={isLoading && doctors.length === 0 && !backendFailed}
+            backendFailed={backendFailed}
+            selectedSpecialty={selectedSpecialization || 'All'}
+            onSelectSpecialty={(s) => setSelectedSpecialization(s === 'All' ? null : s)}
+            onSelectDoctor={(d) => setSelectedDoctor(d)}
+            onBook={promptAuth}
+            onViewAll={promptAuth}
+            hasMore={!backendFailed && hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={fetchMoreDoctors}
+            searchQuery={searchQuery}
+          />
         </View>
 
         <View onLayout={(e) => { howItWorksY.current = e.nativeEvent.layout.y; }}>

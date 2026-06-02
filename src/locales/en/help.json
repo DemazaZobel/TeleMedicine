@@ -1,0 +1,36 @@
+{
+    "back": "Back",
+    "bookingTitle": "Booking Appointments",
+    "bookAppointmentTitle": "How to book an appointment",
+    "bookAppointmentBody": "To book an appointment, browse the Available Doctors section, select a doctor, tap 'Book Appointment', choose a date and time slot, confirm your details, and complete payment if required. You will receive a confirmation notification once your appointment is confirmed by the doctor.",
+  
+    "cancelRescheduleTitle": "How to cancel or reschedule",
+    "cancelRescheduleBody": "Go to the Appointments tab, find your appointment, tap the three-dot menu, and select Cancel or Request Reschedule. Cancellations made 24 hours before the appointment are fully refunded. Same-day cancellations may incur a fee.",
+  
+    "afterBookingTitle": "What happens after I book?",
+    "afterBookingBody": "After booking, your appointment enters a REQUESTED state. The doctor reviews and confirms it. You will receive a push notification and email when confirmed. You can track the status in your Appointments tab.",
+  
+    "onlineTitle": "Online Consultations",
+    "onlineWorksTitle": "How do online consultations work?",
+    "onlineWorksBody": "Once your online appointment is confirmed, a secure meeting link is generated. At your appointment time, tap the meeting link from your Appointments tab to join the video consultation. Ensure you have a stable internet connection.",
+  
+    "devicesTitle": "What devices can I use?",
+    "devicesBody": "Online consultations work on iOS, Android, and web browsers. We recommend using a device with a front-facing camera and a stable Wi-Fi connection for the best experience.",
+  
+    "accountTitle": "Account & Security",
+    "resetPasswordTitle": "How do I reset my password?",
+    "resetPasswordBody": "On the login screen, tap 'Forgot Password', enter your registered email address, and follow the link sent to your email to set a new password. Password reset links expire after 30 minutes.",
+  
+    "dataSecureTitle": "Is my data secure?",
+    "dataSecureBody": "All data transmitted on Medlink is encrypted using TLS 1.3. Medical records and personal information are stored securely on our servers and are never sold to third parties. See our Privacy Policy for full details.",
+  
+    "deleteAccountTitle": "How do I delete my account?",
+    "deleteAccountBody": "Go to Profile > Settings > Account > Delete Account. This action is irreversible and permanently removes all your data within 30 days.",
+  
+    "paymentsTitle": "Payments",
+    "paymentMethodsTitle": "What payment methods are accepted?",
+    "paymentMethodsBody": "Medlink accepts payments via Chapa, which supports Telebirr, CBE Birr, bank transfers, and major credit/debit cards.",
+  
+    "refundsTitle": "How do refunds work?",
+    "refundsBody": "Refunds are processed within 3–5 business days. Cancellations 24 hours before appointment get full refund. Same-day cancellations are non-refundable unless doctor cancels."
+  }

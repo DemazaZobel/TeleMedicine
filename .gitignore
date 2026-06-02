@@ -39,6 +39,11 @@ yarn-error.*
 
 app-example
 
+# test reports (regenerate with npm scripts)
+allure-results/
+coverage/
+test-report*.html
+
 # generated native folders
 /ios
 /android

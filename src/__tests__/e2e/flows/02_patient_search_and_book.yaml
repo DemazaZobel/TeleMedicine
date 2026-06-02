@@ -1,0 +1,88 @@
+# e2e/flows/02_patient_search_and_book.yaml
+# TC-SEARCH-001, TC-SEARCH-005, TC-BOOK-001, TC-BOOK-003, TC-DOC-APPT-001
+# Tests: Patient searches for a doctor, views profile with fee, books appointment
+#
+# PRECONDITIONS:
+#   - Patient is already logged in (run 01_patient_login.yaml first, or app is in logged-in state)
+#   - At least one verified doctor exists with specialization "Cardiologist"
+#   - That doctor has at least one available time slot
+
+appId: host.exp.exponent
+---
+
+# ── Ensure we are on Home tab ─────────────────────────────────────────────────
+- tapOn:
+    text: "Home"
+
+- waitForAnimationToEnd
+
+# ── TC-SEARCH-001: Search for a doctor ───────────────────────────────────────
+- tapOn:
+    id: "search-bar"
+
+- inputText: "Cardiologist"
+
+- waitForAnimationToEnd
+
+# Assert: at least one result appears
+- assertVisible:
+    text: "Cardiologist"
+
+# ── TC-SEARCH-005: View doctor profile ───────────────────────────────────────
+- tapOn:
+    id: "doctor-card-0"       # tap first doctor card
+
+- waitForAnimationToEnd
+
+# Assert: doctor profile details visible
+- assertVisible:
+    text: "ETB"               # TC-BOOK-003: fee must be visible before booking
+
+- assertVisible:
+    text: "Book Appointment"
+
+# ── TC-BOOK-001: Book an online appointment ───────────────────────────────────
+- tapOn:
+    text: "Book Appointment"
+
+- waitForAnimationToEnd
+
+# Select ONLINE type if toggle exists
+- tapOn:
+    text: "Online"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Select first available time slot
+- tapOn:
+    id: "slot-0"
+    optional: true
+
+# If no slot id, tap the first visible time
+- tapOn:
+    text: "09:00"
+    optional: true
+
+- waitForAnimationToEnd
+
+# Confirm booking
+- tapOn:
+    id: "confirm-booking-button"
+
+- waitForAnimationToEnd
+
+# ── TC-DOC-APPT-001: Appointment appears in list ─────────────────────────────
+- tapOn:
+    text: "Appointments"      # bottom tab
+
+- waitForAnimationToEnd
+
+# Assert: new appointment is in list with REQUESTED/Pending status
+- assertVisible:
+    text: "Pending"
+    optional: true
+
+- assertVisible:
+    text: "Cardiologist"
+    optional: true

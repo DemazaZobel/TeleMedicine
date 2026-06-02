@@ -1,0 +1,63 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "serve-coverage",
+      "type": "npm",
+      "script": "coverage:view",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "coverage",
+        "pattern": {
+          "regexp": "^Coverage report: (https?://\\S+)$",
+          "line": 1,
+          "uri": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Coverage report:"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "test:coverage",
+      "type": "npm",
+      "script": "test:coverage",
+      "problemMatcher": []
+    },
+    {
+      "label": "allure:serve",
+      "type": "shell",
+      "command": "SERVE_PORT=5501 npm run allure:serve",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "allure",
+        "pattern": {
+          "regexp": "^Serving allure-report: (https?://\\S+)$",
+          "line": 1,
+          "uri": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Serving allure-report:"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "allure:build",
+      "type": "npm",
+      "script": "allure:build",
+      "problemMatcher": []
+    }
+  ]
+}

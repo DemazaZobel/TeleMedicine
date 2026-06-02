@@ -1,0 +1,41 @@
+{
+    "back": "ተመለስ",
+  
+    "bookingTitle": "ቀጠሮ መያዝ",
+  
+    "bookAppointmentTitle": "ቀጠሮ እንዴት እንደሚያዝ",
+    "bookAppointmentBody": "የሚገኙ ዶክተሮችን ይመልከቱ፣ ዶክተር ይምረጡ፣ የቀጠሮ መያዝ ቁልፍን ይጫኑ፣ ቀን እና ሰዓት ይምረጡ እና ያረጋግጡ።",
+  
+    "cancelRescheduleTitle": "ቀጠሮ መሰረዝ ወይም መቀየር",
+    "cancelRescheduleBody": "የቀጠሮዎን ዝርዝር በቀጠሮዎች ክፍል ውስጥ ይፈልጉ፣ የሶስት ነጥብ ምናሌን ይጫኑ እና መሰረዝ ወይም መቀየር ይምረጡ። 24 ሰዓት በፊት የተሰረዙ ቀጠሮዎች ሙሉ ክፍያ ይመለሳሉ።",
+  
+    "afterBookingTitle": "ቀጠሮ ከተያዘ በኋላ",
+    "afterBookingBody": "ቀጠሮዎ በጥያቄ ሁኔታ ውስጥ ይገባል። ዶክተሩ ካረጋገጠ በኋላ ማስታወቂያ ይደርስዎታል።",
+  
+    "onlineTitle": "የኦንላይን ምክክር",
+  
+    "onlineWorksTitle": "የኦንላይን ምክክር እንዴት ይሰራል",
+    "onlineWorksBody": "ቀጠሮዎ ከተረጋገጠ በኋላ የደህንነት የስብሰባ ሊንክ ይፈጠራል። በቀጠሮ ሰዓት በዚያ ሊንክ ይገቡበታል።",
+  
+    "devicesTitle": "የሚጠቀሙበት መሳሪያ",
+    "devicesBody": "በአይኦኤስ፣ አንድሮይድ እና የድር መተግበሪያ ላይ ይሰራል። ካሜራ እና የተረጋጋ ኢንተርኔት ይመከራል።",
+  
+    "accountTitle": "መለያ እና ደህንነት",
+  
+    "resetPasswordTitle": "የይለፍ ቃል መቀየር",
+    "resetPasswordBody": "በመግቢያ ገጽ ላይ የይለፍ ቃል ረሳሁ የሚለውን ይጫኑ እና በኢሜይል የተላከ መልእክት ይከተሉ።",
+  
+    "dataSecureTitle": "የመረጃ ደህንነት",
+    "dataSecureBody": "ሁሉም መረጃ በTLS 1.3 ኢንክሪፕሽን ይጠበቃል።",
+  
+    "deleteAccountTitle": "መለያ መሰረዝ",
+    "deleteAccountBody": "በመገለጫ ክፍል > ቅንብሮች > መለያ ውስጥ መሰረዝን ይምረጡ።",
+  
+    "paymentsTitle": "ክፍያ",
+  
+    "paymentMethodsTitle": "የክፍያ መንገዶች",
+    "paymentMethodsBody": "በክፍያ አገልግሎት አቅራቢ በመጠቀም ቴሌብር፣ ሲቢኢ ብር እና የባንክ ካርድ ይደገፋል።",
+  
+    "refundsTitle": "መመለሻ",
+    "refundsBody": "በ3–5 የስራ ቀናት ውስጥ መመለሻ ይፈጸማል።"
+  }

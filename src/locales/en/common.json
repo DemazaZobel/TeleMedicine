@@ -230,12 +230,18 @@
   "termsIntro": "Please read these Terms of Service carefully before using the Medlink platform.",
 
 
-"bookAppointmentLink": "Book Appointment",
-"onlineConsultation": "Online Consultation",
-"healthPackages": "Health Packages",
-"copyright": "© 2026 MedLink. All rights reserved.",
-"loginRequired": "Login Required",
-"loginRequiredDesc": "Please log in or sign up to book an appointment.",
-"phone": "+251 911 234 567",
-"emailContact": "support@medlink.et"
+  "bookAppointmentLink": "Book Appointment",
+  "onlineConsultation": "Online Consultation",
+  "healthPackages": "Health Packages",
+  "copyright": "© 2026 MedLink. All rights reserved.",
+  "loginRequired": "Login Required",
+  "loginRequiredDesc": "Please log in or sign up to book an appointment.",
+  "phone": "+251 911 234 567",
+  "emailContact": "support@medlink.et",
+  "specialtyAll": "All",
+    "specialtyCardiologist": "Cardiologist",
+    "specialtyDermatologist": "Dermatologist",
+    "specialtyPediatrician": "Pediatrician",
+    "specialtyGynecologist": "Gynecologist",
+    "specialtyGeneral": "General Practitioner"
 }

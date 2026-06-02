@@ -2,14 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-  ImageBackground,
+    ImageBackground,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Theme } from '../../theme';
@@ -129,7 +129,13 @@ export const AuthContainer = React.memo(function AuthContainer({
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
-            contentContainerStyle={styles.mobileScrollContent}
+            contentContainerStyle={[
+              styles.mobileScrollContent,
+              {
+                paddingTop: Math.max(insets.top + 56, 72),
+                paddingBottom: Math.max(insets.bottom + 32, 40),
+              },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -191,9 +197,10 @@ const createStyles = (theme: Theme, windowWidth: number, windowHeight: number) =
 
     mobileScrollContent: {
       flexGrow: 1,
-      justifyContent: 'center',
-      paddingHorizontal: 24,
-      paddingVertical: 60,
+      justifyContent: 'flex-start',
+      paddingHorizontal: 20,
+      paddingTop: 72,
+      paddingBottom: 40,
     },
 
     mobileCard: {
