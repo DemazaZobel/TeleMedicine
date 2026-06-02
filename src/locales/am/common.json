@@ -244,5 +244,20 @@
   "specialtyDermatologist": "የቆዳ ሐኪም",
   "specialtyPediatrician": "የሕፃናት ሐኪም",
   "specialtyGynecologist": "የማህፀን ሐኪም",
-  "specialtyGeneral": "ጠቅላላ ሐኪም"
+  "specialtyGeneral": "ጠቅላላ ሐኪም",
+  
+
+  
+    "testimonial1Name": "ሐና ተ.",
+    "testimonial1Text": "ቀጠሮ መያዝ በጣም ቀላል ሆኗል። አሁን ዶክተሬን ያለምንም ችግር ማማከር እችላለሁ። ሜድሊንክ እጅግ አመሰግናለሁ!",
+  
+    "testimonial2Name": "ዳዊት መ.",
+    "testimonial2Text": "በጥቂት ደቂቃዎች ውስጥ ስፔሻሊስት አገኘሁ፤ የሚያስፈልገኝንም ሕክምና በፍጥነት አገኘሁ። ሜድሊንክ በእውነት ትልቅ እገዛ ነው።",
+  
+    "testimonial3Name": "ሰላማዊት ከ.",
+    "testimonial3Text": "የቀጠሮ ማሳሰቢያዎቹ በጣም ይረዱኛል። እንደ እኔ በሥራ የተጠመዱ ሰዎች በጣም የሚጠቀሙበት መተግበሪያ ነው።",
+  
+    "testimonial4Name": "ዮናስ አ.",
+    "testimonial4Text": "በኢትዮጵያ ካሉ የጤና መተግበሪያዎች መካከል ከምርጦቹ አንዱ ነው። ቀላል፣ ፈጣን እና አስተማማኝ ነው።"
+
 }

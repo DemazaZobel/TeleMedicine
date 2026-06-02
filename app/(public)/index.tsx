@@ -45,12 +45,7 @@ const FAKE_DOCTORS: any[] = [
 const FEATURE_KEYS = ['item_0', 'item_1', 'item_2', 'item_3', 'item_4', 'item_5'] as const;
 const FEATURE_ICONS = ['calendar-outline', 'videocam-outline', 'notifications-outline', 'location-outline', 'document-text-outline', 'time-outline'] as const;
 
-const TESTIMONIALS = [
-  { id: 'tm-1', name: 'Hana T.', rating: 5, text: 'Booking appointments became very easy. I can now consult with my doctor without any hassle. Thank you, Medlink!' },
-  { id: 'tm-2', name: 'Dawit M.', rating: 5, text: 'I found a specialist in minutes and got the care I needed. Medlink is a blessing!' },
-  { id: 'tm-3', name: 'Selamawit K.', rating: 5, text: 'The reminders help me a lot. Great app for busy people like me.' },
-  { id: 'tm-4', name: 'Yonas A.', rating: 5, text: 'The best healthcare app in Ethiopia. Simple, fast, and reliable.' },
-];
+
 
 // Specialty keys used for i18n lookup — values come from translation files
 const SPECIALTY_KEYS = ['All', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Gynecologist', 'General'] as const;
@@ -294,6 +289,11 @@ function NavBar({ theme, isMobile, menuOpen, onToggleMenu, onLogin, onSignup, me
 
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 
+// ─── Hero Section ─────────────────────────────────────────────────────────────
+// Drop-in replacement for HeroSection in PublicHomeScreen.
+// Only the floating card icons/backgrounds changed — everything else is identical
+// to the rest of the file (Ionicons, Animated, theme.colors, t(), same structure).
+
 function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: SectionProps & { onGetStarted: () => void; onLogin: () => void }) {
   const { t } = useTranslation();
   const floatAnim1 = useRef(new Animated.Value(0)).current;
@@ -313,15 +313,12 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
     makeFloat(floatAnim3, 1400);
   }, [fadeAnim, floatAnim1, floatAnim2, floatAnim3]);
 
+  // ── Mobile layout ────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
       <Animated.View style={{ opacity: fadeAnim, backgroundColor: theme.colors.background }}>
         <View style={{ width: '100%', height: 260, overflow: 'hidden', position: 'relative' }}>
-          <Image
-            source={femaleDoc}
-            style={{ width: '100%', height: '100%' }}
-            resizeMode="cover"
-          />
+          <Image source={femaleDoc} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#00000018' }} />
         </View>
 
@@ -340,16 +337,9 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
               onPress={onGetStarted}
               activeOpacity={0.85}
               style={{
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 8,
-                backgroundColor: '#10B981',
-                paddingVertical: 14,
-                borderRadius: 14,
-                minHeight: 48,
-                elevation: 5,
+                flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                marginRight: 8, backgroundColor: '#10B981', paddingVertical: 14,
+                borderRadius: 14, minHeight: 48, elevation: 5,
               }}
             >
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, marginRight: 6 }}>
@@ -362,15 +352,9 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
               onPress={onLogin}
               activeOpacity={0.85}
               style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: 14,
-                borderRadius: 14,
-                minHeight: 48,
-                borderWidth: 2,
-                borderColor: '#10B981',
-                backgroundColor: theme.colors.background,
+                flex: 1, alignItems: 'center', justifyContent: 'center',
+                paddingVertical: 14, borderRadius: 14, minHeight: 48,
+                borderWidth: 2, borderColor: '#10B981', backgroundColor: theme.colors.background,
               }}
             >
               <Text style={{ color: '#10B981', fontWeight: '800', fontSize: 15 }}>
@@ -379,6 +363,7 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
             </TouchableOpacity>
           </View>
 
+          {/* Trust badges */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 }}>
             {[
               { icon: 'shield-checkmark-outline', label: t('common:trustedDoctors') },
@@ -388,16 +373,11 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
               <View
                 key={item.label}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: 20,
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  marginRight: 6,
-                  marginBottom: 6,
+                  flexDirection: 'row', alignItems: 'center',
+                  backgroundColor: theme.colors.surface, borderRadius: 20,
+                  paddingHorizontal: 10, paddingVertical: 5,
+                  borderWidth: 1, borderColor: theme.colors.border,
+                  marginRight: 6, marginBottom: 6,
                 }}
               >
                 <Ionicons name={item.icon as any} size={11} color="#10B981" style={{ marginRight: 4 }} />
@@ -408,25 +388,23 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
             ))}
           </View>
 
+          {/* Stats pills — mobile */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {[
               { dot: '#10B981', label: t('common:patients') },
-              { icon: 'star', iconColor: '#F59E0B', label: t('common:rating') },
-              { icon: 'medical', iconColor: '#EF4444', label: t('common:doctors') },
+              // ribbon-outline = accreditation/quality, replaces generic star
+              { icon: 'ribbon-outline', iconColor: '#F59E0B', label: t('common:rating') },
+              // medkit-outline = clinical equipment, replaces generic heart
+              { icon: 'medkit-outline', iconColor: '#3B82F6', label: t('common:doctors') },
             ].map((item) => (
               <View
                 key={item.label}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: 20,
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  marginRight: 6,
-                  marginBottom: 6,
+                  flexDirection: 'row', alignItems: 'center',
+                  backgroundColor: theme.colors.surface, borderRadius: 20,
+                  paddingHorizontal: 10, paddingVertical: 5,
+                  borderWidth: 1, borderColor: theme.colors.border,
+                  marginRight: 6, marginBottom: 6,
                 }}
               >
                 {item.dot
@@ -444,9 +422,16 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
     );
   }
 
+  // ── Desktop layout ───────────────────────────────────────────────────────────
   return (
     <Animated.View style={{ opacity: fadeAnim, flexDirection: 'row', minHeight: 580, overflow: 'hidden' }}>
-      <View style={{ width: '36%', zIndex: 2, paddingLeft: 58, paddingRight: 0, paddingVertical: 56, justifyContent: 'center', alignItems: 'center', gap: 24, backgroundColor: theme.colors.background }}>
+
+      {/* Left: copy + CTAs */}
+      <View style={{
+        width: '36%', zIndex: 2, paddingLeft: 58, paddingRight: 0, paddingVertical: 56,
+        justifyContent: 'center', alignItems: 'center', gap: 24,
+        backgroundColor: theme.colors.background,
+      }}>
         <Text style={{ fontSize: 42, fontWeight: '800', color: theme.colors.primary, lineHeight: 52, letterSpacing: -1, textAlign: 'center' }}>
           {t('common:qualityHealthcare')}
         </Text>
@@ -458,7 +443,12 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
           <TouchableOpacity
             onPress={onGetStarted}
             activeOpacity={0.85}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: theme.colors.primary, paddingHorizontal: 20, paddingVertical: 16, borderRadius: 14, shadowColor: theme.colors.primary, shadowOpacity: 0.3, shadowRadius: 12, elevation: 5 }}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 10,
+              backgroundColor: theme.colors.primary,
+              paddingHorizontal: 20, paddingVertical: 16, borderRadius: 14,
+              shadowColor: theme.colors.primary, shadowOpacity: 0.3, shadowRadius: 12, elevation: 5,
+            }}
           >
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>{t('common:getStarted')}</Text>
             <Ionicons name="arrow-forward" size={18} color="#fff" />
@@ -485,9 +475,15 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
         </View>
       </View>
 
+      {/* Right: image + floating cards */}
       <View style={{ width: '64%', position: 'relative' }}>
         <Image source={femaleDoc} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-        <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '15%', flexDirection: 'row' }} pointerEvents="none">
+
+        {/* Left-edge fade to match background */}
+        <View
+          style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '15%', flexDirection: 'row' }}
+          pointerEvents="none"
+        >
           <View style={{ flex: 3, backgroundColor: theme.colors.background }} />
           <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.85 }} />
           <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.6 }} />
@@ -496,49 +492,109 @@ function HeroSection({ theme, isDark, isMobile, onGetStarted, onLogin }: Section
           <View style={{ flex: 1, backgroundColor: theme.colors.background, opacity: 0.05 }} />
         </View>
 
+        {/* ── Card 1: Doctors — medkit-outline (clinical bag) instead of heart ── */}
         <Animated.View style={{ position: 'absolute', top: 40, left: '18%', transform: [{ translateY: floatAnim1 }] }}>
-          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
-            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="heart" size={17} color="#fff" />
+          <View style={{
+            backgroundColor: isDark ? '#1e293bfa' : '#fffffff4',
+            borderRadius: 16, padding: 12,
+            flexDirection: 'row', alignItems: 'center', gap: 10,
+            borderWidth: 1, borderColor: isDark ? '#334155' : '#e2e8f0',
+          }}>
+            <View style={{
+              width: 34, height: 34, borderRadius: 17,
+              // Blue tint — clinical/trustworthy, distinct from the red heart
+              backgroundColor: isDark ? '#1e3a5f' : '#DBEAFE',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Ionicons name="medkit-outline" size={17} color="#185FA5" />
             </View>
             <View>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: '#111' }}>{t('common:doctors')}</Text>
-              <Text style={{ fontSize: 10, color: '#666' }}>{t('common:verifiedSpecialists')}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#f1f5f9' : '#111' }}>
+                {t('common:doctors')}
+              </Text>
+              <Text style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#666' }}>
+                {t('common:verifiedSpecialists')}
+              </Text>
             </View>
           </View>
         </Animated.View>
 
+        {/* ── Card 2: Rating — ribbon-outline (accreditation) instead of star ── */}
         <Animated.View style={{ position: 'absolute', top: 40, right: 24, transform: [{ translateY: floatAnim2 }] }}>
-          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
-            <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#F59E0B', alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="star" size={17} color="#fff" />
+          <View style={{
+            backgroundColor: isDark ? '#1e293bfa' : '#fffffff4',
+            borderRadius: 16, padding: 12,
+            flexDirection: 'row', alignItems: 'center', gap: 10,
+            borderWidth: 1, borderColor: isDark ? '#334155' : '#e2e8f0',
+          }}>
+            <View style={{
+              width: 34, height: 34, borderRadius: 17,
+              // Amber tint kept — ribbon reads as quality award, amber = excellence
+              backgroundColor: isDark ? '#3d2c00' : '#FEF3C7',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Ionicons name="ribbon-outline" size={17} color="#B45309" />
             </View>
             <View>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: '#111' }}>{t('common:rating')}</Text>
-              <Text style={{ fontSize: 10, color: '#666' }}>{t('common:averageScore')}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#f1f5f9' : '#111' }}>
+                {t('common:rating')}
+              </Text>
+              <Text style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#666' }}>
+                {t('common:averageScore')}
+              </Text>
             </View>
           </View>
         </Animated.View>
 
+        {/* ── Card 3: Available Now — pulse dot + time-outline (clock) ── */}
         <Animated.View style={{ position: 'absolute', bottom: 60, right: 24, transform: [{ translateY: floatAnim3 }] }}>
-          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#e2e8f0' }}>
+          <View style={{
+            backgroundColor: isDark ? '#1e293bfa' : '#fffffff4',
+            borderRadius: 16, padding: 12,
+            flexDirection: 'row', alignItems: 'center', gap: 8,
+            borderWidth: 1, borderColor: isDark ? '#334155' : '#e2e8f0',
+          }}>
+            {/* Green pulse dot — live availability signal */}
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: '#111' }}>{t('common:availableNow')}</Text>
+            {/* Clock icon — anchors "now" without feeling like a generic alarm */}
+            <Ionicons name="time-outline" size={14} color={isDark ? '#94a3b8' : '#64748b'} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#f1f5f9' : '#111' }}>
+              {t('common:availableNow')}
+            </Text>
           </View>
         </Animated.View>
 
+        {/* ── Card 4: Patients — stacked avatars (unchanged, already appropriate) ── */}
         <View style={{ position: 'absolute', bottom: 60, left: '18%' }}>
-          <View style={{ backgroundColor: '#fffffff4', borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#e2e8f0' }}>
+          <View style={{
+            backgroundColor: isDark ? '#1e293bfa' : '#fffffff4',
+            borderRadius: 16, padding: 12,
+            flexDirection: 'row', alignItems: 'center', gap: 10,
+            borderWidth: 1, borderColor: isDark ? '#334155' : '#e2e8f0',
+          }}>
             <View style={{ flexDirection: 'row' }}>
               {[0, 1, 2, 3].map((i) => (
-                <View key={i} style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center', marginLeft: i === 0 ? 0 : -9, borderWidth: 2, borderColor: '#fff' }}>
+                <View
+                  key={i}
+                  style={{
+                    width: 26, height: 26, borderRadius: 13,
+                    backgroundColor: theme.colors.primary,
+                    alignItems: 'center', justifyContent: 'center',
+                    marginLeft: i === 0 ? 0 : -9,
+                    borderWidth: 2, borderColor: isDark ? '#1e293b' : '#fff',
+                  }}
+                >
                   <Ionicons name="person" size={12} color="#fff" />
                 </View>
               ))}
             </View>
             <View>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: '#111' }}>{t('common:patients')}</Text>
-              <Text style={{ fontSize: 10, color: '#666' }}>{t('common:trustMedlink')}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#f1f5f9' : '#111' }}>
+                {t('common:patients')}
+              </Text>
+              <Text style={{ fontSize: 10, color: isDark ? '#94a3b8' : '#666' }}>
+                {t('common:trustMedlink')}
+              </Text>
             </View>
           </View>
         </View>
@@ -947,6 +1003,12 @@ function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const cardWidth = isMobile ? width - 64 : Math.min(420, width * 0.32);
   const gap = 16;
+  const TESTIMONIALS = [1, 2, 3, 4].map((i) => ({
+    id: `tm-${i}`,
+    name: t(`common:testimonial${i}Name`),
+    rating: 5,
+    text: t(`common:testimonial${i}Text`),
+  }));
 
   const slideTo = useCallback((idx: number) => {
     Animated.spring(slideAnim, { toValue: -idx * (cardWidth + gap), useNativeDriver: true, tension: 60, friction: 10 }).start();
@@ -1195,7 +1257,6 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
               <View style={{ height: 8, width: '60%', borderRadius: 4, backgroundColor: isDark ? '#2a2a2a' : '#f1f5f9', marginBottom: 10 }} />
               <View style={{ height: 72, width: '100%', borderRadius: 14, backgroundColor: isDark ? '#222' : '#f8fafc', borderWidth: 1, borderColor: isDark ? '#333' : '#e2e8f0' }} />
             </View>
-            <Text style={{ color: '#dcfce766', fontSize: 11 }}>{t('common:appScreenshotPlaceholder')}</Text>
           </View>
         )}
       </View>
@@ -1326,6 +1387,8 @@ export default function PublicHomeScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const { t, i18n } = useTranslation();
+
+  
 
   const {
     doctors,
