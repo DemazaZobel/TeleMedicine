@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  Alert,
 } from 'react-native';
 
 import { AuthContainer, Input } from '../../../components/ui';
@@ -17,6 +18,9 @@ import { useTranslation } from '../../../i18n';
 import { useAuthStore } from '../../../store/authStore';
 import { Theme, useTheme } from '../../../theme';
 import type { UserRole } from '../../../types';
+import { signInWithGoogle, statusCodes } from '../../../services/google-auth.service';
+import { STORAGE_KEYS } from '../../../services/api';
+import * as Storage from '../../../services/storage';
 
 const ROLES: { labelKey: string; icon: keyof typeof Ionicons.glyphMap; value: UserRole }[] = [
   { labelKey: 'Patient', icon: 'person-outline', value: 'PATIENT' },
@@ -35,6 +39,7 @@ export function RegisterForm() {
   const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = useTranslation();
+  
 
   const { register, isLoading, error, clearError } = useAuthStore();
   const { width } = useWindowDimensions();
@@ -87,7 +92,50 @@ export function RegisterForm() {
     }
   }, [firstName, lastName, email, password, role, isValid]);
 
-  const handleGoogle = () => console.log('Google signup clicked');
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogle = useCallback(async () => {
+    setGoogleLoading(true);
+    try {
+      const { status, data } = await signInWithGoogle(role);
+  
+      if (status === 200) {
+        // Mirror exactly what authStore.login() does
+        await Promise.all([
+          Storage.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, data.access),
+          Storage.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, data.refresh),
+          Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(data.user)),
+        ]);
+  
+        useAuthStore.setState({
+          user: data.user,
+          tokens: { access: data.access, refresh: data.refresh },
+          isAuthenticated: true,
+          isLoading: false,
+        });
+  
+        // Fetch linked accounts just like login does
+        await useAuthStore.getState().fetchLinkedAccounts();
+  
+      } else if (status === 202) {
+        // Doctor pending approval — no tokens issued yet
+        router.replace('/(auth)/verify-email' as any);
+      }
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === statusCodes.SIGN_IN_CANCELLED) return;
+      if (code === statusCodes.IN_PROGRESS) return;
+  
+      const msg = err?.response?.data?.detail
+        ?? err?.response?.data?.message
+        ?? err?.message
+        ?? t('common:errorGeneric');
+  
+      Alert.alert(t('common:errorTitle'), msg);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }, [role, router, t]);
 
   const clearOnChange = useCallback(
     (setter: any) => (text: string) => {
@@ -244,7 +292,7 @@ export function RegisterForm() {
             <View style={styles.dividerLine} />
           </View>
 
-          <GoogleSignInButton onPress={handleGoogle} loading={isLoading} />
+          <GoogleSignInButton onPress={handleGoogle} loading={googleLoading} />
         </View>
 
         {/* LOGIN LINK */}

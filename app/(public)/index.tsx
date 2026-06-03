@@ -1665,7 +1665,7 @@ const [guideVisible, setGuideVisible] = useState(false);
         menuAnim={menuAnim}
         navItems={NAV_ITEMS}
       />
-    }
+    
       <ScrollView ref={scrollViewRef} style={{ flex: 1, backgroundColor: theme.colors.background }} showsVerticalScrollIndicator={false}>
         <View onLayout={(e) => { heroY.current = e.nativeEvent.layout.y; }}>
           <HeroSection {...sectionProps} onGetStarted={() => router.push('/(auth)/register')} onLogin={() => router.push('/(auth)/login')} />
