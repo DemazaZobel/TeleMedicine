@@ -260,6 +260,9 @@
     "testimonial4Name": "ዮናስ አ.",
     "testimonial4Text": "በኢትዮጵያ ካሉ የጤና መተግበሪያዎች መካከል ከምርጦቹ አንዱ ነው። ቀላል፣ ፈጣን እና አስተማማኝ ነው።",
     "translitHint": "እንግሊዝኛ ታይፕ በአማርኛ ያገኛሉ። ምሳሌ:",
-"translitLongPressHint": "{{button}} ን ረጅም ጊዜ ተጫኑ ለሙሉ መመሪያ።"
+"translitLongPressHint": "{{button}} ን ረጅም ጊዜ ተጫኑ ለሙሉ መመሪያ።",
+"errorTitle": "ስህተት ተፈጥሯል",
+"errorGeneric": "እባክዎ ቆየት ብለው እንደገና ይሞክሩ።",
+"errorNetwork": "የኔትወርክ ስህተት። ግንኙነትዎን ያረጋግጡ እንደገና ይሞክሩ።"
 
 }

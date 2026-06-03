@@ -258,5 +258,8 @@
     "testimonial4Name": "Yonas A.",
     "testimonial4Text": "The best healthcare app in Ethiopia. Simple, fast, and reliable.",
     "translitHint": "Type in English to get Amharic. Example:",
-"translitLongPressHint": "Long press {{button}} for the full guide."
+"translitLongPressHint": "Long press {{button}} for the full guide.",
+"errorTitle": "Something went wrong",
+"errorGeneric": "Please try again later.",
+"errorNetwork": "Network error. Check your connection and try again."
 }

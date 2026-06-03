@@ -47,3 +47,4 @@ test-report*.html
 # generated native folders
 /ios
 /android
+.env

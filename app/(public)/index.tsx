@@ -26,7 +26,8 @@ import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme'; 
 import { useAmharicInput } from '../../src/hooks/useAmharicInput';
-import {TranslitGuideModal} from "../../src/components/ui/TranslitGuideModal"
+import {TranslitGuideModal} from "../../src/components/ui/TranslitGuideModal";
+import apiClient from '../../src/services/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1141,14 +1142,28 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
       Alert.alert(t('common:missingFields'), t('common:fillNameEmailMessage'));
       return;
     }
+  
     setSending(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSending(false);
-    setSent(true);
-    setName(''); setEmail(''); setSubject(''); setMessage('');
-    nameInput.reset(); subjectInput.reset(); messageInput.reset();
-    setTimeout(() => setSent(false), 4000);
-  }, [name, email, subject, message, t]);
+    try {
+      await apiClient.post('/contact/', {
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim(),
+        message: message.trim(),
+      });
+  
+      setSent(true);
+      setName(''); setEmail(''); setSubject(''); setMessage('');
+      nameInput.reset(); subjectInput.reset(); messageInput.reset();
+      setTimeout(() => setSent(false), 4000);
+    } catch (error: any) {
+      const data = error?.response?.data;
+      const msg = data?.detail ?? data?.message ?? t('common:errorGeneric');
+      Alert.alert(t('common:errorTitle'), error?.response ? msg : t('common:errorNetwork'));
+    } finally {
+      setSending(false);
+    }
+  }, [name, email, subject, message, t, nameInput, subjectInput, messageInput]);
 
   return (
     <View style={{ marginTop: isMobile ? 48 : 64, paddingHorizontal: isMobile ? 16 : 32 }}>
