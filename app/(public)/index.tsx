@@ -24,10 +24,9 @@ import { useTranslation } from '../../src/i18n';
 import { setItemAsync } from '../../src/services/storage';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
-import { useTheme } from '../../src/theme';
-import { transliterateAmharic } from '../../src/utils';
- 
+import { useTheme } from '../../src/theme'; 
 import { useAmharicInput } from '../../src/hooks/useAmharicInput';
+import {TranslitGuideModal} from "../../src/components/ui/TranslitGuideModal"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -621,22 +620,29 @@ function SearchSection({
   setTranslitEnabled,
 }: SearchSectionProps) {
   const { t } = useTranslation();
- 
+  const [guideVisible, setGuideVisible] = useState(false);
+
   const { displayValue, handleChange, reset } = useAmharicInput({
     enabled: translitEnabled,
     onChangeText: (amharicText, _latinText) => {
       setSearchQuery?.(amharicText);
     },
   });
- 
+
   const handleToggleTranslit = () => {
     setTranslitEnabled?.(!translitEnabled);
     reset();
     setSearchQuery?.('');
   };
- 
+
   return (
     <View style={{ paddingHorizontal: isMobile ? 16 : 32, marginTop: isMobile ? 20 : 32 }}>
+      <TranslitGuideModal
+        visible={guideVisible}
+        onClose={() => setGuideVisible(false)}
+        theme={theme}
+      />
+
       <View style={{
         backgroundColor: '#ecfdf5', borderRadius: 20, padding: isMobile ? 18 : 26,
         borderWidth: 1, borderColor: '#bbf7d0',
@@ -649,7 +655,7 @@ function SearchSection({
         <Text style={{ fontSize: 13, color: '#047857', marginBottom: 18, lineHeight: 20 }}>
           {t('patient:desc')}
         </Text>
- 
+
         <View style={{ gap: 12 }}>
           <View style={{
             flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -657,7 +663,7 @@ function SearchSection({
             paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#fff',
           }}>
             <Ionicons name="search-outline" size={17} color="#047857" />
- 
+
             <TextInput
               placeholder={t('common:searchPlaceholder')}
               placeholderTextColor="#6ee7b7"
@@ -668,9 +674,12 @@ function SearchSection({
                 ...Platform.select({ web: { outlineStyle: 'none' } as any }),
               }}
             />
- 
+
+            {/* Tap = toggle, Long press = open guide */}
             <TouchableOpacity
               onPress={handleToggleTranslit}
+              onLongPress={() => setGuideVisible(true)}
+              delayLongPress={400}
               activeOpacity={0.8}
               style={{
                 flexDirection: 'row',
@@ -693,6 +702,23 @@ function SearchSection({
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Hint shown when transliteration is active */}
+          {translitEnabled && (
+            <View style={{
+              backgroundColor: '#f0fdf4', borderRadius: 8, padding: 10,
+              flexDirection: 'row', alignItems: 'center', gap: 8,
+              borderWidth: 1, borderColor: '#bbf7d0',
+            }}>
+              <Text style={{ fontSize: 16 }}>💡</Text>
+              <Text style={{ flex: 1, fontSize: 12, color: '#065f46', lineHeight: 18 }}>
+                {t('common:translitHint')}{' '}
+                <Text style={{ fontWeight: '800' }}>selam</Text>
+                {' → ሰላም. '}
+                {t('common:translitLongPressHint', { button: 'Ha|A' })}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -1067,6 +1093,7 @@ function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
 
 // ─── Contact Section ──────────────────────────────────────────────────────────
 
+
 function ContactSection({ theme, isDark, isMobile }: SectionProps) {
   const { i18n, t } = useTranslation();
   const [name, setName] = useState('');
@@ -1076,8 +1103,38 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [translitEnabled, setTranslitEnabled] = useState(i18n.language === 'am');
+  const [guideVisible, setGuideVisible] = useState(false);
 
-  useEffect(() => { setTranslitEnabled(i18n.language === 'am'); }, [i18n.language]);
+  const nameInput = useAmharicInput({
+    enabled: translitEnabled,
+    onChangeText: (amharic) => setName(amharic),
+  });
+
+  const subjectInput = useAmharicInput({
+    enabled: translitEnabled,
+    onChangeText: (amharic) => setSubject(amharic),
+  });
+
+  const messageInput = useAmharicInput({
+    enabled: translitEnabled,
+    onChangeText: (amharic) => setMessage(amharic),
+  });
+
+  useEffect(() => {
+    setTranslitEnabled(i18n.language === 'am');
+  }, [i18n.language]);
+
+  const handleToggleTranslit = () => {
+    const next = !translitEnabled;
+    setTranslitEnabled(next);
+    // Reset all inputs when toggling
+    nameInput.reset();
+    subjectInput.reset();
+    messageInput.reset();
+    setName('');
+    setSubject('');
+    setMessage('');
+  };
 
   const handleSend = useCallback(async () => {
     if (!name.trim() || !email.trim() || !message.trim()) {
@@ -1089,27 +1146,71 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
     setSending(false);
     setSent(true);
     setName(''); setEmail(''); setSubject(''); setMessage('');
+    nameInput.reset(); subjectInput.reset(); messageInput.reset();
     setTimeout(() => setSent(false), 4000);
   }, [name, email, subject, message, t]);
 
   return (
     <View style={{ marginTop: isMobile ? 48 : 64, paddingHorizontal: isMobile ? 16 : 32 }}>
-      <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>{t('common:contactUsTitle')}</Text>
+      <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>
+        {t('common:contactUsTitle')}
+      </Text>
       <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary, marginTop: 10, marginBottom: 32, alignSelf: 'center' }} />
+
+      {/* Transliteration Guide Modal */}
+      <TranslitGuideModal
+        visible={guideVisible}
+        onClose={() => setGuideVisible(false)}
+        theme={theme}
+      />
+
       <View style={{ flex: 1 }}>
         <View style={{ backgroundColor: theme.colors.surface, borderRadius: 20, padding: isMobile ? 20 : 28, borderWidth: 1, borderColor: theme.colors.border, gap: 14 }}>
+
+          {/* Header with ሀ/A toggle */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: theme.colors.text }}>{t('common:sendAMessage')}</Text>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: theme.colors.text }}>
+              {t('common:sendAMessage')}
+            </Text>
+
+            {/* Tap = toggle, Long press = open guide */}
             <TouchableOpacity
-              onPress={() => setTranslitEnabled(!translitEnabled)}
+              onPress={handleToggleTranslit}
+              onLongPress={() => setGuideVisible(true)}
+              delayLongPress={400}
               activeOpacity={0.8}
-              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: translitEnabled ? '#ecfdf5' : '#f1f5f9', borderWidth: 1.5, borderColor: translitEnabled ? '#10b981' : '#cbd5e1', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5, gap: 5 }}
+              style={{
+                flexDirection: 'row', alignItems: 'center',
+                backgroundColor: translitEnabled ? '#ecfdf5' : '#f1f5f9',
+                borderWidth: 1.5,
+                borderColor: translitEnabled ? '#10b981' : '#cbd5e1',
+                borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5, gap: 5,
+              }}
             >
               <Text style={{ fontSize: 12, fontWeight: '800', color: translitEnabled ? '#059669' : '#94a3b8' }}>ሀ</Text>
               <Text style={{ fontSize: 10, color: translitEnabled ? '#6ee7b7' : '#cbd5e1' }}>|</Text>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: !translitEnabled ? '#475569' : '#a7f3d0' }}>{t('common:letterA')}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: !translitEnabled ? '#475569' : '#a7f3d0' }}>
+                {t('common:letterA')}
+              </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Hint text when transliteration is on */}
+          {translitEnabled && (
+            <View style={{
+              backgroundColor: '#f0fdf4', borderRadius: 8, padding: 10,
+              flexDirection: 'row', alignItems: 'center', gap: 8,
+              borderWidth: 1, borderColor: '#bbf7d0',
+            }}>
+              <Text style={{ fontSize: 16 }}>💡</Text>
+              <Text style={{ flex: 1, fontSize: 12, color: '#065f46', lineHeight: 18 }}>
+                {t('common:translitHint')}{' '}
+                <Text style={{ fontWeight: '800' }}>selam</Text>
+                {' → ሰላም. '}
+                {t('common:translitLongPressHint', { button: 'Ha|A' })}
+              </Text>
+            </View>
+          )}
 
           {sent && (
             <View style={{ backgroundColor: '#ecfdf5', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#bbf7d0' }}>
@@ -1118,34 +1219,90 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
             </View>
           )}
 
+          {/* Name + Email row */}
           <View style={[{ gap: 14 }, !isMobile && { flexDirection: 'row' }]}>
             <View style={{ flex: 1, gap: 6 }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('common:fullName')}</Text>
-              <TextInput value={name} onChangeText={(text) => setName(translitEnabled ? transliterateAmharic(text) : text)} placeholder={t('common:placeholderName')} placeholderTextColor={theme.colors.textSecondary} style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {t('common:fullName')}
+              </Text>
+              {/* ── FIXED: uses nameInput hook ── */}
+              <TextInput
+                value={translitEnabled ? nameInput.displayValue : name}
+                onChangeText={(text) => {
+                  if (translitEnabled) nameInput.handleChange(text);
+                  else setName(text);
+                }}
+                placeholder={t('common:placeholderName')}
+                placeholderTextColor={theme.colors.textSecondary}
+                style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }}
+              />
             </View>
             <View style={{ flex: 1, gap: 6 }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('common:emailAddress')}</Text>
-              <TextInput value={email} onChangeText={setEmail} placeholder={t('common:placeholderEmail')} placeholderTextColor={theme.colors.textSecondary} keyboardType="email-address" autoCapitalize="none" style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {t('common:emailAddress')}
+              </Text>
+              {/* Email never transliterates */}
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder={t('common:placeholderEmail')}
+                placeholderTextColor={theme.colors.textSecondary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }}
+              />
             </View>
           </View>
 
+          {/* Subject */}
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('common:subject')}</Text>
-            <TextInput value={subject} onChangeText={(text) => setSubject(translitEnabled ? transliterateAmharic(text) : text)} placeholder={t('common:placeholderSubject')} placeholderTextColor={theme.colors.textSecondary} style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }} />
+            <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {t('common:subject')}
+            </Text>
+            {/* ── FIXED: uses subjectInput hook ── */}
+            <TextInput
+              value={translitEnabled ? subjectInput.displayValue : subject}
+              onChangeText={(text) => {
+                if (translitEnabled) subjectInput.handleChange(text);
+                else setSubject(text);
+              }}
+              placeholder={t('common:placeholderSubject')}
+              placeholderTextColor={theme.colors.textSecondary}
+              style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background }}
+            />
           </View>
 
+          {/* Message */}
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{t('common:message')}</Text>
-            <TextInput value={message} onChangeText={(text) => setMessage(translitEnabled ? transliterateAmharic(text) : text)} placeholder={t('common:placeholderMessage')} placeholderTextColor={theme.colors.textSecondary} multiline numberOfLines={5} textAlignVertical="top" style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background, minHeight: 120 }} />
+            <Text style={{ fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {t('common:message')}
+            </Text>
+            {/* ── FIXED: uses messageInput hook ── */}
+            <TextInput
+              value={translitEnabled ? messageInput.displayValue : message}
+              onChangeText={(text) => {
+                if (translitEnabled) messageInput.handleChange(text);
+                else setMessage(text);
+              }}
+              placeholder={t('common:placeholderMessage')}
+              placeholderTextColor={theme.colors.textSecondary}
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+              style={{ borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: theme.colors.text, backgroundColor: theme.colors.background, minHeight: 120 }}
+            />
           </View>
 
+          {/* Send button */}
           <TouchableOpacity
             onPress={handleSend}
             disabled={sending}
             activeOpacity={0.85}
             style={{ backgroundColor: sending ? theme.colors.primary + '88' : theme.colors.primary, borderRadius: 12, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{sending ? t('common:sending') : t('common:sendMessage')}</Text>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+              {sending ? t('common:sending') : t('common:sendMessage')}
+            </Text>
             {!sending && <Ionicons name="send" size={16} color="#fff" />}
           </TouchableOpacity>
         </View>
@@ -1387,6 +1544,14 @@ export default function PublicHomeScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  // 2. Add state inside Input component:
+const [guideVisible, setGuideVisible] = useState(false);
+
+// 3. Add modal before the suggestion bar:
+ <TranslitGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} theme={theme} />
+
+
+
 
   
 
@@ -1423,6 +1588,7 @@ export default function PublicHomeScreen() {
 
   useEffect(() => {
     fetchDoctors().catch(() => setFetchFailed(true));
+    console.log('TranslitGuideModal', TranslitGuideModal);
   }, [fetchDoctors]);
 
   useEffect(() => { setSearchTranslitEnabled(i18n.language === 'am'); }, [i18n.language]);
@@ -1484,7 +1650,7 @@ export default function PublicHomeScreen() {
         menuAnim={menuAnim}
         navItems={NAV_ITEMS}
       />
-
+    }
       <ScrollView ref={scrollViewRef} style={{ flex: 1, backgroundColor: theme.colors.background }} showsVerticalScrollIndicator={false}>
         <View onLayout={(e) => { heroY.current = e.nativeEvent.layout.y; }}>
           <HeroSection {...sectionProps} onGetStarted={() => router.push('/(auth)/register')} onLogin={() => router.push('/(auth)/login')} />

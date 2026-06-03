@@ -9,6 +9,7 @@ import { useTranslation } from '../src/i18n';
 import { getItemAsync } from '../src/services/storage';
 import { useAuthStore } from '../src/store/authStore';
 import { ThemeProvider, useTheme } from '../src/theme';
+import MediChat from '../src/components/chat/MediChat';
 
 // Prevent the splash screen from auto-hiding (no-op on web)
 SplashScreen.preventAutoHideAsync().catch(() => { });
@@ -140,6 +141,7 @@ export default function RootLayout() {
         <WebLayoutWrapper>
           <AuthGate>
             <Slot />
+            <MediChat /> {/* Global chatbot component, always mounted */}
           </AuthGate>
         </WebLayoutWrapper>
       )}

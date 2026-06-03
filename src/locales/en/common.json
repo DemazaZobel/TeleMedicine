@@ -256,5 +256,7 @@
     "testimonial3Text": "The reminders help me a lot. Great app for busy people like me.",
   
     "testimonial4Name": "Yonas A.",
-    "testimonial4Text": "The best healthcare app in Ethiopia. Simple, fast, and reliable."
+    "testimonial4Text": "The best healthcare app in Ethiopia. Simple, fast, and reliable.",
+    "translitHint": "Type in English to get Amharic. Example:",
+"translitLongPressHint": "Long press {{button}} for the full guide."
 }
