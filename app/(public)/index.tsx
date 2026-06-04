@@ -1024,12 +1024,14 @@ function FeaturesSection({ theme, isDark, isMobile }: SectionProps) {
 
 // ─── Testimonials Section ─────────────────────────────────────────────────────
 
+
 function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const cardWidth = isMobile ? width - 64 : Math.min(420, width * 0.32);
   const gap = 16;
+
   const TESTIMONIALS = [1, 2, 3, 4].map((i) => ({
     id: `tm-${i}`,
     name: t(`common:testimonial${i}Name`),
@@ -1037,41 +1039,114 @@ function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
     text: t(`common:testimonial${i}Text`),
   }));
 
-  const slideTo = useCallback((idx: number) => {
-    Animated.spring(slideAnim, { toValue: -idx * (cardWidth + gap), useNativeDriver: true, tension: 60, friction: 10 }).start();
-    setActiveIndex(idx);
-  }, [slideAnim, cardWidth, gap]);
+  // ── Animate whenever activeIndex changes ──────────────────────────────────
+  // This replaces the old slideTo() helper that was being called inside
+  // setActiveIndex's updater function, which caused the setState-during-render
+  // warning. Now the animation is purely a side-effect of the index changing.
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: -activeIndex * (cardWidth + gap),
+      useNativeDriver: true,
+      tension: 60,
+      friction: 10,
+    }).start();
+  }, [activeIndex, slideAnim, cardWidth, gap]);
 
+  // ── Auto-advance every 3.8s ───────────────────────────────────────────────
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveIndex((prev) => {
-        const next = (prev + 1) % TESTIMONIALS.length;
-        slideTo(next);
-        return next;
-      });
+      // Only update state here — animation is handled by the effect above
+      setActiveIndex((prev) => (prev + 1) % TESTIMONIALS.length);
     }, 3800);
     return () => clearInterval(timer);
-  }, [slideTo]);
+  }, [TESTIMONIALS.length]);
+
+  // ── Manual dot tap ────────────────────────────────────────────────────────
+  const handleDotPress = useCallback((idx: number) => {
+    setActiveIndex(idx);
+  }, []);
 
   return (
     <View style={{ marginTop: isMobile ? 48 : 64, alignItems: 'center' }}>
-      <Text style={{ fontSize: isMobile ? 22 : 26, fontWeight: '800', color: theme.colors.text, textAlign: 'center' }}>{t('common:whatPatientsSay')}</Text>
-      <View style={{ width: 48, height: 3, borderRadius: 2, backgroundColor: theme.colors.primary, marginTop: 10, marginBottom: 32 }} />
+      <Text style={{
+        fontSize: isMobile ? 22 : 26, fontWeight: '800',
+        color: theme.colors.text, textAlign: 'center',
+      }}>
+        {t('common:whatPatientsSay')}
+      </Text>
+      <View style={{
+        width: 48, height: 3, borderRadius: 2,
+        backgroundColor: theme.colors.primary,
+        marginTop: 10, marginBottom: 32,
+      }} />
+
       <View style={{ width: '100%', overflow: 'hidden', paddingHorizontal: isMobile ? 16 : 32 }}>
-        <Animated.View style={{ flexDirection: 'row', gap, transform: [{ translateX: slideAnim }] }}>
+        <Animated.View style={{
+          flexDirection: 'row',
+          gap,
+          transform: [{ translateX: slideAnim }],
+        }}>
           {TESTIMONIALS.map((item, idx) => {
             const isCenter = idx === activeIndex;
             return (
-              <Animated.View key={item.id} style={{ width: cardWidth, transform: [{ scale: isCenter ? 1.04 : 0.95 }] }}>
-                <Card style={{ borderRadius: 18, padding: 22, gap: 12, borderWidth: isCenter ? 1.5 : 1, borderColor: isCenter ? theme.colors.primary + '66' : theme.colors.border, shadowColor: isCenter ? theme.colors.primary : '#000', shadowOpacity: isCenter ? 0.12 : 0.04, shadowRadius: isCenter ? 16 : 4, elevation: isCenter ? 6 : 1 }}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={28} color={theme.colors.primary + '55'} />
-                  <Text style={{ fontSize: isCenter ? 15 : 13, fontWeight: isCenter ? '600' : '400', color: isCenter ? theme.colors.text : theme.colors.textSecondary, lineHeight: isCenter ? 26 : 22, fontStyle: 'italic' }}>{item.text}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: isCenter ? theme.colors.primary : theme.colors.primary + '22', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: isCenter ? '#fff' : theme.colors.primary }}>{item.name.charAt(0)}</Text>
+              <Animated.View
+                key={item.id}
+                style={{
+                  width: cardWidth,
+                  transform: [{ scale: isCenter ? 1.04 : 0.95 }],
+                }}
+              >
+                <Card style={{
+                  borderRadius: 18, padding: 22, gap: 12,
+                  borderWidth: isCenter ? 1.5 : 1,
+                  borderColor: isCenter
+                    ? theme.colors.primary + '66'
+                    : theme.colors.border,
+                  shadowColor: isCenter ? theme.colors.primary : '#000',
+                  shadowOpacity: isCenter ? 0.12 : 0.04,
+                  shadowRadius: isCenter ? 16 : 4,
+                  elevation: isCenter ? 6 : 1,
+                }}>
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={28}
+                    color={theme.colors.primary + '55'}
+                  />
+                  <Text style={{
+                    fontSize: isCenter ? 15 : 13,
+                    fontWeight: isCenter ? '600' : '400',
+                    color: isCenter ? theme.colors.text : theme.colors.textSecondary,
+                    lineHeight: isCenter ? 26 : 22,
+                    fontStyle: 'italic',
+                  }}>
+                    {item.text}
+                  </Text>
+                  <View style={{
+                    flexDirection: 'row', alignItems: 'center',
+                    gap: 12, marginTop: 4,
+                  }}>
+                    <View style={{
+                      width: 40, height: 40, borderRadius: 20,
+                      backgroundColor: isCenter
+                        ? theme.colors.primary
+                        : theme.colors.primary + '22',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Text style={{
+                        fontSize: 16, fontWeight: '800',
+                        color: isCenter ? '#fff' : theme.colors.primary,
+                      }}>
+                        {item.name.charAt(0)}
+                      </Text>
                     </View>
                     <View>
-                      <Text style={{ fontSize: 14, fontWeight: isCenter ? '800' : '600', color: theme.colors.text }}>{item.name}</Text>
+                      <Text style={{
+                        fontSize: 14,
+                        fontWeight: isCenter ? '800' : '600',
+                        color: theme.colors.text,
+                      }}>
+                        {item.name}
+                      </Text>
                       <StarRating rating={item.rating} size={isCenter ? 13 : 11} />
                     </View>
                   </View>
@@ -1081,10 +1156,25 @@ function TestimonialsSection({ theme, isMobile, width }: SectionProps) {
           })}
         </Animated.View>
       </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+
+      {/* Dot indicators */}
+      <View style={{
+        flexDirection: 'row', justifyContent: 'center',
+        gap: 8, marginTop: 20,
+      }}>
         {TESTIMONIALS.map((_, idx) => (
-          <TouchableOpacity key={idx} onPress={() => slideTo(idx)} activeOpacity={0.7}>
-            <View style={{ width: idx === activeIndex ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: idx === activeIndex ? theme.colors.primary : theme.colors.border }} />
+          <TouchableOpacity
+            key={idx}
+            onPress={() => handleDotPress(idx)}
+            activeOpacity={0.7}
+          >
+            <View style={{
+              width: idx === activeIndex ? 24 : 8,
+              height: 8, borderRadius: 4,
+              backgroundColor: idx === activeIndex
+                ? theme.colors.primary
+                : theme.colors.border,
+            }} />
           </TouchableOpacity>
         ))}
       </View>

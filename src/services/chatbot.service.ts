@@ -1,10 +1,8 @@
-// ─── chatbot.service.ts (Gemini — debugged) ──────────────────────────────────
-// Fixes the "couldn't connect" error by:
-//   1. Validating the API key before any fetch
-//   2. Logging the EXACT error (network, HTTP, key invalid, safety block, etc.)
-//   3. Using the stable model alias "gemini-1.5-flash-latest"
-//   4. Falling back to demo doctors when your backend is unreachable
-//   5. Clear error messages for every failure mode
+// ─── chatbot.service.ts (Groq + Medlink backend) ─────────────────────────────
+// Uses Groq free API (llama-3.3-70b) + your real Medlink backend.
+// Auth token is read from AsyncStorage — same place your apiClient stores it.
+
+import * as Storage from './storage'; // adjust path if needed
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,80 +41,158 @@ export interface ChatResponse {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-// STEP 1: To test quickly, paste your key directly here:
-//   const GEMINI_API_KEY = 'AIzaSy...';
-// Then once working, move it to .env as EXPO_PUBLIC_GEMINI_API_KEY
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
+const GROQ_API_KEY  = process.env.EXPO_PUBLIC_GROQ_API_KEY ?? '';
+const API_BASE_URL  = 'https://medlinkethiopia.pythonanywhere.com/api';
+const MODEL         = 'llama-3.3-70b-versatile';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.medlink.et';
+// Must match your apiClient storage key exactly
+const ACCESS_TOKEN_KEY = 'medlink_access_token';
 
-// "gemini-1.5-flash-latest" is the stable alias — avoids 404s from version changes
-const MODEL = 'gemini-1.5-flash-latest';
-
-// ── Key validator (call on component mount to catch issues early) ─────────────
+// ── Key validator ─────────────────────────────────────────────────────────────
 
 export function validateChatConfig(): { ok: boolean; error?: string } {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === '') {
+  if (!GROQ_API_KEY || GROQ_API_KEY.trim() === '') {
     return {
       ok: false,
-      error: 'GEMINI_API_KEY is missing.\n\n1. Go to https://aistudio.google.com\n2. Click "Get API Key"\n3. Add to your .env file:\n   EXPO_PUBLIC_GEMINI_API_KEY=AIzaSy...\n4. Restart Expo (npx expo start --clear)',
-    };
-  }
-  if (!GEMINI_API_KEY.startsWith('AIza')) {
-    return {
-      ok: false,
-      error: `API key looks wrong — Gemini keys start with "AIza".\nGot: "${GEMINI_API_KEY.slice(0, 8)}..."`,
+      error:
+        'GROQ_API_KEY is missing.\n' +
+        '1. Go to console.groq.com\n' +
+        '2. API Keys → Create API Key\n' +
+        '3. Add EXPO_PUBLIC_GROQ_API_KEY=gsk_... to .env\n' +
+        '4. npx expo start --clear',
     };
   }
   return { ok: true };
 }
 
-// ── Fallback demo doctors (shown when backend API is unreachable) ─────────────
+// ── Fallback demo doctors ─────────────────────────────────────────────────────
+// Shown only when the backend is unreachable (e.g. no internet)
 
 const FALLBACK_DOCTORS: Doctor[] = [
-  { id: '1', first_name: 'Samuel',    last_name: 'Bekele',   specialization: 'Cardiologist',        average_rating: 4.9, years_of_experience: 12, is_verified: true, hospital: 'Zewditu Memorial Hospital' },
-  { id: '2', first_name: 'Lidiya',    last_name: 'Tesfaye',  specialization: 'Pediatrician',         average_rating: 4.8, years_of_experience: 8,  is_verified: true, hospital: 'Tikur Anbessa Hospital' },
-  { id: '3', first_name: 'Mulugeta',  last_name: 'Alemu',    specialization: 'Dermatologist',        average_rating: 4.7, years_of_experience: 10, is_verified: true, hospital: "St. Paul's Hospital" },
-  { id: '4', first_name: 'Hana',      last_name: 'Wondimu',  specialization: 'Gynecologist',         average_rating: 4.9, years_of_experience: 15, is_verified: true, hospital: 'Ayder Referral Hospital' },
-  { id: '5', first_name: 'Ermias',    last_name: 'Getachew', specialization: 'General Practitioner', average_rating: 4.6, years_of_experience: 6,  is_verified: true, hospital: 'Menelik II Hospital' },
-  { id: '6', first_name: 'Bethlehem', last_name: 'Haile',    specialization: 'Cardiologist',         average_rating: 4.8, years_of_experience: 11, is_verified: true, hospital: 'Black Lion Hospital' },
-  { id: '7', first_name: 'Dawit',     last_name: 'Girma',    specialization: 'Dermatologist',        average_rating: 4.7, years_of_experience: 9,  is_verified: true, hospital: 'Tikur Anbessa Hospital' },
-  { id: '8', first_name: 'Tigist',    last_name: 'Mengistu', specialization: 'Pediatrician',         average_rating: 4.9, years_of_experience: 13, is_verified: true, hospital: 'Yekatit 12 Hospital' },
+  { id: '1', first_name: 'Samuel',    last_name: 'Bekele',   specialization: 'Cardiologist',         average_rating: 4.9, years_of_experience: 12, is_verified: true, hospital: 'Zewditu Memorial Hospital' },
+  { id: '2', first_name: 'Lidiya',    last_name: 'Tesfaye',  specialization: 'Pediatrician',          average_rating: 4.8, years_of_experience: 8,  is_verified: true, hospital: 'Tikur Anbessa Hospital' },
+  { id: '3', first_name: 'Mulugeta',  last_name: 'Alemu',    specialization: 'Dermatologist',         average_rating: 4.7, years_of_experience: 10, is_verified: true, hospital: "St. Paul's Hospital" },
+  { id: '4', first_name: 'Hana',      last_name: 'Wondimu',  specialization: 'Gynecologist',          average_rating: 4.9, years_of_experience: 15, is_verified: true, hospital: 'Ayder Referral Hospital' },
+  { id: '5', first_name: 'Ermias',    last_name: 'Getachew', specialization: 'General Practitioner',  average_rating: 4.6, years_of_experience: 6,  is_verified: true, hospital: 'Menelik II Hospital' },
+  { id: '6', first_name: 'Bethlehem', last_name: 'Haile',    specialization: 'Cardiologist',          average_rating: 4.8, years_of_experience: 11, is_verified: true, hospital: 'Black Lion Hospital' },
+  { id: '7', first_name: 'Dawit',     last_name: 'Girma',    specialization: 'Dermatologist',         average_rating: 4.7, years_of_experience: 9,  is_verified: true, hospital: 'Tikur Anbessa Hospital' },
+  { id: '8', first_name: 'Tigist',    last_name: 'Mengistu', specialization: 'Pediatrician',          average_rating: 4.9, years_of_experience: 13, is_verified: true, hospital: 'Yekatit 12 Hospital' },
 ];
 
-// ── Doctor fetcher ────────────────────────────────────────────────────────────
+function filterFallback(specialization?: string, limit = 4): Doctor[] {
+  if (!specialization) return FALLBACK_DOCTORS.slice(0, limit);
+  const s = specialization.toLowerCase();
+  const filtered = FALLBACK_DOCTORS.filter(d =>
+    d.specialization.toLowerCase().includes(s)
+  );
+  return (filtered.length > 0 ? filtered : FALLBACK_DOCTORS).slice(0, limit);
+}
+
+// ── Doctor fetcher — uses your real Medlink backend ───────────────────────────
+
+// Maps AI-generated specialty names to values your backend actually accepts.
+// Source: discovery store specializations list + your backend's filter param.
+const SPECIALTY_MAP: Record<string, string> = {
+  'General Practitioner': 'General',
+  'Cardiologist':         'Cardiology',
+  'Pediatrician':         'Pediatrics',
+  'Dermatologist':        'Dermatology',
+  'Neurologist':          'Neurology',
+  'Orthopedist':          'Orthopedics',
+  'Dentist':              'Dentistry',
+  'Gynecologist':         'Gynecology',
+  'Psychiatrist':         'Psychiatry',
+  'Ophthalmologist':      'Ophthalmology',
+  'ENT Specialist':       'ENT',
+  'Endocrinologist':      'Endocrinology',
+};
 
 export async function fetchDoctorsFromAPI(params: FetchDoctorsParams): Promise<Doctor[]> {
+  const limit = params.limit ?? 4;
+
+  // Map AI specialty name → backend value, e.g. "Cardiologist" → "Cardiology"
+  const mappedSpec = params.specialization
+    ? (SPECIALTY_MAP[params.specialization] ?? params.specialization)
+    : null;
+
+  // Skip specialization filter for generic queries — just return all doctors
+  const isGeneric = !mappedSpec || mappedSpec.toLowerCase() === 'general';
+
+  console.log('[Medlink chatbot] Specialty:', params.specialization, '→', mappedSpec, isGeneric ? '(generic — no filter)' : '');
+
   const query = new URLSearchParams();
-  if (params.specialization) query.set('specialization', params.specialization);
-  if (params.min_rating)     query.set('min_rating',     String(params.min_rating));
-  if (params.min_experience) query.set('min_experience', String(params.min_experience));
-  query.set('limit', String(params.limit ?? 4));
+  if (mappedSpec && !isGeneric) query.set('specialization', mappedSpec);
+  if (params.min_rating)        query.set('min_rating',     String(params.min_rating));
+  if (params.min_experience)    query.set('sort_by',        'experience_desc');
+  query.set('page', '1');
+
+  // Read Bearer token from AsyncStorage — same key as apiClient
+  let token: string | null = null;
+  try {
+    token = await Storage.getItemAsync(ACCESS_TOKEN_KEY);
+    if (token) console.log('[Medlink chatbot] ✅ Auth token found');
+    else        console.warn('[Medlink chatbot] ⚠️  No auth token — sending unauthenticated request');
+  } catch {
+    console.warn('[Medlink chatbot] Could not read auth token');
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const endpoint = `${API_BASE_URL}/providers/search/?${query.toString()}`;
+  console.log('[Medlink chatbot] Fetching:', endpoint);
 
   try {
-    const res = await fetch(`${API_BASE_URL}/providers/search?${query.toString()}`, {
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(endpoint, {
+      headers,
+      signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) throw new Error(`Backend ${res.status}`);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.warn(`[Medlink chatbot] HTTP ${res.status}:`, body.slice(0, 200));
+      return filterFallback(params.specialization, limit);
+    }
+
     const data = await res.json();
-    const doctors = (data.results ?? data.providers ?? data ?? []) as Doctor[];
+    console.log('[Medlink chatbot] ✅ Raw response:', JSON.stringify(data).slice(0, 400));
 
-    if (doctors.length === 0 && params.specialization) {
-      // Backend returned empty — use filtered fallback
-      return FALLBACK_DOCTORS
-        .filter(d => d.specialization.toLowerCase().includes(params.specialization!.toLowerCase()))
-        .slice(0, params.limit ?? 4);
-    }
-    return doctors;
+    // Django REST Framework paginates as { count, next, previous, results: [...] }
+    const raw: any[] = data?.results ?? (Array.isArray(data) ? data : []);
 
-  } catch (err) {
-    console.warn('[Medlink] Backend unreachable — using demo doctors:', err);
-    if (params.specialization) {
-      const s = params.specialization.toLowerCase();
-      const filtered = FALLBACK_DOCTORS.filter(d => d.specialization.toLowerCase().includes(s));
-      return (filtered.length > 0 ? filtered : FALLBACK_DOCTORS).slice(0, params.limit ?? 4);
+    if (raw.length === 0 && mappedSpec && !isGeneric) {
+      // Specialty filter returned nothing — retry without it to get any doctors
+      console.warn('[Medlink chatbot] No results for specialty "' + mappedSpec + '" — retrying without filter');
+      return fetchDoctorsFromAPI({ ...params, specialization: undefined });
     }
-    return FALLBACK_DOCTORS.slice(0, params.limit ?? 4);
+
+    if (raw.length === 0) {
+      console.warn('[Medlink chatbot] Backend returned 0 results — using fallback');
+      return filterFallback(params.specialization, limit);
+    }
+
+    // Map fields — using exact names from ProviderSearchResult in doctor.types.ts
+    // current_working_hospital is the field name your backend uses for hospital
+    const doctors: Doctor[] = raw.map((d: any) => ({
+      id:                  String(d.id ?? Math.random()),
+      first_name:          d.first_name  ?? d.user?.first_name  ?? 'Unknown',
+      last_name:           d.last_name   ?? d.user?.last_name   ?? '',
+      specialization:      d.specialization ?? 'General Practitioner',
+      average_rating:      Number(d.average_rating ?? 0),
+      years_of_experience: Number(d.years_of_experience ?? 0),
+      is_verified:         Boolean(d.is_verified ?? false),
+      hospital:            d.current_working_hospital ?? d.hospital ?? undefined,
+      profile_image:       d.profile_image ?? d.photo ?? undefined,
+    }));
+
+    return doctors.slice(0, limit);
+
+  } catch (err: any) {
+    console.warn('[Medlink chatbot] Fetch failed:', err?.message);
+    return filterFallback(params.specialization, limit);
   }
 }
 
@@ -136,27 +212,36 @@ Medlink App facts:
 - To book: tap a doctor card → "Book Appointment" → choose time → confirm
 - Emergencies: call 907
 
-Symptom to specialty mapping:
-- Chest pain, palpitations → Cardiologist
-- Skin rash, acne, hair loss → Dermatologist
-- Child illness, under 18 → Pediatrician
-- Pregnancy, menstrual issues → Gynecologist
-- Headache, dizziness, nerve pain → Neurologist
-- Eye problems → Ophthalmologist
-- Ear pain, hearing loss, sinus → ENT Specialist
-- Bone or joint pain → Orthopedist
-- Diabetes, thyroid issues → Endocrinologist
-- Anxiety, depression → Psychiatrist
-- Fever, cough, fatigue → General Practitioner
+Symptom to specialty mapping (use EXACTLY these specialization values):
+- Chest pain, palpitations, shortness of breath → Cardiologist
+- Skin rash, acne, hair loss, nail issues → Dermatologist
+- Child illness, patient under 18 → Pediatrician
+- Pregnancy, menstrual issues, reproductive health → Gynecologist
+- Headache, dizziness, nerve pain, memory issues → Neurologist
+- Eye problems, vision changes → Ophthalmologist
+- Ear pain, hearing loss, sinus problems → ENT Specialist
+- Bone or joint pain, fractures → Orthopedist
+- Diabetes, thyroid, hormonal issues → Endocrinologist
+- Anxiety, depression, mental health → Psychiatrist
+- Teeth, gum, dental issues → Dentist
+- Fever, cough, fatigue, general illness, or no specific symptoms → General Practitioner
+- When user asks for "most experienced", "best", "top doctor" with no symptoms → General Practitioner
 
-TOOL CALL FORMAT — when symptoms or doctor search needed, output ONLY this JSON (nothing before it):
+TOOL CALL INSTRUCTIONS:
+When the user describes symptoms OR asks for a doctor (including "most experienced", "best rated", "find me a doctor"), output ONLY this JSON with no text before or after it:
 {"tool":"search_doctors","specialization":"<specialty>","min_rating":null,"min_experience":null,"limit":4}
 
+IMPORTANT rules for the JSON:
+- "specialization" is REQUIRED — NEVER set it to null. If the user asks generally ("best doctor", "most experienced"), use "General Practitioner".
+- Set "min_experience" to 10 only if user says "experienced" or "senior".
+- Set "min_rating" to 4.5 only if user says "top rated" or "best".
+- After receiving doctor results, respond warmly in 2-3 sentences. Do not list doctors — cards are shown in the UI.
+
 Rules:
-- Never diagnose. Say "this sounds like a case for a [Specialty]".
+- NEVER diagnose. Say "this sounds like a case for a [Specialty]".
 - For emergencies add: "Please call 907 immediately."
-- Keep responses short — mobile chat interface.
-- NEVER invent doctor names. Use only names from tool results.`;
+- Keep responses short and warm — mobile chat interface.
+- NEVER make up doctor names. Only use names from tool results.`;
 
 // ── Tool call parser ──────────────────────────────────────────────────────────
 
@@ -173,71 +258,50 @@ function extractToolCall(text: string): ToolCall | null {
   if (!match) return null;
   try {
     const parsed = JSON.parse(match[0]) as ToolCall;
-    return parsed.specialization ? parsed : null;
+    // Fallback: if specialization is null, use General Practitioner
+    if (!parsed.specialization || parsed.specialization === "null") {
+      parsed.specialization = "General Practitioner";
+    }
+    return parsed;
   } catch {
     return null;
   }
 }
 
-// ── Gemini fetch with detailed error logging ──────────────────────────────────
+// ── Groq fetch ────────────────────────────────────────────────────────────────
 
-async function callGemini(body: object): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+interface GroqMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
 
+async function callGroq(messages: GroqMessage[], maxTokens = 1024): Promise<string> {
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({ model: MODEL, messages, temperature: 0.5, max_tokens: maxTokens }),
     });
   } catch (networkErr: any) {
-    const msg = networkErr?.message ?? 'unknown';
-    console.error('[Medlink] ❌ Network error:', msg);
-    throw new Error(
-      'Cannot reach Gemini API. Check your internet connection.\n' +
-      'If using a simulator, ensure it has network access.'
-    );
+    throw new Error('Cannot reach Groq. Check your internet connection.');
   }
 
   if (!res.ok) {
-    const errBody = await res.text().catch(() => '');
-    console.error(`[Medlink] ❌ Gemini HTTP ${res.status}:`, errBody);
-
+    const body = await res.text().catch(() => '');
     switch (res.status) {
-      case 400: throw new Error('Invalid request. Check your API key and try again.');
-      case 403: throw new Error('API key rejected (403). Get a fresh key at aistudio.google.com');
-      case 404: throw new Error(`Model "${MODEL}" not found (404). The model name may have changed.`);
-      case 429: throw new Error('Rate limit hit (429). Wait a few seconds and try again.');
-      case 500: throw new Error('Gemini server error (500). Try again in a moment.');
-      default:  throw new Error(`Gemini error ${res.status}: ${errBody.slice(0, 200)}`);
+      case 401: throw new Error('Invalid Groq API key. Get a fresh one at console.groq.com → API Keys.');
+      case 429: throw new Error('Rate limit hit. Wait a moment and try again.');
+      default:  throw new Error(`Groq error ${res.status}: ${body.slice(0, 200)}`);
     }
   }
 
   const data = await res.json();
-
-  if (data?.error) {
-    console.error('[Medlink] ❌ Gemini error in body:', data.error);
-    throw new Error(data.error?.message ?? 'Unknown Gemini error');
-  }
-
-  const candidate = data?.candidates?.[0];
-  if (!candidate) {
-    console.error('[Medlink] ❌ No candidates returned:', JSON.stringify(data).slice(0, 300));
-    throw new Error('Gemini returned no response. The prompt may have triggered a safety filter.');
-  }
-
-  if (candidate.finishReason === 'SAFETY') {
-    console.warn('[Medlink] ⚠️ Safety filter triggered');
-    return "I can't respond to that. Please describe your symptoms and I'll help find the right doctor.";
-  }
-
-  const text: string = candidate?.content?.parts?.[0]?.text ?? '';
-  if (!text) {
-    console.error('[Medlink] ❌ Empty text in candidate:', JSON.stringify(candidate));
-    throw new Error('Gemini returned an empty response.');
-  }
-
+  const text: string = data?.choices?.[0]?.message?.content ?? '';
+  if (!text) throw new Error('Groq returned an empty response.');
   return text;
 }
 
@@ -248,40 +312,23 @@ export async function sendChatMessage(
   userMessage: string,
 ): Promise<ChatResponse> {
 
-  // Validate config first — throws a clear message if key is missing/wrong
   const config = validateChatConfig();
-  if (!config.ok) {
-    console.error('[Medlink] ❌ Config invalid:', config.error);
-    throw new Error(config.error);
-  }
+  if (!config.ok) throw new Error(config.error);
 
-  // Convert history: 'assistant' → 'model' for Gemini
-  const geminiHistory = history.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  const messages: GroqMessage[] = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    { role: 'user',   content: userMessage },
+  ];
 
-  const baseBody = {
-    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    generationConfig: { temperature: 0.5, maxOutputTokens: 1024 },
-  };
+  console.log('[Medlink chatbot] → Groq:', userMessage.slice(0, 80));
+  const firstText = await callGroq(messages);
+  console.log('[Medlink chatbot] ← Groq:', firstText.slice(0, 150));
 
-  // ── First call ──────────────────────────────────────────────────────────────
-  console.log('[Medlink] Sending to Gemini:', userMessage.slice(0, 80));
-  const firstText = await callGemini({
-    ...baseBody,
-    contents: [
-      ...geminiHistory,
-      { role: 'user', parts: [{ text: userMessage }] },
-    ],
-  });
-  console.log('[Medlink] ✅ First response:', firstText.slice(0, 150));
-
-  // ── Check for tool call ─────────────────────────────────────────────────────
   const toolCall = extractToolCall(firstText);
 
   if (toolCall) {
-    console.log('[Medlink] 🔧 Tool call:', toolCall.specialization);
+    console.log('[Medlink chatbot] 🔧 Searching:', toolCall.specialization);
 
     const doctors = await fetchDoctorsFromAPI({
       specialization: toolCall.specialization,
@@ -290,37 +337,28 @@ export async function sendChatMessage(
       limit:          Math.min(toolCall.limit ?? 4, 6),
     });
 
-    console.log(`[Medlink] 👨‍⚕️ Got ${doctors.length} doctors`);
-
     const doctorSummary = doctors.length > 0
       ? doctors.map((d, i) =>
           `${i + 1}. Dr. ${d.first_name} ${d.last_name} — ` +
           `${d.specialization}, ${d.years_of_experience} yrs, ` +
           `rated ${d.average_rating}/5` +
-          (d.hospital ? `, ${d.hospital}` : '')
+          (d.hospital ? `, at ${d.hospital}` : '')
         ).join('\n')
       : 'No doctors found for this specialty right now.';
 
-    // ── Second call with doctor results ──────────────────────────────────────
-    const followUpText = await callGemini({
-      ...baseBody,
-      generationConfig: { temperature: 0.5, maxOutputTokens: 512 },
-      contents: [
-        ...geminiHistory,
-        { role: 'user',  parts: [{ text: userMessage }] },
-        { role: 'model', parts: [{ text: firstText }] },
-        {
-          role: 'user',
-          parts: [{
-            text: `[System: Doctor results for "${toolCall.specialization}"]\n${doctorSummary}\n\nBriefly introduce these doctors in 2 warm sentences. The cards are shown separately — don't list them again.`,
-          }],
-        },
-      ],
-    });
+    const followUpText = await callGroq([
+      ...messages,
+      { role: 'assistant', content: firstText },
+      {
+        role: 'user',
+        content:
+          `[System: Doctor results for "${toolCall.specialization}"]\n${doctorSummary}\n\n` +
+          `Warmly introduce these doctors in 2 sentences. Cards are shown in the UI — don't list them again.`,
+      },
+    ], 512);
 
     return { text: followUpText, doctors };
   }
 
-  // ── Plain response (app guide / general) ───────────────────────────────────
   return { text: firstText, doctors: [] };
 }
