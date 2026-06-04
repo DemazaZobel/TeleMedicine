@@ -53,6 +53,7 @@ interface BookingActions {
   updatePreferences: (payload: Partial<NotificationPreferenceDetail>) => Promise<void>;
   acceptReschedule: (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => Promise<void>;
   rejectReschedule: (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => Promise<void>;
+  setAppointmentOutcome: (id: string | number, outcome: 'COMPLETED' | 'NO_SHOW') => Promise<void>;
 
   // Payments
   fetchPaymentMethods: () => Promise<void>;
@@ -212,6 +213,25 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       throw error;
     }
   },
+  setAppointmentOutcome: async (id: string | number, outcome: 'COMPLETED' | 'NO_SHOW') => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await bookingService.setOutcome(id, outcome);
+      set((state) => ({
+        appointments: state.appointments.map(app =>
+          app.id === id ? response.appointment : app
+        ),
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message || 'Failed to update appointment outcome.'
+      });
+      throw error;
+    }
+  },
+
 
   rejectReschedule: async (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => {
     try {

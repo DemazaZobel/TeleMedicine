@@ -41,6 +41,9 @@ export function parseBackendError(error: any): string {
 
   if (data) {
     if (typeof data === 'string') {
+      if (data.toLowerCase().includes('allowed extensions are')) {
+        return 'Invalid file format. Please upload a valid image or document (PDF, JPG, PNG).';
+      }
       return data;
     }
 
@@ -80,8 +83,17 @@ export function parseBackendError(error: any): string {
         return String(v);
       };
 
-      const errorText = formatValue(val);
+      let errorText = formatValue(val);
       if (errorText) {
+        // Clean up common file format errors
+        if (errorText.toLowerCase().includes('allowed extensions are')) {
+          const fieldLower = field.toLowerCase();
+          if (fieldLower.includes('image') || fieldLower.includes('avatar') || fieldLower.includes('photo')) {
+            errorText = 'Invalid image format. Allowed formats: JPG, JPEG, PNG, WEBP, GIF.';
+          } else {
+            errorText = 'Invalid file format. Allowed formats: PDF, JPG, JPEG, PNG.';
+          }
+        }
         return `${formatField(field)}: ${errorText}`;
       }
     }
@@ -99,5 +111,40 @@ export function parseBackendError(error: any): string {
   }
 
   return 'An unexpected error occurred.';
+}
+
+/**
+ * Ensures a filename has a valid extension based on its MIME type or URI.
+ */
+export function ensureExtension(uri: string, filename: string, mimeType?: string): string {
+  // If filename already has a valid 2-4 char extension, return it
+  const match = /\.([a-zA-Z0-9]{2,4})$/.exec(filename);
+  if (match) {
+    return filename;
+  }
+
+  // Otherwise, try to extract extension from the uri
+  const uriMatch = /\.([a-zA-Z0-9]{2,4})$/.exec(uri.split('?')[0]);
+  if (uriMatch) {
+    return `${filename}.${uriMatch[1].toLowerCase()}`;
+  }
+
+  // If no extension in URI, try using the mimeType
+  if (mimeType) {
+    const parts = mimeType.split('/');
+    if (parts.length === 2) {
+      const ext = parts[1].toLowerCase().replace('jpeg', 'jpg');
+      // Ignore generic/wildcard extensions
+      if (ext && ext !== 'octet-stream' && ext !== '*') {
+        return `${filename}.${ext}`;
+      }
+    }
+  }
+
+  // Fallback to .jpg for safety if it looks like an image, or .bin for other files
+  if (mimeType?.startsWith('image/') || uri.startsWith('data:image/')) {
+    return `${filename}.jpg`;
+  }
+  return `${filename}.pdf`;
 }
 

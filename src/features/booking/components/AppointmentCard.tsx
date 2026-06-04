@@ -44,6 +44,7 @@ export function AppointmentCard({
     acceptReschedule,
     rejectReschedule,
     cancelAppointment,
+    setAppointmentOutcome,
   } = useBookingStore();
   const user = useAuthStore((s) => s.user);
 
@@ -290,11 +291,36 @@ export function AppointmentCard({
     }
   };
 
+  const handleSetOutcome = (outcome: "COMPLETED" | "NO_SHOW") => {
+    Alert.alert(
+      outcome === "COMPLETED" ? "Mark as Completed" : "Mark as No Show",
+      `Are you sure you want to mark this appointment as ${outcome.toLowerCase()}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Confirm",
+          onPress: async () => {
+            try {
+              setLocalLoading(true);
+              await setAppointmentOutcome(appointment.id, outcome);
+              Alert.alert("Success", `Appointment marked as ${outcome.toLowerCase()}.`);
+            } catch (err: any) {
+              Alert.alert("Error", err.response?.data?.detail || err.message || "Failed to update status");
+            } finally {
+              setLocalLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+
   const statusUpper = appointment.status?.toUpperCase() || "";
   const isCancelled = statusUpper === "CANCELLED";
   const isCompleted = statusUpper === "COMPLETED";
   const isNoShow = statusUpper === "NO_SHOW";
-  const isExpired = statusUpper === "EXPIRED" || (isPast && !isCompleted && !isCancelled);
+  const isExpired = statusUpper === "EXPIRED" || (isPast && !isCompleted && !isCancelled && (isDoctor || statusUpper !== "CONFIRMED"));
   const isFinalized = isCancelled || isCompleted || isNoShow || isExpired;
 
   const hasPrimaryBtn =
@@ -487,7 +513,26 @@ export function AppointmentCard({
       {/* ─── FOOTER CARD MAIN ACTIONS ─── */}
       {!isFinalized && (
         <View style={styles.cardActions}>
-          {statusUpper === "REQUESTED" && isDoctor ? (
+          {statusUpper === "CONFIRMED" && isPast && !isDoctor ? (
+            <View style={styles.workflowRow}>
+              <Button
+                title="No Show"
+                variant="danger"
+                size="sm"
+                onPress={() => handleSetOutcome("NO_SHOW")}
+                loading={localLoading}
+                style={styles.splitActionBtn}
+              />
+              <Button
+                title="Mark Completed"
+                variant="primary"
+                size="sm"
+                onPress={() => handleSetOutcome("COMPLETED")}
+                loading={localLoading}
+                style={styles.splitMainBtn}
+              />
+            </View>
+          ) : statusUpper === "REQUESTED" && isDoctor ? (
             <View style={styles.workflowRow}>
               <Button
                 title={t("actions.decline")}

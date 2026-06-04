@@ -1,7 +1,7 @@
 // src/components/reviews/ReviewCard.tsx
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import type { Review } from '../../types/review';
+import type { Review } from '../types/review';
 import RatingStars from './RatingStars';
 
 interface Props {

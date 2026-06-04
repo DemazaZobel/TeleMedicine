@@ -1,7 +1,7 @@
 // src/services/chatService.ts
-import apiClient, { STORAGE_KEYS } from './api';
-import * as Storage from './storage';
-import type { ChatRoom, Message } from '../types/chat';
+import apiClient, { STORAGE_KEYS } from '@/services/api';
+import * as Storage from '@/services/storage';
+import type { ChatRoom, Message } from '@/types/chat';
 
 // ─── Normalizers ─────────────────────────────────────────
 
@@ -25,8 +25,8 @@ const normalizeConversation = (conversation: any, currentUserId?: string): ChatR
 
 const normalizeMessage = (message: any): Message => {
   const rawFileUrl = message.attachments?.[0]?.file ?? message.file_url ?? message.file ?? message.attachment ?? undefined;
-  const fileUrl = rawFileUrl && !rawFileUrl.startsWith('http') 
-    ? `https://medlinkethiopia.pythonanywhere.com${rawFileUrl.startsWith('/') ? '' : '/'}${rawFileUrl}` 
+  const fileUrl = rawFileUrl && !rawFileUrl.startsWith('http')
+    ? `https://medlinkethiopia.pythonanywhere.com${rawFileUrl.startsWith('/') ? '' : '/'}${rawFileUrl}`
     : rawFileUrl;
 
   // Compare timestamps strictly if we must, but usually a small difference is just DB lag. 
@@ -126,10 +126,10 @@ export const uploadChatFile = async (
   const formData = new FormData();
   // React Native requires the actual MIME type (e.g. 'image/jpeg') for the file to upload correctly, 
   // not our custom UI classification ('image' or 'document')
-  formData.append('file', { 
-    uri: file.uri, 
-    name: file.name, 
-    type: file.mimeType || 'application/octet-stream' 
+  formData.append('file', {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType || 'application/octet-stream'
   } as any);
 
   const { data } = await apiClient.post(

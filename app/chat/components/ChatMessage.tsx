@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Linking, TouchableOpacity, Image, Alert } from 'react-native';
+import { useTheme, type Theme } from '@/theme';
+import { formatTime } from '@/utils/index';
 import { Ionicons } from '@expo/vector-icons';
-import type { Message } from '../../types/chat';
-import { formatTime } from '../../utils/index';
 import { Audio } from 'expo-av';
-import { useTheme, type Theme } from '../../theme';
+import React, { useEffect, useState } from 'react';
+import { Alert, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { Message } from '@/types/chat';
 
 interface Props {
   message: Message;
@@ -17,7 +17,7 @@ const isVideoLink = (text: string): boolean => {
   if (!text) return false;
   const lower = text.toLowerCase().trim();
   if (!lower.startsWith('http://') && !lower.startsWith('https://')) return false;
-  
+
   return (
     lower.includes('zoom.us') ||
     lower.includes('meet.google.com') ||
@@ -54,19 +54,19 @@ const ChatMessage: React.FC<Props> = ({ message, isOwn, onEdit, onDelete }) => {
       "What would you like to do?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Edit", 
-          onPress: () => onEdit && onEdit(message) 
+        {
+          text: "Edit",
+          onPress: () => onEdit && onEdit(message)
         },
-        { 
-          text: "Delete", 
-          style: "destructive", 
+        {
+          text: "Delete",
+          style: "destructive",
           onPress: () => {
             Alert.alert("Delete Message", "Are you sure you want to delete this message?", [
               { text: "Cancel", style: "cancel" },
               { text: "Delete", style: "destructive", onPress: () => onDelete && onDelete(message.id) }
             ]);
-          } 
+          }
         }
       ]
     );
@@ -127,7 +127,7 @@ const ChatMessage: React.FC<Props> = ({ message, isOwn, onEdit, onDelete }) => {
   const fileType = getFileType();
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.container, isOwn ? styles.ownContainer : styles.otherContainer, isVideo && styles.videoContainer]}
       onLongPress={handleLongPress}
       delayLongPress={300}
@@ -237,7 +237,7 @@ const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
   imageAttachment: { width: 220, height: 220, borderRadius: 16 },
   docAttachment: { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', padding: 10, borderRadius: 10 },
   docName: { fontSize: 14, marginLeft: 8, flex: 1, fontWeight: '500' },
-  
+
   // Audio Attachment
   audioAttachment: { flexDirection: 'row', alignItems: 'center', minWidth: 150, paddingVertical: 4 },
   audioPlayButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)', alignItems: 'center', justifyContent: 'center', marginRight: 8 },

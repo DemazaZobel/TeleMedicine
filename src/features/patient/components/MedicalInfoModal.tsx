@@ -8,6 +8,7 @@ import { Input, Button, Banner, Card } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
 import { usePatientStore } from '../../../store/patient.store';
 import { useTheme, Theme } from '../../../theme';
+import { ensureExtension } from '../../../lib/utils';
 import type { PatientProfileUpdate } from '../types/patient.types';
 
 interface MedicalInfoModalProps {
@@ -156,14 +157,16 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
 
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
+      const docName = ensureExtension(doc.uri, doc.name || `document_${i}`, doc.mimeType);
+      
       if (Platform.OS === 'web') {
         const response = await fetch(doc.uri);
         const blob = await response.blob();
-        formData.append('medical_documents', blob, doc.name || `document_${i}`);
+        formData.append('medical_documents', blob, docName);
       } else {
         formData.append('medical_documents', {
           uri: doc.uri,
-          name: doc.name || `document_${i}`,
+          name: docName,
           type: doc.mimeType || 'application/pdf',
         } as any);
       }

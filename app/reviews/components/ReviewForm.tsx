@@ -1,9 +1,9 @@
 // src/components/reviews/ReviewForm.tsx
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
-import type { ReviewSubmission } from '../../types/review';
+import type { ReviewSubmission } from '../types/review';
 import RatingStars from './RatingStars';
-import { submitReview } from '../../services/reviewService';
+import { submitReview } from '../services/reviewService';
 
 interface Props {
   appointmentId: string;

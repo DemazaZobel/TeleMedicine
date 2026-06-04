@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import { useTheme, type Theme } from '@/theme';
 import { Ionicons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
 import { Audio } from 'expo-av';
-import { useTheme, type Theme } from '../../theme';
-import type { Message } from '../../types/chat';
+import * as DocumentPicker from 'expo-document-picker';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import type { Message } from '@/types/chat';
 
 interface Props {
   onSend: (text: string) => Promise<void>;
@@ -15,9 +15,9 @@ interface Props {
   onEditSubmit?: (messageId: string, text: string) => Promise<void>;
 }
 
-const ChatInput: React.FC<Props> = ({ 
-  onSend, 
-  onShareVideoLink, 
+const ChatInput: React.FC<Props> = ({
+  onSend,
+  onShareVideoLink,
   onFileUpload,
   editingMessage,
   onCancelEdit,
@@ -159,69 +159,69 @@ const ChatInput: React.FC<Props> = ({
       )}
       <View style={styles.container}>
         {onFileUpload && !recording && !editingMessage && (
-        <TouchableOpacity
-          onPress={handleAttachment}
-          style={styles.actionButton}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="attach-outline" size={22} color="#8E8E93" />
-        </TouchableOpacity>
-      )}
-      {onShareVideoLink && !recording && !editingMessage && (
-        <TouchableOpacity
-          onPress={onShareVideoLink}
-          style={styles.actionButton}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="videocam-outline" size={22} color={theme.colors.primary} />
-        </TouchableOpacity>
-      )}
+          <TouchableOpacity
+            onPress={handleAttachment}
+            style={styles.actionButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="attach-outline" size={22} color="#8E8E93" />
+          </TouchableOpacity>
+        )}
+        {onShareVideoLink && !recording && !editingMessage && (
+          <TouchableOpacity
+            onPress={onShareVideoLink}
+            style={styles.actionButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="videocam-outline" size={22} color={theme.colors.primary} />
+          </TouchableOpacity>
+        )}
 
-      {recording ? (
-        <View style={styles.recordingContainer}>
-          <View style={styles.recordingIndicator} />
-          <Text style={styles.recordingText}>{formatDuration(recordingDuration)}</Text>
-        </View>
-      ) : (
-        <TextInput
-          style={styles.input}
-          value={text}
-          onChangeText={setText}
-          placeholder="Type a message..."
-          placeholderTextColor="#8E8E93"
-          multiline
-          maxLength={2000}
-          returnKeyType="default"
-        />
-      )}
+        {recording ? (
+          <View style={styles.recordingContainer}>
+            <View style={styles.recordingIndicator} />
+            <Text style={styles.recordingText}>{formatDuration(recordingDuration)}</Text>
+          </View>
+        ) : (
+          <TextInput
+            style={styles.input}
+            value={text}
+            onChangeText={setText}
+            placeholder="Type a message..."
+            placeholderTextColor="#8E8E93"
+            multiline
+            maxLength={2000}
+            returnKeyType="default"
+          />
+        )}
 
-      {text.trim() ? (
-        <TouchableOpacity
-          onPress={handleSend}
-          style={[styles.sendButton, sending && styles.sendButtonDisabled]}
-          disabled={sending}
-          activeOpacity={0.7}
-        >
-          {sending ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <Ionicons name="send" size={18} color="#FFF" />
-          )}
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          onPress={recording ? stopRecording : startRecording}
-          style={[styles.micButton, sending && styles.sendButtonDisabled, recording && styles.micButtonRecording]}
-          disabled={sending}
-          activeOpacity={0.7}
-        >
-          {sending ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <Ionicons name={recording ? "stop" : "mic"} size={20} color="#FFF" />
-          )}
-        </TouchableOpacity>
-      )}
+        {text.trim() ? (
+          <TouchableOpacity
+            onPress={handleSend}
+            style={[styles.sendButton, sending && styles.sendButtonDisabled]}
+            disabled={sending}
+            activeOpacity={0.7}
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Ionicons name="send" size={18} color="#FFF" />
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={recording ? stopRecording : startRecording}
+            style={[styles.micButton, sending && styles.sendButtonDisabled, recording && styles.micButtonRecording]}
+            disabled={sending}
+            activeOpacity={0.7}
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Ionicons name={recording ? "stop" : "mic"} size={20} color="#FFF" />
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

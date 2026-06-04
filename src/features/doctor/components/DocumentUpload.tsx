@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '../../../components/ui';
 import { useTheme } from '../../../theme';
 import { useDoctorStore } from '../../../store/doctor.store';
+import { ensureExtension } from '../../../lib/utils';
 import { createDocumentUploadStyles } from '../styles/documentUpload.styles';
 
 export function DocumentUpload() {
@@ -73,14 +74,16 @@ export function DocumentUpload() {
       formData.append('document_type', documentType.trim());
       formData.append('license_number', licenseNumber.trim());
       
+      const docName = ensureExtension(selectedFile.uri, selectedFile.name, selectedFile.mimeType);
+
       if (Platform.OS === 'web') {
         const response = await fetch(selectedFile.uri);
         const blob = await response.blob();
-        formData.append('file', blob, selectedFile.name);
+        formData.append('file', blob, docName);
       } else {
         formData.append('file', {
           uri: selectedFile.uri,
-          name: selectedFile.name,
+          name: docName,
           type: selectedFile.mimeType,
         } as any);
       }

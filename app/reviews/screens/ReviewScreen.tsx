@@ -2,7 +2,7 @@
 import React from 'react';
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import ReviewForm from '../../components/reviews/ReviewForm';
+import ReviewForm from '../components/ReviewForm';
 
 const ReviewScreen: React.FC = () => {
   const params = useLocalSearchParams();

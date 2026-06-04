@@ -272,6 +272,18 @@ export const bookingService = {
     return data;
   },
 
+  /** POST /api/appointments/{id}/outcome/ */
+  setOutcome: async (
+    appointmentId: string | number,
+    outcome: 'COMPLETED' | 'NO_SHOW',
+  ): Promise<{ message: string; appointment: AppointmentDetail }> => {
+    const { data } = await apiClient.post<{ message: string; appointment: AppointmentDetail }>(
+      `${BASE_URL}/${appointmentId}/outcome/`,
+      { outcome },
+    );
+    return data;
+  },
+
   getPayoutMethod: () =>
     api.get('/payments/payout-method/').then(res => res.data),
 

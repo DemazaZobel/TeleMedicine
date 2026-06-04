@@ -16,6 +16,8 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
+import { ensureExtension } from '../../../lib/utils';
+
 const DOCTOR_BASE = '/providers';
 
 export const doctorApi = {
@@ -39,9 +41,10 @@ export const doctorApi = {
     // Use native fetch instead of Axios — Axios on React Native corrupts
     // FormData file blobs (the request interceptor JSON.stringifies them).
     const token = await getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-    const filename = imageUri.split('/').pop() ?? 'profile.jpg';
+    let filename = imageUri.split('/').pop() ?? 'profile.jpg';
     const match = /\.([a-zA-Z0-9]+)$/.exec(filename);
     const mimeType = match ? `image/${match[1].toLowerCase().replace('jpg', 'jpeg')}` : 'image/jpeg';
+    filename = ensureExtension(imageUri, filename, mimeType);
 
     const formData = new FormData();
     if (Platform.OS === 'web') {

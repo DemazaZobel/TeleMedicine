@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
+import { ensureExtension } from '../../src/lib/utils';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS, RADII, SPACING } from '../../src/constants/theme';
@@ -38,6 +39,8 @@ export default function DoctorSetupScreen() {
         consultation_fee: parseFloat(fee),
       });
 
+      const docName = ensureExtension(file.uri, file.name, file.mimeType);
+
       // 2. Prepare Multipart Form Data (FR2)
       const formData = new FormData();
       formData.append('document_type', 'Medical License');
@@ -45,7 +48,7 @@ export default function DoctorSetupScreen() {
       // @ts-ignore - React Native FormData requires this structure
       formData.append('file', {
         uri: file.uri,
-        name: file.name,
+        name: docName,
         type: file.mimeType,
       });
 

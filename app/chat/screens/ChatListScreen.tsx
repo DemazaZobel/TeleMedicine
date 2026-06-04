@@ -1,14 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  Text, ActivityIndicator, StyleSheet, RefreshControl, ScrollView, TouchableOpacity,
-} from 'react-native';
+import ChatList from '../components/ChatList';
+import { EmptyState, PageHeader, ScreenContainer } from '@/components/ui';
+import { getChatRooms } from '../services/chatService';
+import { useAuthStore } from '@/store/authStore';
+import { useTheme } from '@/theme';
+import type { ChatRoom } from '@/types/chat';
 import { useRouter } from 'expo-router';
-import { ScreenContainer, PageHeader, EmptyState } from '../../components/ui';
-import ChatList from '../../components/chat/ChatList';
-import { getChatRooms } from '../../services/chatService';
-import { useAuthStore } from '../../store/authStore';
-import { useTheme } from '../../theme';
-import type { ChatRoom } from '../../types/chat';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  RefreshControl, ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 
 const ChatListScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -85,9 +89,9 @@ const ChatListScreen: React.FC = () => {
 
   return (
     <ScreenContainer scrollable={false} constrained>
-      <PageHeader 
-        title="Messages" 
-        subtitle={rooms.length > 0 ? `${rooms.length} conversations` : undefined} 
+      <PageHeader
+        title="Messages"
+        subtitle={rooms.length > 0 ? `${rooms.length} conversations` : undefined}
       />
       {rooms.length === 0 ? (
         <ScrollView
@@ -102,9 +106,9 @@ const ChatListScreen: React.FC = () => {
             actionLabel={isDoctor ? 'Chat with my patients' : 'Find a Doctor'}
             onAction={() => router.push(isDoctor ? '/patients' : '/')}
           />
-          
+
           {/* Temporary debug button so user can test UI without actual patients */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.push({ pathname: '/chat/[id]', params: { id: 'demo_room', roomName: 'Demo Patient (Test)' } })}
             style={{ marginTop: 24, alignSelf: 'center', backgroundColor: theme.colors.primaryLight, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 }}
           >

@@ -1,6 +1,6 @@
 // src/services/reviewService.ts
 import type { Review, ReviewSubmission } from "../types/review";
-import apiClient from "./api";
+import apiClient from "@/services/api";
 
 const normalizeReview = (review: any): Review => ({
   id: review.id?.toString() ?? review.pk?.toString() ?? "",

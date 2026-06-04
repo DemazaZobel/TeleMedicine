@@ -23,6 +23,8 @@ import type {
 } from '../../../types';
 import type { User } from '../../../types/models';
 
+import { ensureExtension } from '../../../lib/utils';
+
 const AUTH_BASE = '/auth';
 
 export const authService = {
@@ -116,9 +118,10 @@ export const authService = {
   /** PUT /api/auth/profile/ — Upload profile image via native fetch (Axios corrupts FormData on RN) */
   async uploadProfileImage(imageUri: string): Promise<User> {
     const token = await getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-    const filename = imageUri.split('/').pop() ?? 'avatar.jpg';
+    let filename = imageUri.split('/').pop() ?? 'avatar.jpg';
     const match = /\.([a-zA-Z0-9]+)$/.exec(filename);
     const mimeType = match ? `image/${match[1].toLowerCase().replace('jpg', 'jpeg')}` : 'image/jpeg';
+    filename = ensureExtension(imageUri, filename, mimeType);
 
     const formData = new FormData();
     if (Platform.OS === 'web') {

@@ -18,4 +18,8 @@ export interface Message {
   text: string;
   timestamp: string;
   isRead: boolean;
+  fileUrl?: string;
+  fileType?: string;
+  fileName?: string;
+  isEdited?: boolean;
 }

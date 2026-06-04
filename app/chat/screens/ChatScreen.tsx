@@ -1,22 +1,29 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  View, FlatList, KeyboardAvoidingView,
-  Platform, SafeAreaView, StyleSheet,
-  ActivityIndicator, Text, TouchableOpacity,
-  Alert, Modal, TextInput
-} from 'react-native';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { parseBackendError } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+import { useTheme, type Theme } from '@/theme';
+import type { Message } from '@/types/chat';
 import { Ionicons } from '@expo/vector-icons';
-import ChatMessage from '../../components/chat/ChatMessage';
-import ChatInput from '../../components/chat/ChatInput';
-import { getMessages, sendMessage, shareVideoLink, uploadChatFile, editMessage, deleteMessage } from '../../services/chatService';
-import { useAuthStore } from '../../store/authStore';
-import { useTheme, type Theme } from '../../theme';
-import type { Message } from '../../types/chat';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList, KeyboardAvoidingView,
+  Modal,
+  Platform, SafeAreaView, StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import ChatInput from '../components/ChatInput';
+import ChatMessage from '../components/ChatMessage';
+import { deleteMessage, editMessage, getMessages, sendMessage, shareVideoLink, uploadChatFile } from '../services/chatService';
 
-const isSameDay = (d1: Date, d2: Date) => 
-  d1.getFullYear() === d2.getFullYear() && 
-  d1.getMonth() === d2.getMonth() && 
+const isSameDay = (d1: Date, d2: Date) =>
+
+  d1.getFullYear() === d2.getFullYear() &&
+  d1.getMonth() === d2.getMonth() &&
   d1.getDate() === d2.getDate();
 
 const processMessages = (msgs: Message[]) => {
@@ -62,7 +69,7 @@ const ChatScreen: React.FC = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({ 
+    navigation.setOptions({
       title: roomName ?? 'Chat',
       headerTitle: () => (
         <TouchableOpacity style={styles.headerTitleContainer} onPress={() => Alert.alert("Patient Profile", "View full medical profile (Coming soon)")}>
@@ -237,7 +244,7 @@ const ChatScreen: React.FC = () => {
       loadMessages(false);
     } catch (err: any) {
       console.error("Upload failed", err.response?.data || err.message);
-      const backendError = err.response?.data ? JSON.stringify(err.response.data) : (err.message ?? 'Failed to upload file.');
+      const backendError = parseBackendError(err);
       Alert.alert('Upload Error', backendError);
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     }
@@ -273,8 +280,8 @@ const ChatScreen: React.FC = () => {
               <Text style={styles.doctorBannerSubtitle}>Start a face-to-face call</Text>
             </View>
           </View>
-          <TouchableOpacity 
-            style={styles.doctorBannerBtn} 
+          <TouchableOpacity
+            style={styles.doctorBannerBtn}
             onPress={() => setIsVideoModalVisible(true)}
             activeOpacity={0.8}
           >

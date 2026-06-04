@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { getDoctorReviews } from '../../services/reviewService';
-import ReviewCard from '../../components/reviews/ReviewCard';
-import RatingStars from '../../components/reviews/RatingStars';
-import type { DoctorReviewsResponse } from '../../types/review';
+import { getDoctorReviews } from '../services/reviewService';
+import ReviewCard from '../components/ReviewCard';
+import RatingStars from '../components/RatingStars';
+import type { DoctorReviewsResponse } from '../types/review';
 
 const DoctorReviewsScreen: React.FC = () => {
   const [data, setData] = useState<DoctorReviewsResponse | null>(null);

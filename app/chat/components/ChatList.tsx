@@ -1,8 +1,8 @@
+import { useTheme } from '@/theme/useTheme';
 import { formatTime } from '@/utils/index';
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ListRenderItemInfo } from 'react-native';
-import type { ChatRoom } from '../../types/chat';
-import { useTheme } from '../../theme/useTheme';
+import { FlatList, Image, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { ChatRoom } from '@/types/chat';
 
 interface Props {
   rooms: ChatRoom[];
