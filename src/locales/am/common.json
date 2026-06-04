@@ -12,6 +12,7 @@
   "close": "ዝጋ",
   "edit": "አስተካክል",
   "back": "ተመለስ",
+  "goBack": "ተመለስ",
   "next": "ቀጣይ",
   "phonePlaceholder": "+251 9XX XXX XXX",
   "letterA": "ሀ",
@@ -177,7 +178,6 @@
   "noNotifications": "ምንም ማሳወቂያ የለም",
   "noNotificationsYet": "እስካሁን ምንም ማሳወቂያዎች የሉም",
   "allCaughtUp": "ሁሉም ማሳወቂያዎች ተነበዋል! አዳዲስ ማሳወቂያዎች እዚህ ይወጣሉ።",
-
   "findRightDoctor": "ትክክለኛውን ሐኪም ያግኙ",
   "searchPlaceholder": "ሐኪሞችን፣ ስፔሻሊቲዎችን ይፈልጉ...",
   "allSpecialties": "ሁሉም ስፔሻሊቲዎች",
@@ -207,7 +207,6 @@
   "getInTouchSubtitle": "ስለ ሜድሊንክ ጥያቄዎች አሉዎት? ከእርስዎ ለመስማት እንፈልጋለን።",
   "workingHours": "የስራ ሰዓት",
   "workingHoursValue": "ሰኞ–አርብ፣ ከ8 ጠዋት – 6 ምሽት",
-
   "email": "ኢሜይል",
   "messageSentSuccess": "መልዕክቱ ተልኳል! በቅርቡ እናገኝዎታለን።",
   "missingFields": "ያጡ መረጃዎች",
@@ -229,8 +228,6 @@
   "lastUpdated": "መጨረሻ የተዘመነ፡ ግንቦት 2026",
   "privacyIntro": "ይህ የግላዊነት ፖሊሲ ሜድሊንክ መረጃዎን እንዴት እንደሚሰበስብ፣ እንደሚጠቀምበት እና እንደሚጠብቀው ይገልፃል።",
   "termsIntro": "እባክዎ ሜድሊንክን ከመጠቀምዎ በፊት እነዚህን የአገልግሎት ውሎች በጥንቃቄ ያንብቡ።",
-
-
   "bookAppointmentLink": "ቀጠሮ ያዝ",
   "onlineConsultation": "የመስመር ላይ ምክክር",
   "healthPackages": "የጤና ፓኬጆች",
@@ -245,24 +242,19 @@
   "specialtyPediatrician": "የሕፃናት ሐኪም",
   "specialtyGynecologist": "የማህፀን ሐኪም",
   "specialtyGeneral": "ጠቅላላ ሐኪም",
-  
-
-  
-    "testimonial1Name": "ሐና ተ.",
-    "testimonial1Text": "ቀጠሮ መያዝ በጣም ቀላል ሆኗል። አሁን ዶክተሬን ያለምንም ችግር ማማከር እችላለሁ። ሜድሊንክ እጅግ አመሰግናለሁ!",
-  
-    "testimonial2Name": "ዳዊት መ.",
-    "testimonial2Text": "በጥቂት ደቂቃዎች ውስጥ ስፔሻሊስት አገኘሁ፤ የሚያስፈልገኝንም ሕክምና በፍጥነት አገኘሁ። ሜድሊንክ በእውነት ትልቅ እገዛ ነው።",
-  
-    "testimonial3Name": "ሰላማዊት ከ.",
-    "testimonial3Text": "የቀጠሮ ማሳሰቢያዎቹ በጣም ይረዱኛል። እንደ እኔ በሥራ የተጠመዱ ሰዎች በጣም የሚጠቀሙበት መተግበሪያ ነው።",
-  
-    "testimonial4Name": "ዮናስ አ.",
-    "testimonial4Text": "በኢትዮጵያ ካሉ የጤና መተግበሪያዎች መካከል ከምርጦቹ አንዱ ነው። ቀላል፣ ፈጣን እና አስተማማኝ ነው።",
-    "translitHint": "እንግሊዝኛ ታይፕ በአማርኛ ያገኛሉ። ምሳሌ:",
-"translitLongPressHint": "{{button}} ን ረጅም ጊዜ ተጫኑ ለሙሉ መመሪያ።",
-"errorTitle": "ስህተት ተፈጥሯል",
-"errorGeneric": "እባክዎ ቆየት ብለው እንደገና ይሞክሩ።",
-"errorNetwork": "የኔትወርክ ስህተት። ግንኙነትዎን ያረጋግጡ እንደገና ይሞክሩ።"
-
+  "testimonial1Name": "ሐና ተ.",
+  "testimonial1Text": "ቀጠሮ መያዝ በጣም ቀላል ሆኗል። አሁን ዶክተሬን ያለምንም ችግር ማማከር እችላለሁ። ሜድሊንክ እጅግ አመሰግናለሁ!",
+  "testimonial2Name": "ዳዊት መ.",
+  "testimonial2Text": "በጥቂት ደቂቃዎች ውስጥ ስፔሻሊስት አገኘሁ፤ የሚያስፈልገኝንም ሕክምና በፍጥነት አገኘሁ። ሜድሊንክ በእውነት ትልቅ እገዛ ነው።",
+  "testimonial3Name": "ሰላማዊት ከ.",
+  "testimonial3Text": "የቀጠሮ ማሳሰቢያዎቹ በጣም ይረዱኛል። እንደ እኔ በሥራ የተጠመዱ ሰዎች በጣም የሚጠቀሙበት መተግበሪያ ነው።",
+  "testimonial4Name": "ዮናስ አ.",
+  "testimonial4Text": "በኢትዮጵያ ካሉ የጤና መተግበሪያዎች መካከል ከምርጦቹ አንዱ ነው። ቀላል፣ ፈጣን እና አስተማማኝ ነው።",
+  "translitHint": "እንግሊዝኛ ታይፕ በአማርኛ ያገኛሉ። ምሳሌ:",
+  "translitLongPressHint": "{{button}} ን ረጅም ጊዜ ተጫኑ ለሙሉ መመሪያ።",
+  "errorTitle": "ስህተት ተፈጥሯል",
+  "errorGeneric": "እባክዎ ቆየት ብለው እንደገና ይሞክሩ።",
+  "errorNetwork": "የኔትወርክ ስህተት። ግንኙነትዎን ያረጋግጡ እንደገና ይሞክሩ።",
+  "patientsTab": "ታካሚዎች",
+  "verificationTitle": "ማረጋገጫ"
 }

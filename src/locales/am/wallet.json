@@ -1,0 +1,48 @@
+{
+  "wallet": {
+    "title": "ዋሌት",
+    "balance": {
+      "available": "ያለው ቀሪ ሂሳብ",
+      "active": "ንቁ",
+      "totalEarned": "ጠቅላላ ያገኙት: {{amount}} ብር"
+    },
+    "payoutMethod": {
+      "title": "የክፍያ ዘዴ",
+      "none": "ምንም የክፍያ ዘዴ አልተዋቀረም",
+      "setup": "የክፍያ ዘዴ ያዋቅሩ",
+      "edit": "አርትዕ",
+      "bankTransfer": "የባንክ ዝውውር",
+      "modalTitle": "የክፍያ ዘዴ ማዋቀሪያ",
+      "selectOption": "የክፍያ አማራጭ ይምረጡ:",
+      "telebirr": "ቴሌብር",
+      "cbeBirr": "ንኡስ ባንክ ብር",
+      "otherBank": "ሌላ ባንክ",
+      "bankNamePlaceholder": "የባንክ ስም (ለምሳሌ፦ አዋሽ፣ ዳሽን፣ አቢሲኒያ)",
+      "accountHolderPlaceholder": "የሒሳብ ባለቤት ስም",
+      "bankAccountPlaceholder": "የባንክ ሒሳብ ቁጥር",
+      "mobileWalletPlaceholder": "የሞባይል ዋሌት ቁጥር",
+      "cancel": "ሰርዝ",
+      "save": "አስቀምጥ"
+    },
+    "withdraw": {
+      "title": "ገንዘብ አውጣ",
+      "amountPlaceholder": "መጠን ያስገቡ",
+      "processing": "እየተሰራ ነው...",
+      "button": "አውጣ",
+      "errors": {
+        "invalidAmount": "ከ0 በላይ የሆነ ትክክለኛ መጠን ያስገቡ።",
+        "noPayoutMethod": "ገንዘብ ከማውጣትዎ በፊት እባክዎ የክፍያ ዘዴ ያዋቅሩ።",
+        "insufficientFunds": "በቂ ሒሳብ የለም! ከፍተኛው ያለዎት ሒሳብ {{amount}} ብር ነው።",
+        "minimumAmount": "ዝቅተኛው የማውጣት መጠን {{amount}} ብር ነው።",
+        "failed": "ገንዘብ ማውጣት አልተሳካም። እንደገና ይሞክሩ።"
+      },
+      "success": "የገንዘብ ማውጣት ጥያቄ በተሳካ ሁኔታ ተልኳል!"
+    },
+    "history": {
+      "title": "ትእዛዞች",
+      "empty": "እስካሁን ምንም ትእዛዝ የለም",
+      "pending": "በመጠባበቅ ላይ",
+      "done": "ተጠናቋል"
+    }
+  }
+}

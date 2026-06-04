@@ -92,6 +92,7 @@ export interface AppointmentChangeRequestDetail {
   status: ChangeRequestStatus;
   responded_at?: string;
   created_at: string;
+  created_by_role: 'PATIENT' | 'DOCTOR';
 }
 
 export interface AppointmentChangeRequestCreatePayload {
@@ -178,10 +179,31 @@ export interface PaymentDetail {
 
 export interface DoctorWalletDetail {
   total_earned: string;
+  total_withdrawn: string;
   updated_at: string;
+  available_balance?: number;
 }
 
 export interface InitiatePaymentResponse {
   checkout_url: string;
   tx_ref: string;
+}
+
+export interface PayoutMethodDetail {
+  id: number | string;
+  payout_channel: string;
+  account_name?: string;
+  account_number: string;
+  bank_name?: string;
+  is_default?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WithdrawalDetail {
+  id: number | string;
+  amount: string;
+  status: string;
+  payout_channel: string;
+  created_at?: string;
 }

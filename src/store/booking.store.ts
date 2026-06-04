@@ -11,8 +11,10 @@ import type {
   NotificationDetail,
   NotificationPreferenceDetail,
   PaymentMethodDetail,
+  PayoutMethodDetail,
   ProviderAvailabilityRuleCreatePayload,
-  ProviderAvailabilityRuleDetail
+  ProviderAvailabilityRuleDetail,
+  WithdrawalDetail
 } from '../features/booking/types/bookingTypes';
 
 interface BookingState {
@@ -21,11 +23,15 @@ interface BookingState {
   doctorAvailabilityRules: ProviderAvailabilityRuleDetail[]; // Rules for the doctor being booked
   notifications: NotificationDetail[];
   preferences: NotificationPreferenceDetail | null;
-  wallet: DoctorWalletDetail | null;
-  paymentMethods: PaymentMethodDetail[];
   isLoading: boolean;
   error: string | null;
   isNotificationsDrawerOpen: boolean;
+
+  wallet: DoctorWalletDetail | null;
+  paymentMethods: PaymentMethodDetail[];
+  payoutMethod: PayoutMethodDetail | null;
+  withdrawals: WithdrawalDetail[];
+
 }
 
 interface BookingActions {
@@ -45,6 +51,8 @@ interface BookingActions {
   markAllNotificationsRead: () => Promise<void>;
   fetchPreferences: () => Promise<void>;
   updatePreferences: (payload: Partial<NotificationPreferenceDetail>) => Promise<void>;
+  acceptReschedule: (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => Promise<void>;
+  rejectReschedule: (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => Promise<void>;
 
   // Payments
   fetchPaymentMethods: () => Promise<void>;
@@ -55,7 +63,11 @@ interface BookingActions {
   fetchWallet: () => Promise<void>;
   fetchPaymentHistory: () => Promise<void>;
   verifyPayment: (id: string | number) => Promise<void>;
+  fetchPayoutMethod: () => Promise<void>;
+  savePayoutMethod: (payload: any) => Promise<PayoutMethodDetail>;
 
+  fetchWithdrawals: () => Promise<void>;
+  createWithdrawal: (payload: any) => Promise<any>;
   setIsNotificationsDrawerOpen: (open: boolean) => void;
   clearError: () => void;
   reset: () => void;
@@ -74,6 +86,9 @@ const initialState: BookingState = {
   isLoading: false,
   error: null,
   isNotificationsDrawerOpen: false,
+
+  payoutMethod: null,
+  withdrawals: [],
 };
 
 export const useBookingStore = create<BookingStore>((set, get) => ({
@@ -161,6 +176,80 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     }
   },
 
+  acceptReschedule: async (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      let updatedAppointment;
+
+      if (isDoctor) {
+        // Doctor accepts the change request proposed by the patient
+        const response = await bookingService.doctorDecision(appointmentId, {
+          action: 'accept',
+        });
+        // Handle variable return types from the backend payload structure safely
+        updatedAppointment = (response as any).appointment || response;
+      } else {
+        // Patient accepts the change request proposed by the doctor
+        const response = await bookingService.respondToChangeRequest(changeRequestId, {
+          action: 'accept',
+        });
+        updatedAppointment = response.appointment;
+      }
+
+      // CRITICAL: Swaps out the old appointment inside our state list with the newly modified one
+      set((state) => ({
+        isLoading: false,
+        appointments: state.appointments.map((appt) =>
+          appt.id === appointmentId ? { ...appt, ...updatedAppointment } : appt
+        ),
+      }));
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message || 'Failed to accept reschedule.',
+      });
+      throw error;
+    }
+  },
+
+  rejectReschedule: async (appointmentId: string | number, changeRequestId: string | number, isDoctor: boolean) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      let updatedAppointment;
+
+      if (isDoctor) {
+        // Doctor rejects the change request
+        const response = await bookingService.doctorDecision(appointmentId, {
+          action: 'reject',
+        });
+        updatedAppointment = (response as any).appointment || response;
+      } else {
+        // Patient rejects the change request
+        const response = await bookingService.respondToChangeRequest(changeRequestId, {
+          action: 'reject',
+        });
+        updatedAppointment = response.appointment;
+      }
+
+      // Refresh the local appointment data so the pending card badge clears away
+      set((state) => ({
+        isLoading: false,
+        appointments: state.appointments.map((appt) =>
+          appt.id === appointmentId ? { ...appt, ...updatedAppointment } : appt
+        ),
+      }));
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message || 'Failed to reject reschedule.',
+      });
+      throw error;
+    }
+  },
+
+
   fetchAvailabilityRules: async () => {
     try {
       set({ isLoading: true, error: null });
@@ -191,13 +280,13 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
   createAvailabilityRule: async (payload: ProviderAvailabilityRuleCreatePayload) => {
     try {
       set({ isLoading: true, error: null });
-      
+
       const currentRules = get().availabilityRules;
       let newRulesList;
-      
+
       if (payload.id) {
         // Edit existing rule
-        newRulesList = currentRules.map(rule => 
+        newRulesList = currentRules.map(rule =>
           rule.id === payload.id ? { ...rule, ...payload } : rule
         );
       } else {
@@ -207,9 +296,9 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
 
       // Convert local UI types back to payload types where necessary
       const payloadList = newRulesList.map(({ id, ...rest }) => rest as ProviderAvailabilityRuleCreatePayload);
-      
+
       const updatedRules = await bookingService.updateAvailabilityRules(payloadList);
-      
+
       set({
         availabilityRules: updatedRules,
         isLoading: false,
@@ -227,14 +316,14 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
     try {
       console.log('[BookingStore] Deleting availability rule:', id);
       set({ isLoading: true, error: null });
-      
+
       const currentRules = get().availabilityRules;
       const newRulesList = currentRules.filter((r) => String(r.id) !== String(id));
-      
+
       const payloadList = newRulesList.map(({ id, ...rest }) => rest as ProviderAvailabilityRuleCreatePayload);
-      
+
       const updatedRules = await bookingService.updateAvailabilityRules(payloadList);
-      
+
       console.log('[BookingStore] Delete successful, updating state...');
       set({
         availabilityRules: updatedRules,
@@ -452,16 +541,101 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({ isLoading: false });
     }
   },
+  fetchWithdrawals: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const withdrawals = await bookingService.getWithdrawals();
+
+      set({ withdrawals, isLoading: false });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message,
+      });
+    }
+  },
+
+  createWithdrawal: async (payload: any) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const result = await bookingService.createWithdrawal(payload);
+
+      // 🔁 refresh everything (your backend requirement)
+      const [wallet, withdrawals] = await Promise.all([
+        bookingService.getWallet(),
+        bookingService.getWithdrawals(),
+      ]);
+
+      set({
+        wallet,
+        withdrawals,
+        isLoading: false,
+      });
+
+      return result;
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message,
+      });
+      throw error;
+    }
+  },
+
+
+  fetchPayoutMethod: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const payoutMethod = await bookingService.getPayoutMethod();
+
+      set({ payoutMethod, isLoading: false });
+    } catch (error: any) {
+      set({
+        payoutMethod: null,
+        isLoading: false,
+        error: error.response?.data?.detail || error.message,
+      });
+    }
+  },
+
+  savePayoutMethod: async (payload: any) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const existing = get().payoutMethod;
+
+      const result = await bookingService.savePayoutMethod(payload);
+
+      set({ payoutMethod: result, isLoading: false });
+
+      return result;
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message,
+      });
+      throw error;
+    }
+  },
 
   fetchWallet: async () => {
     try {
       set({ isLoading: true, error: null });
+
       const wallet = await bookingService.getWallet();
+
       set({ wallet, isLoading: false });
     } catch (error: any) {
-      set({ isLoading: false, error: error.message });
+      set({
+        isLoading: false,
+        error: error.response?.data?.detail || error.message,
+      });
     }
   },
+
 
   fetchPaymentHistory: async () => {
     try {
@@ -472,6 +646,7 @@ export const useBookingStore = create<BookingStore>((set, get) => ({
       set({ isLoading: false, error: error.message });
     }
   },
+
 
   setIsNotificationsDrawerOpen: (isNotificationsDrawerOpen) => set({ isNotificationsDrawerOpen }),
 

@@ -8,8 +8,10 @@ import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
 import { useTheme } from '../../src/theme';
 import { TAB_CONFIGS } from '../../src/types/navigation';
+import { useTranslation } from '../../src/i18n';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
@@ -51,12 +53,26 @@ export default function TabsLayout() {
           isTabVisible = false;
         }
 
+        const translatedTitle = (() => {
+          switch (tab.name) {
+            case 'index': return t('common:home');
+            case 'appointments': return t('common:appointments');
+            case 'health': return t('common:health');
+            case 'chat': return t('common:chat');
+            case 'availability': return t('common:availability');
+            case 'patients': return t('common:patientsTab');
+            case 'wallet': return t('common:wallet');
+            case 'profile': return t('common:profile');
+            default: return tab.title;
+          }
+        })();
+
         return (
           <Tabs.Screen
             key={tab.name}
             name={tab.name}
             options={{
-              title: tab.title,
+              title: translatedTitle,
               tabBarIcon: ({ color, size }) => (
                 <Ionicons
                   name={tab.icon as keyof typeof Ionicons.glyphMap}

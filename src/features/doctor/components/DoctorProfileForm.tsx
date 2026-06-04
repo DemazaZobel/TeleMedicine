@@ -11,6 +11,7 @@ import {
 import { useDoctorStore } from "../../../store/doctor.store";
 import { useTheme } from "../../../theme";
 import { createDoctorProfileStyles } from "../styles/doctorProfile.styles";
+import { getFullMediaUrl } from "../../../lib/utils";
 import type { DoctorProfileUpdate } from "../types/doctor.types";
 
 export function DoctorProfileForm() {
@@ -108,7 +109,11 @@ export function DoctorProfileForm() {
         {/* Header Block */}
         <View style={{ alignItems: "center", marginBottom: theme.spacing["2xl"] }}>
           <Image
-            source={require("../../../../assets/images/doctor-avatar.png")}
+            source={
+              profile?.profile_image
+                ? { uri: getFullMediaUrl(profile.profile_image) || "" }
+                : require("../../../../assets/images/doctor-avatar.png")
+            }
             style={{
               width: 110,
               height: 110,

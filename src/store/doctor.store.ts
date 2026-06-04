@@ -8,6 +8,7 @@ import type {
   ProviderSearchParams,
   ProviderSearchResult,
 } from '../features/doctor/types/doctor.types';
+import { parseBackendError } from '../lib/utils';
 
 // ─── State ───────────────────────────────────────────────
 interface DoctorState {
@@ -19,12 +20,14 @@ interface DoctorState {
   isUploadingDocument: boolean;
   isSearching: boolean;
   error: string | null;
+  profileImageVersion: number; // bumped on each successful image upload
 }
 
 // ─── Computed & Actions ──────────────────────────────────
 interface DoctorActions {
   fetchProfile: () => Promise<void>;
   updateProfile: (data: DoctorProfileUpdate) => Promise<void>;
+  uploadProfileImage: (imageUri: string) => Promise<void>;
   fetchDocuments: () => Promise<void>;
   uploadDocument: (formData: FormData) => Promise<void>;
   searchProviders: (params?: ProviderSearchParams) => Promise<void>;
@@ -45,6 +48,7 @@ const initialState: DoctorState = {
   isUploadingDocument: false,
   isSearching: false,
   error: null,
+  profileImageVersion: 0,
 };
 
 export const useDoctorStore = create<DoctorStore>((set, get) => ({
@@ -82,9 +86,7 @@ export const useDoctorStore = create<DoctorStore>((set, get) => ({
       const profile = await doctorApi.getDoctorProfile();
       set({ profile, isLoadingProfile: false });
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: Record<string, unknown> } };
-      const message =
-        (axiosError?.response?.data?.detail as string) || 'Failed to load doctor profile.';
+      const message = parseBackendError(error);
       set({ isLoadingProfile: false, error: message });
     }
   },
@@ -95,9 +97,20 @@ export const useDoctorStore = create<DoctorStore>((set, get) => ({
       const profile = await doctorApi.updateDoctorProfile(data);
       set({ profile, isUpdatingProfile: false });
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: Record<string, unknown> } };
-      const message =
-        (axiosError?.response?.data?.detail as string) || 'Failed to update profile.';
+      const message = parseBackendError(error);
+      set({ isUpdatingProfile: false, error: message });
+      throw error;
+    }
+  },
+
+  uploadProfileImage: async (imageUri: string) => {
+    try {
+      set({ isUpdatingProfile: true, error: null });
+      const profile = await doctorApi.uploadProfileImage(imageUri);
+      // Bump version so subscribers can bust the image cache
+      set((state) => ({ profile, isUpdatingProfile: false, profileImageVersion: state.profileImageVersion + 1 }));
+    } catch (error: unknown) {
+      const message = parseBackendError(error);
       set({ isUpdatingProfile: false, error: message });
       throw error;
     }
@@ -122,23 +135,7 @@ export const useDoctorStore = create<DoctorStore>((set, get) => ({
       await get().fetchProfile();
       set({ isUploadingDocument: false });
     } catch (error: any) {
-      const data = error.response?.data;
-      let message = 'Failed to upload document.';
-
-      if (data) {
-        if (typeof data === 'string') {
-          message = data;
-        } else if (data.detail) {
-          message = Array.isArray(data.detail) ? data.detail[0] : data.detail;
-        } else {
-          // Check for field specific errors (e.g. { file: ["..."] })
-          const fieldErrors = Object.entries(data)
-            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
-            .join('\n');
-          if (fieldErrors) message = fieldErrors;
-        }
-      }
-
+      const message = parseBackendError(error);
       set({ isUploadingDocument: false, error: message });
       throw error;
     }
@@ -147,8 +144,8 @@ export const useDoctorStore = create<DoctorStore>((set, get) => ({
   searchProviders: async (params?: ProviderSearchParams) => {
     try {
       set({ isSearching: true, error: null });
-      const searchResults = await doctorApi.searchProviders(params);
-      set({ searchResults, isSearching: false });
+      const response = await doctorApi.searchProviders(params);
+      set({ searchResults: response.results, isSearching: false });
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: Record<string, unknown> } };
       const message =

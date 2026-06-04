@@ -1,0 +1,34 @@
+{
+    "header": {
+        "title": "የጤና መዝገብ",
+        "subtitle": "የሕክምና መረጃዎ በአጭሩ",
+        "editBtn": "አርትዕ"
+    },
+    "empty": {
+        "title": "የሕክምና መረጃ የለም",
+        "description": "ዶክተሮች በተሻለ ሁኔታ እንዲያገለግሉዎ የሕክምና ዝርዝሮዎን ያክሉ።",
+        "actionLabel": "የሕክምና መረጃ ያክሉ"
+    },
+    "bloodType": {
+        "label": "የደም አይነት"
+    },
+    "personal": {
+        "sectionTitle": "የግል መረጃ",
+        "dateOfBirth": "የልደት ቀን",
+        "gender": "ፆታ"
+    },
+    "conditions": {
+        "sectionTitle": "የሕክምና ሁኔታዎች",
+        "chronicLabel": "ሥር የሰደዱ ሕመሞች",
+        "allergiesLabel": "አለርጂዎች"
+    },
+    "history": {
+        "sectionTitle": "የሕክምና ታሪክ"
+    },
+    "location": {
+        "sectionTitle": "አካባቢ",
+        "address": "አድራሻ",
+        "city": "ከተማ",
+        "country": "ሀገር"
+    }
+}

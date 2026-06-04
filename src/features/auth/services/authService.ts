@@ -1,4 +1,6 @@
-import { apiClient } from '../../../services/api';
+import { apiClient, STORAGE_KEYS } from '../../../services/api';
+import { getItemAsync } from '../../../services/storage';
+import { Platform } from 'react-native';
 import type {
   LoginRequest,
   LoginResponse,
@@ -109,6 +111,45 @@ export const authService = {
       payload
     );
     return data;
+  },
+
+  /** PUT /api/auth/profile/ — Upload profile image via native fetch (Axios corrupts FormData on RN) */
+  async uploadProfileImage(imageUri: string): Promise<User> {
+    const token = await getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+    const filename = imageUri.split('/').pop() ?? 'avatar.jpg';
+    const match = /\.([a-zA-Z0-9]+)$/.exec(filename);
+    const mimeType = match ? `image/${match[1].toLowerCase().replace('jpg', 'jpeg')}` : 'image/jpeg';
+
+    const formData = new FormData();
+    if (Platform.OS === 'web') {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('profile_image', blob, filename);
+    } else {
+      formData.append('profile_image', {
+        uri: imageUri,
+        name: filename,
+        type: mimeType,
+      } as any);
+    }
+
+    const res = await fetch(
+      `https://medlinkethiopia.pythonanywhere.com/api${AUTH_BASE}/profile/`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type — fetch sets correct multipart boundary automatically
+        },
+        body: formData,
+      }
+    );
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      throw new Error(`Upload failed (${res.status}): ${errorBody}`);
+    }
+    return res.json() as Promise<User>;
   },
 
   /** PUT /api/auth/password/change/ — Change password (authenticated) */

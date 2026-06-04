@@ -1,0 +1,66 @@
+{
+    "name": {
+        "patient_fallback": "ታካሚ",
+        "doctor_fallback": "ዶክተር",
+        "doctor_prefix": "ዶ/ር"
+    },
+    "mode": {
+        "online": "በመስመር ላይ",
+        "in_person": "対面"
+    },
+    "status": {
+        "confirmed": "ተረጋግጧል",
+        "verifying": "እየተረጋገጠ ነው...",
+        "unpaid": "ያልተከፈለ",
+        "pending": "በመጠባበቅ ላይ",
+        "completed": "ተጠናቋል",
+        "cancelled": "ተሰርዟል",
+        "no_show": "አልቀረበም",
+        "expired": "ጊዜው አልፏል",
+        "unknown": "አይታወቅም"
+    },
+    "reason_label": "የጉብኝት ምክንያት",
+    "proposal": {
+        "badge": "የቀረበ አዲስ ጊዜ",
+        "expired_warning": "⚠️ የጊዜ ሠሌዳ ለውጥ ጥያቄው ጊዜው አልፏል። እባክዎ ከዚህ በታች አዲስ ሰዓት ያቅርቡ።",
+        "prompt_doctor": "ታካሚው ቀጠሮውን ለማዛወር ጠይቋል። ይህን አዲስ ሰዓት ይቀበሉ?",
+        "prompt_patient": "ዶክተሩ ስብሰባውን ለማዛወር ሐሳብ አቅርበዋል። ይህን ሰዓት ይቀበሉ?",
+        "decline": "አልቀበልም",
+        "accept": "ሰዓቱን ተቀበል",
+        "awaiting_doctor": "ከዶክተሩ ምላሽ እየጠበቀ ነው...",
+        "awaiting_patient": "ከታካሚው ምላሽ እየጠበቀ ነው..."
+    },
+    "actions": {
+        "decline": "አልቀበልም",
+        "reschedule": "ቀጠሮ ቀይር",
+        "accept": "ተቀበል",
+        "cancel": "ሰርዝ",
+        "join": "ተቀላቀል",
+        "pay_now": "አሁን ክፈል",
+        "verifying": "እየተረጋገጠ ነው..."
+    },
+    "alerts": {
+        "join_error_title": "ገና መቀላቀል አይቻልም",
+        "join_error_default": "ምክክሩ ገና አልተከፈተም።",
+        "payment_error_title": "የክፍያ ስህተት",
+        "payment_verify_failed": "የክፍያ ዘዴ ማረጋገጥ አልተቻለም።",
+        "payment_no_method": "የክፍያ ዘዴ መፍጠር አልተቻለም።",
+        "payment_no_url": "የክፍያ አድራሻ አልተገኘም።",
+        "payment_success_title": "ክፍያ ተሳካ",
+        "payment_success_body": "ክፍያዎ ተረጋግጧል።",
+        "payment_failed": "ክፍያ መጀመር አልተቻለም።",
+        "reschedule_success": "የቀጠሮ ለውጥ ጥያቄ ተልኳል።",
+        "reschedule_failed": "ጥያቄ መላክ አልተቻለም።",
+        "reschedule_error_title": "ቀጠሮ ለውጥ አልተሳካም",
+        "respond_no_data": "ንቁ የቀጠሮ ለውጥ ጥያቄ አልተገኘም።",
+        "respond_missing_id": "የጥያቄ መለያ ጎደለ።",
+        "respond_accepted": "የቀጠሮ ለውጥ ሰዓት ተቀብሏል።",
+        "respond_rejected": "የቀጠሮ ለውጥ ሰዓት ተሰርዟል።",
+        "respond_error_title": "ድርጊቱ አልተሳካም",
+        "respond_error_default": "ጥያቄ ማስተናገድ አልተቻለም።",
+        "cancel_success": "ቀጠሮው ተሰርዟል።",
+        "cancel_error_title": "የሰረዛ ስህተት",
+        "cancel_error_default": "ሰርዝ አልተሳካም።"
+    },
+    "in_person_badge": "対面"
+}

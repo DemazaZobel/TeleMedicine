@@ -31,6 +31,7 @@ import {
   type ChatMessage,
   type Doctor,
 } from '../../services/chatbot.service';
+import { getFullMediaUrl } from '../../lib/utils';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
   return (
     <View style={styles.doctorCard}>
       {doctor.profile_image ? (
-        <Image source={{ uri: doctor.profile_image }} style={styles.doctorAvatar} />
+        <Image source={{ uri: getFullMediaUrl(doctor.profile_image) || '' }} style={styles.doctorAvatar} />
       ) : (
         <View style={[styles.doctorAvatar, styles.doctorAvatarPlaceholder]}>
           <Text style={styles.doctorInitials}>{initials}</Text>

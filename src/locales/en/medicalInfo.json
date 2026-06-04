@@ -1,0 +1,34 @@
+{
+  "header": {
+    "title": "Health Record",
+    "subtitle": "Your medical information at a glance",
+    "editBtn": "Edit"
+  },
+  "empty": {
+    "title": "No Medical Info Yet",
+    "description": "Add your medical details so doctors can serve you better.",
+    "actionLabel": "Add Medical Info"
+  },
+  "bloodType": {
+    "label": "Blood Type"
+  },
+  "personal": {
+    "sectionTitle": "Personal Information",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender"
+  },
+  "conditions": {
+    "sectionTitle": "Medical Conditions",
+    "chronicLabel": "Chronic Conditions",
+    "allergiesLabel": "Allergies"
+  },
+  "history": {
+    "sectionTitle": "Medical History"
+  },
+  "location": {
+    "sectionTitle": "Location",
+    "address": "Address",
+    "city": "City",
+    "country": "Country"
+  }
+}

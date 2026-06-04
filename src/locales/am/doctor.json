@@ -143,5 +143,18 @@
   "selectDay": "ቀን ይምረጡ",
   "selectSpecificDate": "ልዩ ቀን ይምረጡ",
   "startTime": "የመነሻ ሰዓት",
-  "workingHoursTitle": "የስራ ሰዓታት"
+  "workingHoursTitle": "የስራ ሰዓታት",
+  "doctorPrefix": "ዶ/ር",
+  "specialist": "ስፔሻሊስት",
+  "reviews": "{{count}} ግምገማዎች",
+  "yearsExp": "{{count}}+ ዓ.ም",
+  "experience": "የስራ ልምድ",
+  "bookAppointment": "ቀጠሮ ያስይዙ",
+  "educationCertifications": "ትምህርት እና ሰርቲፊኬቶች",
+  "currentFacility": "የአሁኑ ተቋም",
+  "verifiedProviderDesc": "የዚህ ሐኪም ማስረጃዎች በሜድሊንክ ቡድን ተረጋግጠዋል።",
+  "noUpcomingSlots": "ምንም የሚቀጣጠሩ ሰዓቶች አልተገኙም።",
+  "todayLabel": "ዛሬ",
+  "profileUnavailable": "የሐኪም መገለጫ አይገኝም",
+  "consultation": "ምክክር"
 }

@@ -11,23 +11,23 @@ import {
   Share,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
-  useWindowDimensions,
-  TouchableOpacity
+  useWindowDimensions
 } from 'react-native';
 import femaleDoc from '../../assets/images/femaleDoc.jpeg';
 import logo from '../../assets/images/logo.png';
 import { Card, ScreenContainer } from '../../src/components/ui';
+import { TranslitGuideModal } from "../../src/components/ui/TranslitGuideModal";
 import type { ProviderSearchResult } from '../../src/features/doctor/types/doctor.types';
 import { DoctorDetailsModal } from '../../src/features/patient';
+import { useAmharicInput } from '../../src/hooks/useAmharicInput';
 import { useTranslation } from '../../src/i18n';
+import apiClient from '../../src/services/api';
 import { setItemAsync } from '../../src/services/storage';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
 import type { Theme } from '../../src/theme';
-import { useTheme } from '../../src/theme'; 
-import { useAmharicInput } from '../../src/hooks/useAmharicInput';
-import {TranslitGuideModal} from "../../src/components/ui/TranslitGuideModal";
-import apiClient from '../../src/services/api';
+import { useTheme } from '../../src/theme';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ function NavBar({ theme, isMobile, menuOpen, onToggleMenu, onLogin, onSignup, me
   );
 
   const LanguageButton = ({ label, value }: { label: string; value: string }) => {
-    const active = i18n.language === value;
+    const active = (i18n.language || 'en').startsWith(value);
     return (
       <TouchableOpacity
         onPress={() => {
@@ -740,7 +740,7 @@ function DoctorCard({ doctor, index, theme, isDark, onPress, onBook }: { doctor:
         <View style={{ width: '100%', height: 180, backgroundColor: isDark ? '#1a2e2a' : '#e9fbf4', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden' }}>
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, backgroundColor: specColor }} />
           <View style={{ position: 'absolute', top: 14, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: isAvailable ? '#D1FAE5' : '#FEF3C7' }}>
-            
+
           </View>
           <View style={{ width: 130, height: 160, borderRadius: 12, backgroundColor: specColor + '22', alignItems: 'center', justifyContent: 'flex-end', overflow: 'hidden' }}>
             {doctor.profile_image ? (
@@ -1142,7 +1142,7 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
       Alert.alert(t('common:missingFields'), t('common:fillNameEmailMessage'));
       return;
     }
-  
+
     setSending(true);
     try {
       await apiClient.post('/contact/', {
@@ -1151,7 +1151,7 @@ function ContactSection({ theme, isDark, isMobile }: SectionProps) {
         subject: subject.trim(),
         message: message.trim(),
       });
-  
+
       setSent(true);
       setName(''); setEmail(''); setSubject(''); setMessage('');
       nameInput.reset(); subjectInput.reset(); messageInput.reset();
@@ -1333,7 +1333,7 @@ function DownloadCTASection({ theme, isDark, isMobile }: SectionProps) {
   const isNativeMobile = Platform.OS === 'ios' || Platform.OS === 'android';
 
   const handleShare = useCallback(async () => {
-    try { await Share.share({ message: t('common:sharePromoMessage') }); } catch {}
+    try { await Share.share({ message: t('common:sharePromoMessage') }); } catch { }
   }, [t]);
 
   if (isNativeMobile) {
@@ -1560,15 +1560,15 @@ export default function PublicHomeScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   // 2. Add state inside Input component:
-const [guideVisible, setGuideVisible] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
 
-// 3. Add modal before the suggestion bar:
- <TranslitGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} theme={theme} />
-
-
+  // 3. Add modal before the suggestion bar:
+  <TranslitGuideModal visible={guideVisible} onClose={() => setGuideVisible(false)} theme={theme} />
 
 
-  
+
+
+
 
   const {
     doctors,
@@ -1624,7 +1624,7 @@ const [guideVisible, setGuideVisible] = useState(false);
       setSearchQuery(text);
     }, 500);
   }, [setSearchQuery]);
-  
+
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -1665,7 +1665,7 @@ const [guideVisible, setGuideVisible] = useState(false);
         menuAnim={menuAnim}
         navItems={NAV_ITEMS}
       />
-    
+
       <ScrollView ref={scrollViewRef} style={{ flex: 1, backgroundColor: theme.colors.background }} showsVerticalScrollIndicator={false}>
         <View onLayout={(e) => { heroY.current = e.nativeEvent.layout.y; }}>
           <HeroSection {...sectionProps} onGetStarted={() => router.push('/(auth)/register')} onLogin={() => router.push('/(auth)/login')} />

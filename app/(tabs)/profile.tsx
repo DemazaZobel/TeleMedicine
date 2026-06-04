@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AccountSwitcher, ScreenContainer } from '../../src/components/ui';
 import { useTheme, Theme } from '../../src/theme';
 import { useAuthStore } from '../../src/store/authStore';
+import { getFullMediaUrl } from '../../src/lib/utils';
 import { CreateLinkedPatientModal } from '../../src/components/ui/CreateLinkedPatientModal';
 import { LinkExistingAccountModal } from '../../src/components/ui/LinkExistingAccountModal';
 import { useBookingStore } from '../../src/store/booking.store';
@@ -13,6 +14,7 @@ import { ChangePasswordModal } from '../../src/features/profile/components/Chang
 import { MedicalInfoModal } from '../../src/features/patient/components/MedicalInfoModal';
 import { useTranslation } from '../../src/i18n';
 import { setItemAsync } from '../../src/services/storage';
+import { authService } from '../../src/features/auth/services/authService';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -79,7 +81,9 @@ export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
   const fetchProfile = useAuthStore((s) => s.fetchProfile);
   const updateProfile = useAuthStore((s) => s.updateProfile);
+  const setUser = useAuthStore((s) => s.setUser);
   const hasLinkedAccount = useAuthStore((s) => s.hasLinkedAccount);
+  const profileImageVersion = useAuthStore((s) => s.profileImageVersion);
   const { preferences, isLoading, fetchPreferences, updatePreferences } = useBookingStore();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -95,6 +99,11 @@ export default function ProfileScreen() {
   }, [fetchProfile, fetchPreferences]);
 
   const initials = `${user?.first_name?.[0] ?? 'U'}${user?.last_name?.[0] ?? ''}`;
+  const avatarUri = user?.profile_image
+    ? `${getFullMediaUrl(user.profile_image)}?v=${profileImageVersion}`
+    : user?.avatar
+    ? `${getFullMediaUrl(user.avatar)}?v=${profileImageVersion}`
+    : null;
 
   const handleTogglePreference = async (key: 'email_appointments' | 'in_app_appointments', value: boolean) => {
     try {
@@ -109,7 +118,7 @@ export default function ProfileScreen() {
     { value: 'am' as const, label: 'አማርኛ (Amharic)' },
   ];
 
-  const currentLang = i18n.language || 'en';
+  const currentLang = (i18n.language || 'en').startsWith('am') ? 'am' : 'en';
   const currentLangLabel = LANGUAGES.find(l => l.value === currentLang)?.label || 'English';
 
   const handleLanguageChange = () => {
@@ -121,10 +130,17 @@ export default function ProfileScreen() {
     i18n.changeLanguage(nextLangCode);
     setItemAsync('preferred_language', nextLangCode);
 
-    // Background sync with API (non-blocking)
-    updateProfile({ preferred_language: nextLangCode }).catch((error) => {
-      console.warn("Failed to sync language preference with backend:", error);
-    });
+    // Background sync with API (non-blocking, direct API call)
+    authService.updateProfile({ preferred_language: nextLangCode })
+      .then((profileData) => {
+        const existingUser = useAuthStore.getState().user;
+        if (existingUser) {
+          setUser({ ...existingUser, ...profileData, role: existingUser.role });
+        }
+      })
+      .catch((error) => {
+        console.warn("Failed to sync language preference with backend:", error);
+      });
   };
 
   return (
@@ -138,7 +154,14 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.avatar}>
-              <Text style={styles.avatarInitials}>{initials}</Text>
+              {avatarUri ? (
+                <Image
+                  source={{ uri: avatarUri }}
+                  style={{ width: '100%', height: '100%', borderRadius: 50 }}
+                />
+              ) : (
+                <Text style={styles.avatarInitials}>{initials}</Text>
+              )}
             </View>
             <View style={styles.editBadge}>
               <Ionicons name="pencil" size={14} color="#FFFFFF" />
@@ -288,7 +311,10 @@ export default function ProfileScreen() {
       {/* Modals */}
       <EditProfileModal 
         visible={isEditProfileVisible} 
-        onClose={() => setEditProfileVisible(false)} 
+        onClose={async () => {
+          setEditProfileVisible(false);
+          await fetchProfile();
+        }} 
       />
       <MedicalInfoModal 
         visible={isMedicalInfoVisible} 

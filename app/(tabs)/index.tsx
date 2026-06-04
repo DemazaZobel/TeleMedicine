@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from '../../src/i18n';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Card, EmptyState, PageHeader, ScreenContainer } from '../../src/components/ui';
 import { PendingApproval } from '../../src/features/doctor/components/PendingApproval';
 import { AdvancedFilterModal, DiscoverySidebar, DoctorCard, FilterChips, SearchBar } from '../../src/features/patient';
+import { useTranslation } from '../../src/i18n';
 import { useAuthStore } from '../../src/store/authStore';
 import { useBookingStore } from '../../src/store/booking.store';
 import { useDiscoveryStore } from '../../src/store/discovery.store';
@@ -14,11 +14,11 @@ import type { Theme } from '../../src/theme';
 import { useTheme } from '../../src/theme';
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
   const router = useRouter();
   const { theme, isDark, toggleTheme } = useTheme();
   const { width } = useWindowDimensions();
   const user = useAuthStore((s) => s.user);
+  const { t } = useTranslation('dashboard');
 
   // Discovery Store
   const {
@@ -84,6 +84,7 @@ export default function HomeScreen() {
   // Active filter chips logic
   const activeFilters = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
+
     if (selectedSpecialization) {
       chips.push({
         key: 'spec',
@@ -91,21 +92,29 @@ export default function HomeScreen() {
         onClear: () => setSelectedSpecialization(null)
       });
     }
+
     if (minFee !== null || maxFee !== null) {
-      const label = minFee === null ? `Under Br ${maxFee}` : maxFee === null ? `Above Br ${minFee}` : `Br ${minFee}-${maxFee}`;
+      const label =
+        minFee === null
+          ? t('patient.filters.underFee', { max: maxFee })
+          : maxFee === null
+            ? t('patient.filters.aboveFee', { min: minFee })
+            : t('patient.filters.feeRange', { min: minFee, max: maxFee });
       chips.push({
         key: 'price',
         label,
         onClear: () => setAdvancedFilters({ minFee: null, maxFee: null })
       });
     }
+
     if (minRating) {
       chips.push({
         key: 'rating',
-        label: `${minRating}+ Stars`,
+        label: t('patient.filters.ratingLabel', { rating: minRating }),
         onClear: () => setAdvancedFilters({ minRating: null })
       });
     }
+
     if (locationFilter) {
       chips.push({
         key: 'location',
@@ -113,15 +122,19 @@ export default function HomeScreen() {
         onClear: () => setAdvancedFilters({ location: null })
       });
     }
+
     if (availability !== 'any') {
       chips.push({
         key: 'availability',
-        label: availability === 'today' ? 'Today' : 'This Week',
+        label: availability === 'today'
+          ? t('patient.filters.today')
+          : t('patient.filters.thisWeek'),
         onClear: () => setAdvancedFilters({ availability: 'any' })
       });
     }
+
     return chips;
-  }, [selectedSpecialization, minFee, maxFee, minRating, location, availability, setSelectedSpecialization, setAdvancedFilters]);
+  }, [selectedSpecialization, minFee, maxFee, minRating, locationFilter, availability, setSelectedSpecialization, setAdvancedFilters, t]);
 
   // Guard for doctor loading and verification
   if (user?.role === 'DOCTOR') {
@@ -138,11 +151,17 @@ export default function HomeScreen() {
   }
 
   const renderBellIcon = () => (
-    <TouchableOpacity onPress={() => setIsNotificationsDrawerOpen(true)} style={styles.bell}>
+    <TouchableOpacity
+      onPress={() => setIsNotificationsDrawerOpen(true)}
+      style={styles.bell}
+      accessibilityLabel={t('notifications.iconLabel')}
+    >
       <Ionicons name="notifications-outline" size={24} color={theme.colors.text} />
       {unreadCount > 0 && (
         <View style={styles.unreadBadge}>
-          <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+          <Text style={styles.unreadBadgeText}>
+            {unreadCount > 9 ? t('notifications.unreadBadge') : unreadCount}
+          </Text>
         </View>
       )}
     </TouchableOpacity>
@@ -157,27 +176,27 @@ export default function HomeScreen() {
     return (
       <ScreenContainer scrollable>
         <PageHeader
-          title={`Welcome Dr. ${user.last_name}!`}
-          subtitle="Manage your patients and appointments"
+          title={t('doctor.welcome', { lastName: user.last_name })}
+          subtitle={t('doctor.subtitle')}
           rightElement={renderBellIcon()}
         />
 
         <Card style={styles.statsCard}>
-          <Text style={styles.cardTitle}>{t("doctor:dashboardTitle")}</Text>
+          <Text style={styles.cardTitle}>{t('doctor.dashboardTitle')}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{upcomingCount}</Text>
-              <Text style={styles.statLabel}>{t("appointment:upcoming")}</Text>
+              <Text style={styles.statLabel}>{t('doctor.stats.upcoming')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{completedCount}</Text>
-              <Text style={styles.statLabel}>Completed</Text>
+              <Text style={styles.statLabel}>{t('doctor.stats.completed')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{cancelledCount}</Text>
-              <Text style={styles.statLabel}>Cancelled</Text>
+              <Text style={styles.statLabel}>{t('doctor.stats.cancelled')}</Text>
             </View>
           </View>
         </Card>
@@ -189,8 +208,8 @@ export default function HomeScreen() {
   const renderHeader = () => (
     <View style={styles.patientHeaderContainer}>
       <PageHeader
-        title={`Hello, ${user?.first_name || 'Patient'}!`}
-        subtitle="Find your doctor and book an appointment"
+        title={t('patient.greeting', { firstName: user?.first_name || 'Patient' })}
+        subtitle={t('patient.subtitle')}
         rightElement={renderBellIcon()}
       />
       <View style={{ paddingHorizontal: theme.spacing.xl, marginTop: -theme.spacing.lg }}>
@@ -205,6 +224,7 @@ export default function HomeScreen() {
                 activeFilters.length > 0 && styles.filterBtnActive
               ]}
               onPress={() => setFilterModalVisible(true)}
+              accessibilityLabel={t('patient.search.filterLabel')}
             >
               <Ionicons
                 name="options-outline"
@@ -265,8 +285,8 @@ export default function HomeScreen() {
     return (
       <EmptyState
         icon="search-outline"
-        title={t("patient:noDoctorsFound")}
-        description={t("patient:noDoctorsDesc")}
+        title={t('patient.empty.title')}
+        description={t('patient.empty.description')}
       />
     );
   };
@@ -316,7 +336,6 @@ export default function HomeScreen() {
     </ScreenContainer>
   );
 }
-
 const createStyles = (theme: Theme, isDesktop: boolean) =>
   StyleSheet.create({
     patientHeaderContainer: {

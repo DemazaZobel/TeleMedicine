@@ -1,11 +1,46 @@
 {
-  "welcome": "እንኳን ደህና መጡ፣",
-  "upcomingAppointments": "ቀጣይ ቀጠሮዎች",
-  "noUpcoming": "ምንም ቀጣይ ቀጠሮዎች አልተገኙም።",
-  "activePatients": "ንቁ ታካሚዎች",
-  "completedSessions": "ያለቁ ምክክሮች",
-  "pendingAppr": "ማረጋገጫ በመጠባበቅ ላይ",
-  "apprDesc": "የእርስዎ ሙያዊ ሰነዶች በአሁኑ ጊዜ በሕክምና ቦርዳችን እየተገመገሙ ነው።",
-  "totalEarnings": "አጠቃላይ ገቢ",
-  "withdraw": "ገንዘብ አውጣ"
+  "doctor": {
+    "welcome": "እንኳን ደህና መጡ ዶ/ር {{lastName}}!",
+    "subtitle": "ህሙማንዎን እና ቀጠሮዎችዎን ያስተዳድሩ",
+    "dashboardTitle": "የእርስዎ ዳሽቦርድ",
+    "stats": {
+      "upcoming": "መጪ",
+      "pendingReview": "በመጠባበቅ ላይ",
+      "thisWeek": "በዚህ ሳምንት",
+      "completed": "የተጠናቀቀ",
+      "cancelled": "የተሰረዘ",
+      "noShows": "ያልቀረቡ"
+    }
+  },
+  "patient": {
+    "greeting": "ሰላም {{firstName}}!",
+    "subtitle": "ሐኪምዎን ያግኙ እና ቀጠሮ ይያዙ",
+    "emptyTitle": "ሐኪም አልተገኘም",
+    "emptyDescription": "ፍለጋዎን ይቀይሩ ወይም ሌላ ስፔሻላይዜሽን ይምረጡ።",
+    "defaultName": "Patient",
+    "search": {
+      "placeholder": "ዶክተሮችን ፈልግ...",
+      "filterLabel": "ማጣሪያዎች"
+    },
+    "filters": {
+      "today": "ዛሬ",
+      "thisWeek": "በዚህ ሳምንት",
+      "underFee": "ከ Br {{max}} በታች",
+      "aboveFee": "ከ Br {{min}} በላይ",
+      "feeRange": "Br {{min}}-{{max}}",
+      "ratingLabel": "{{rating}}+ ኮከቦች"
+    },
+    "empty": {
+      "title": "ዶክተር አልተገኘም",
+      "description": "ፍለጋዎን ያስተካክሉ ወይም ሌላ ስፔሻሊቲ ይምረጡ።"
+    }
+  },
+  "notifications": {
+    "iconLabel": "ማሳወቂያዎች",
+    "unreadBadge": "9+"
+  },
+  "loading": {
+    "profile": "መገለጫ በመጫን ላይ...",
+    "doctors": "ዶክተሮች በመጫን ላይ..."
+  }
 }

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { useTheme } from '../../src/theme';
+import { useTranslation } from '../../src/i18n';
 
 import {
   MobileWebNav,
@@ -21,6 +22,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { useDoctorStore } from '../../src/store/doctor.store';
 
 export default function DoctorLayout() {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const router = useRouter();
 
@@ -83,45 +85,45 @@ export default function DoctorLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('common:home'),
           headerShown: false,
         }}
       />
 
       <Stack.Screen
         name="appointments"
-        options={{ title: 'Appointments' }}
+        options={{ title: t('common:appointments') }}
       />
 
       <Stack.Screen
         name="availability"
-        options={{ title: 'Availability' }}
+        options={{ title: t('common:availability') }}
       />
 
       <Stack.Screen
         name="notifications"
-        options={{ title: 'Notifications' }}
+        options={{ title: t('common:notifications') }}
       />
 
       <Stack.Screen
         name="chat"
-        options={{ title: 'Messages' }}
+        options={{ title: t('common:chat') }}
       />
 
       <Stack.Screen
         name="wallet"
-        options={{ title: 'Wallet' }}
+        options={{ title: t('common:wallet') }}
       />
 
       <Stack.Screen
         name="documents"
-        options={{ title: 'Secure Documents' }}
+        options={{ title: t('common:documents') }}
       />
 
       <Stack.Screen
         name="pending-approval"
         options={{
-          title: 'Verification',
+          title: t('common:verificationTitle'),
           headerShown: !isWeb,
         }}
       />

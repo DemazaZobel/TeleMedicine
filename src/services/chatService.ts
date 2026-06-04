@@ -1,8 +1,7 @@
-import { Platform } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import type { ChatRoom, Message } from '../types/chat';
 import { STORAGE_KEYS } from './api';
 import * as Storage from './storage';
-import type { ChatRoom, Message } from '../types/chat';
+import { Platform } from 'react-native';
 
 const API_BASE = 'https://medlinkethiopia.pythonanywhere.com/api';
 
@@ -126,7 +125,13 @@ export const uploadChatFile = async (
 ): Promise<any> => {
   const token = await Storage.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
   const formData = new FormData();
-  formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
+  if (Platform.OS === 'web') {
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+    formData.append('file', blob, file.name);
+  } else {
+    formData.append('file', { uri: file.uri, name: file.name, type: file.type } as any);
+  }
   const response = await fetch(
     `${API_BASE}/chat/conversations/${conversationId}/files/`,
     {

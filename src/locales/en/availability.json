@@ -1,0 +1,53 @@
+{
+    "screen": {
+        "title": "Working Hours",
+        "subtitle": "Set your weekly consultation schedule"
+    },
+    "addButton": "Add Hours",
+    "stats": {
+        "activeDays": "Active Days",
+        "totalSlots": "Total Slots",
+        "daysOff": "Days Off"
+    },
+    "slots": {
+        "count_one": "{{count}} slot",
+        "count_other": "{{count}} slots"
+    },
+    "delete": {
+        "webConfirm": "Delete this working hour?",
+        "alertTitle": "Remove Schedule",
+        "alertMessage": "Are you sure you want to delete this working hour?",
+        "cancel": "Cancel",
+        "confirm": "Delete",
+        "errorTitle": "Error",
+        "errorMessage": "Could not delete this slot. Please try again."
+    },
+    "empty": {
+        "title": "No Schedule Set",
+        "description": "Patients cannot book you until you set your working hours."
+    },
+    "days": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+    },
+    "repeatWeekly": "Repeat Weekly",
+    "makeWeekly": "Make this a recurring weekly slot",
+    "selectDay": "Select Day",
+    "selectSpecificDate": "Select Specific Date",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "validationTimeFormat": "Please use HH:MM format (e.g. 09:00)",
+    "editWorkingHoursTitle": "Edit Working Hours",
+    "addWorkingHoursTitle": "Add Working Hours",
+    "editWorkingHoursSubtitle": "Modify your existing schedule block.",
+    "addWorkingHoursSubtitle": "Define when patients can book your time.",
+    "cancelBtn": "Cancel",
+    "updateScheduleBtn": "Update Schedule",
+    "saveHoursBtn": "Save Hours",
+    "doneBtn": "Done"
+}

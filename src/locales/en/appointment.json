@@ -1,66 +1,57 @@
 {
-  "title": "Appointments",
-  "requested": "Requested",
-  "confirmed": "Confirmed",
-  "cancelled": "Cancelled",
-  "completed": "Completed",
-  "noShow": "No Show",
-  "expired": "Expired",
-  "bookTitle": "Book Appointment",
-  "selectSlot": "Select an Available Time Slot",
-  "confirmBooking": "Confirm Booking",
-  "bookingSuccess": "Appointment successfully requested!",
-  "reasonForVisit": "Reason for Visit",
-  "cancelAppointment": "Cancel Appointment",
-  "cancelConfirm": "Are you sure you want to cancel this appointment?",
-  "reschedule": "Reschedule",
-  "doctorDetails": "Doctor Details",
-  "specialties": {
-    "Cardiologist": "Cardiologist",
-    "Dermatologist": "Dermatologist",
-    "Pediatrician": "Pediatrician",
-    "Gynecologist": "Gynecologist",
-    "General": "General Practitioner"
+  "header": {
+    "title": "Appointments",
+    "subtitleDoctor": "Manage your schedule",
+    "subtitlePatient": "View your upcoming sessions"
   },
-  "acceptAppointment": "Accept Appointment",
-  "accepted": "Accepted",
-  "appointmentDate": "Appointment Date",
-  "appointmentDetails": "Appointment Details",
-  "acceptedMessage": "Appointment accepted.",
-  "confirmedSuccessMessage": "Appointment confirmed successfully.",
-  "cancelledSuccessMessage": "Appointment has been cancelled.",
-  "confirmedSuccess": "Appointment has been confirmed.",
-  "bookingExists": "Booking Exists",
-  "reasonPlaceholder": "Briefly describe your symptoms or reason for visit",
-  "calendar": "Calendar",
-  "cancellationReason": "Cancellation Reason",
-  "consultation": "Consultation",
-  "consultationMode": "Consultation Mode",
-  "consultationCompleted": "Consultation completed.",
-  "reasonEgp": "E.g., General checkup, follow-up...",
-  "rescheduleReasonPlaceholder": "E.g., I have a conflicting meeting...",
-  "cancelReasonPlaceholder": "E.g., I have a personal emergency...",
-  "enterDoctorId": "Enter the doctor's profile ID",
-  "inPerson": "In Person",
-  "joinConsultation": "Join Consultation",
-  "keepAppointment": "Keep Appointment",
-  "locationFacility": "Location & Facility",
-  "noAppointments": "No Appointments",
-  "online": "Online",
-  "proposedChange": "PROPOSED CHANGE",
-  "payNow": "Pay Now",
-  "validationDateTime": "Please enter a valid date (YYYY-MM-DD) and time (HH:MM).",
-  "proposeReschedule": "Propose Reschedule",
-  "reasonForChange": "Reason for Change",
-  "requestAppointment": "Request Appointment",
-  "rescheduleSentSuccess": "Reschedule request sent.",
-  "reviewReschedule": "Review Reschedule",
-  "selectBestTimeDesc": "Select a date and time that works best for you.",
-  "proposeChangeInstructions": "Suggest a new time and mode for this appointment.",
-  "upcoming": "Upcoming",
-  "upcomingAppointment": "Upcoming Appointment",
-  "viewDetails": "View Details",
-  "yesCancel": "Yes, Cancel",
-  "noUpcomingScheduled": "You don't have any upcoming appointments scheduled.",
-  "requestSubmitted": "Your appointment request has been submitted!"
+  "screen": {
+    "title": "Appointments",
+    "subtitle": "{{active}} active · {{pending}} pending review",
+    "pendingBadge": "{{count}} pending"
+  },
+  "summary": {
+    "upcoming": "Upcoming",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "filters": {
+    "all": "All",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "empty": {
+    "all": {
+      "title": "No appointments",
+      "desc": "Your upcoming appointments will appear here."
+    },
+    "pending": {
+      "title": "No pending requests",
+      "desc": "New booking requests will appear here."
+    },
+    "confirmed": {
+      "title": "No confirmed bookings",
+      "desc": "Accepted appointments will show here."
+    },
+    "completed": {
+      "title": "No completed sessions",
+      "desc": "Finished consultations will appear here."
+    },
+    "cancelled": {
+      "title": "No cancellations",
+      "desc": "Cancelled appointments will show here."
+    }
+  },
+  "alerts": {
+    "acceptSuccess": {
+      "title": "Accepted",
+      "message": "Appointment confirmed successfully."
+    },
+    "acceptError": {
+      "title": "Error",
+      "message": "Failed to accept appointment."
+    }
+  }
 }

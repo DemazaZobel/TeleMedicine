@@ -1,0 +1,43 @@
+{
+    "profile": {
+        "editBtn": "አርትዕ",
+        "heroName": "የዶክተር መገለጫ",
+        "verified": "የተረጋገጠ ባለሙያ",
+        "pendingReview": "በተቋም ግምገማ ላይ",
+        "accessibility": {
+            "editPhoto": "የመገለጫ ፎቶ አርትዕ",
+            "editProfile": "መገለጫ አርትዕ"
+        },
+        "stats": {
+            "rating": "ደረጃ",
+            "reviews": "ግምገማዎች",
+            "experience": "ልምድ",
+            "fee": "ክፍያ"
+        },
+        "sections": {
+            "professionalInfo": "የሙያ መረጃ",
+            "about": "ስለ ዶክተሩ",
+            "background": "ዳራ",
+            "socialLinks": "የማህበራዊ ሚዲያ ትስስሮች"
+        },
+        "infoRows": {
+            "specialization": "ስፔሻላይዜሽን",
+            "currentHospital": "አሁን የሚሰሩበት ሆስፒታል",
+            "location": "አካባቢ",
+            "experience": "ልምድ",
+            "experienceYears": "{{years}} ዓመታት",
+            "consultationFee": "የምክክር ክፍያ",
+            "education": "ትምህርት"
+        },
+        "social": {
+            "youtube": "የዩቲዩብ ቻናል",
+            "linkedin": "የሊንክዲን መገለጫ"
+        },
+        "empty": {
+            "noProfessionalInfo": "እስካሁን ምንም የሙያ መረጃ አልተጨመረም።",
+            "notSetUpTitle": "መገለጫ አልተዋቀረም",
+            "notSetUpDesc": "የሙያ መረጃዎን ለማከል \"አርትዕ\" ይጫኑ።",
+            "setupBtn": "መገለጫ ያዋቅሩ"
+        }
+    }
+}

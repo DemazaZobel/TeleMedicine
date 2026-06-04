@@ -1,0 +1,81 @@
+{
+    "todayAppointments": {
+        "title": "የዛሬ ቀጠሮዎች",
+        "emptyTitle": "ዛሬ ቀጠሮ የለም",
+        "emptySubtitle": "ቀኑን ይደሰቱበት ወይም ተደራሽነት ያክሉ።",
+        "viewAll": "ሁሉንም ቀጠሮዎች ይመልከቱ",
+        "status": {
+            "confirmed": "ተረጋግጧል",
+            "pending": "በጥበቃ ላይ",
+            "completed": "ተጠናቋል",
+            "noShow": "አልቀረበም"
+        },
+        "mode": {
+            "online": "በመስመር ላይ",
+            "inPerson": "対面"
+        }
+    },
+    "quickActions": {
+        "title": "ፈጣን ድርጊቶች",
+        "actions": {
+            "addHours": "ሰዓት ያክሉ",
+            "patients": "ታካሚዎች",
+            "earnings": "ገቢ",
+            "messages": "መልዕክቶች",
+            "schedule": "መርሃ ግብር",
+            "profile": "መገለጫ"
+        }
+    },
+    "scheduleCoverage": {
+        "title": "የጊዜ ሰሌዳ ሽፋን",
+        "daysSet": "{{count}}/7 ቀናት ተዘጋጅተዋል",
+        "edit": "አርትዕ",
+        "noHoursSet": "ሰዓት አልተቀናጀም",
+        "add": "ጨምር",
+        "appointments_one": "{{count}} ቀጠሮ",
+        "appointments_other": "{{count}} ቀጠሮዎች",
+        "fillRate": "{{percent}}%",
+        "nudge": {
+            "oneDay": "{{day}} ምንም ተደራሽነት የለም — ታካሚዎች መያዝ አይችሉም።",
+            "manyDays": "{{count}} ቀናት ምንም ሰዓት አልተቀናጀም። ለማከል ይጫኑ።"
+        },
+        "days": {
+            "mon": "ሰኞ",
+            "tue": "ማክሰኞ",
+            "wed": "ረቡዕ",
+            "thu": "ሐሙስ",
+            "fri": "አርብ",
+            "sat": "ቅዳሜ",
+            "sun": "እሑድ"
+        }
+    },
+    "suggestions": {
+        "title": "ጥቆማዎች",
+        "allGood": {
+            "title": "ሁሉም ነገር ተከናውኗል!",
+            "subtitle": "ምንም አልቀረም። መልካም ቀን ይሁንልዎ፣ ዶክተር።"
+        },
+        "pending": {
+            "title_one": "{{count}} ቀጠሮ ውሳኔዎን ይጠብቃል",
+            "title_other": "{{count}} ቀጠሮዎች ውሳኔዎን ይጠብቃሉ",
+            "subtitle": "ከጊዜ ማለፋቸው በፊት ተቀበሉ ወይም አዲስ ሰዓት ያቅርቡ።"
+        },
+        "availability": {
+            "titleOneDay": "{{day}} ምንም ተደራሽነት አልተቀናጀም",
+            "titleManyDays": "{{count}} ቀናት ምንም ተደራሽነት አልተቀናጀም",
+            "subtitle": "ታካሚዎች በዚያ ቀናት ቀጠሮ መያዝ አይችሉም።"
+        },
+        "bio": {
+            "title": "መገለጫዎ ባዮ የለውም",
+            "subtitle": "ታካሚዎች ከቀጠሮ በፊት ባዮዎን ያነባሉ — ቅን አስተሳሰብ ለመፍጠር ያክሉ።"
+        },
+        "fee": {
+            "title": "የምክክር ክፍያ አልተቀናጀም",
+            "subtitle": "ታካሚዎች ቀጠሮ ከመያዛቸው በፊት ምን እንደሚጠብቃቸው እንዲያውቁ ክፍያ ያቀናጁ።"
+        },
+        "reviews": {
+            "title": "ምንም ግምገማ የለም",
+            "subtitle": "የቀድሞ ታካሚዎችን ተከታተሉ እና የመጀመሪያ ግምገማ እንዲሰጡ ያበረታቷቸው።"
+        }
+    }
+}

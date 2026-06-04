@@ -1,0 +1,48 @@
+{
+    "wallet": {
+        "title": "Wallet",
+        "balance": {
+            "available": "Available Balance",
+            "active": "Active",
+            "totalEarned": "Total Earned: {{amount}} ETB"
+        },
+        "payoutMethod": {
+            "title": "Payout Method",
+            "none": "No payout method configured",
+            "setup": "Setup Payout Method",
+            "edit": "Edit",
+            "bankTransfer": "Bank Transfer",
+            "modalTitle": "Payout Method Setup",
+            "selectOption": "Select Payout Option:",
+            "telebirr": "Telebirr",
+            "cbeBirr": "CBE Birr",
+            "otherBank": "Other Bank",
+            "bankNamePlaceholder": "Bank Name (e.g., Awash, Dashen, Abyssinia)",
+            "accountHolderPlaceholder": "Account Holder Name",
+            "bankAccountPlaceholder": "Bank Account Number",
+            "mobileWalletPlaceholder": "Mobile Wallet Number",
+            "cancel": "Cancel",
+            "save": "Save"
+        },
+        "withdraw": {
+            "title": "Withdraw Funds",
+            "amountPlaceholder": "Enter amount",
+            "processing": "Processing...",
+            "button": "Withdraw",
+            "errors": {
+                "invalidAmount": "Please enter a valid amount greater than 0.",
+                "noPayoutMethod": "Please set up a payout method before attempting a withdrawal.",
+                "insufficientFunds": "Insufficient funds! Your maximum available balance is {{amount}} ETB.",
+                "minimumAmount": "The minimum withdrawal amount is {{amount}} ETB.",
+                "failed": "Failed to process withdrawal. Please try again."
+            },
+            "success": "Withdrawal request submitted successfully!"
+        },
+        "history": {
+            "title": "Withdrawals",
+            "empty": "No withdrawals yet",
+            "pending": "Pending",
+            "done": "Done"
+        }
+    }
+}

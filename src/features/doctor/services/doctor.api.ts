@@ -1,4 +1,6 @@
-import { apiClient } from '../../../services/api';
+import { apiClient, STORAGE_KEYS } from '../../../services/api';
+import { getItemAsync } from '../../../services/storage';
+import { Platform } from 'react-native';
 import type {
   DoctorProfile,
   DoctorProfileUpdate,
@@ -31,6 +33,46 @@ export const doctorApi = {
       payload
     );
     return response.data;
+  },
+
+  uploadProfileImage: async (imageUri: string): Promise<DoctorProfile> => {
+    // Use native fetch instead of Axios — Axios on React Native corrupts
+    // FormData file blobs (the request interceptor JSON.stringifies them).
+    const token = await getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+    const filename = imageUri.split('/').pop() ?? 'profile.jpg';
+    const match = /\.([a-zA-Z0-9]+)$/.exec(filename);
+    const mimeType = match ? `image/${match[1].toLowerCase().replace('jpg', 'jpeg')}` : 'image/jpeg';
+
+    const formData = new FormData();
+    if (Platform.OS === 'web') {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('profile_image', blob, filename);
+    } else {
+      formData.append('profile_image', {
+        uri: imageUri,
+        name: filename,
+        type: mimeType,
+      } as any);
+    }
+
+    const res = await fetch(
+      `https://medlinkethiopia.pythonanywhere.com/api${DOCTOR_BASE}/profile/`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type — fetch sets the correct multipart boundary automatically
+        },
+        body: formData,
+      }
+    );
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      throw new Error(`Upload failed (${res.status}): ${errorBody}`);
+    }
+    return res.json() as Promise<DoctorProfile>;
   },
 
   // Documents

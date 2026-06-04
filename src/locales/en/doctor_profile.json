@@ -1,0 +1,43 @@
+{
+    "profile": {
+        "editBtn": "Edit",
+        "heroName": "Doctor Profile",
+        "verified": "Verified Practitioner",
+        "pendingReview": "Pending Institutional Review",
+        "accessibility": {
+            "editPhoto": "Edit profile photo",
+            "editProfile": "Edit profile"
+        },
+        "stats": {
+            "rating": "Rating",
+            "reviews": "Reviews",
+            "experience": "Experience",
+            "fee": "Fee"
+        },
+        "sections": {
+            "professionalInfo": "Professional Info",
+            "about": "About",
+            "background": "Background",
+            "socialLinks": "Social Links"
+        },
+        "infoRows": {
+            "specialization": "Specialization",
+            "currentHospital": "Current Hospital",
+            "location": "Location",
+            "experience": "Experience",
+            "experienceYears": "{{years}} years",
+            "consultationFee": "Consultation Fee",
+            "education": "Education"
+        },
+        "social": {
+            "youtube": "YouTube Channel",
+            "linkedin": "LinkedIn Profile"
+        },
+        "empty": {
+            "noProfessionalInfo": "No professional info added yet.",
+            "notSetUpTitle": "Profile Not Set Up",
+            "notSetUpDesc": "Tap \"Edit\" to add your professional information.",
+            "setupBtn": "Set Up Profile"
+        }
+    }
+}

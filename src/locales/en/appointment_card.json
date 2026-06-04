@@ -1,0 +1,66 @@
+{
+    "name": {
+        "patient_fallback": "Patient",
+        "doctor_fallback": "Doctor",
+        "doctor_prefix": "Dr."
+    },
+    "mode": {
+        "online": "Online",
+        "in_person": "In-Person"
+    },
+    "status": {
+        "confirmed": "Confirmed",
+        "verifying": "Verifying...",
+        "unpaid": "Unpaid",
+        "pending": "Pending",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "no_show": "No Show",
+        "expired": "Expired",
+        "unknown": "Unknown"
+    },
+    "reason_label": "REASON FOR VISIT",
+    "proposal": {
+        "badge": "PROPOSED NEW TIME",
+        "expired_warning": "⚠️ This reschedule proposal has expired. Please counter-propose with a new slot below.",
+        "prompt_doctor": "The patient has requested to move this appointment. Do you accept this new slot?",
+        "prompt_patient": "The doctor has proposed moving this session. Do you accept this slot?",
+        "decline": "Decline",
+        "accept": "Accept Slot",
+        "awaiting_doctor": "Awaiting response from doctor...",
+        "awaiting_patient": "Awaiting response from patient..."
+    },
+    "actions": {
+        "decline": "Decline",
+        "reschedule": "Reschedule",
+        "accept": "Accept",
+        "cancel": "Cancel",
+        "join": "Join",
+        "pay_now": "Pay Now",
+        "verifying": "Verifying..."
+    },
+    "alerts": {
+        "join_error_title": "Cannot Join Yet",
+        "join_error_default": "Consultation is not open yet.",
+        "payment_error_title": "Payment Error",
+        "payment_verify_failed": "Could not verify payment method.",
+        "payment_no_method": "Unable to create payment method.",
+        "payment_no_url": "No checkout URL returned.",
+        "payment_success_title": "Payment Successful",
+        "payment_success_body": "Your payment has been confirmed.",
+        "payment_failed": "Failed to initiate payment.",
+        "reschedule_success": "Reschedule request sent.",
+        "reschedule_failed": "Failed to send request.",
+        "reschedule_error_title": "Reschedule Failed",
+        "respond_no_data": "No active reschedule data found.",
+        "respond_missing_id": "Missing change request identifier.",
+        "respond_accepted": "The rescheduled slot has been accepted successfully.",
+        "respond_rejected": "The rescheduled slot has been rejected successfully.",
+        "respond_error_title": "Action Failed",
+        "respond_error_default": "Failed to process request.",
+        "cancel_success": "Appointment cancelled successfully.",
+        "cancel_error_title": "Cancel Error",
+        "cancel_error_default": "Failed to cancel."
+    },
+    "in_person_badge": "In-Person"
+}

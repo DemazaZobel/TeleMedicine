@@ -1,4 +1,5 @@
 import { Card, ScreenContainer } from "@/components/ui";
+import { getFullMediaUrl } from "@/lib/utils";
 import { useDoctorStore } from "@/store/doctor.store";
 import { useTheme, type Theme } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,8 +14,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { DoctorProfileEditModal } from "./DoctorProfileEditModal";
+import { useTranslation } from "../../../i18n";
 import { formatDisplayValue } from "../../../utils";
+import { DoctorProfileEditModal } from "./DoctorProfileEditModal";
 
 // ─── Small reusable pieces ────────────────────────────────────────────────────
 
@@ -79,13 +81,64 @@ function SectionLabel({ title, theme }: { title: string; theme: any }) {
     );
 }
 
+// ─── Tappable avatar in hero ──────────────────────────────────────────────────
+
+function HeroAvatar({
+    imageUri,
+    onPress,
+    theme,
+    editPhotoLabel,
+}: {
+    imageUri: string | null | undefined;
+    onPress: () => void;
+    theme: any;
+    editPhotoLabel: string;
+}) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.85}
+            style={{ marginBottom: 14 }}
+            accessibilityRole="button"
+            accessibilityLabel={editPhotoLabel}
+        >
+            {/* Avatar ring */}
+            <View style={{
+                width: 110, height: 110, borderRadius: 55,
+                borderWidth: 3, borderColor: theme.colors.primary + "40",
+                overflow: "hidden",
+                backgroundColor: theme.colors.surface,
+                alignItems: "center", justifyContent: "center",
+            }}>
+                {imageUri ? (
+                    <Image source={{ uri: imageUri }} style={{ width: "100%", height: "100%" }} />
+                ) : (
+                    <Ionicons name="person" size={48} color={theme.colors.textTertiary} />
+                )}
+            </View>
+
+            {/* Camera badge */}
+            <View style={{
+                position: "absolute", bottom: 2, right: 2,
+                width: 30, height: 30, borderRadius: 15,
+                backgroundColor: theme.colors.primary,
+                alignItems: "center", justifyContent: "center",
+                borderWidth: 2.5, borderColor: theme.colors.surface,
+            }}>
+                <Ionicons name="camera" size={14} color="#FFFFFF" />
+            </View>
+        </TouchableOpacity>
+    );
+}
+
 // ─── Main exported component ─────────────────────────────────────────────────
 
 export function DoctorProfileView() {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
+    const { t } = useTranslation('doctorProfile');
 
-    const { profile, isLoadingProfile, fetchProfile } = useDoctorStore();
+    const { profile, isLoadingProfile, fetchProfile, profileImageVersion } = useDoctorStore();
     const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => { fetchProfile(); }, []);
@@ -114,6 +167,10 @@ export function DoctorProfileView() {
         ? parseFloat(String(profile.average_rating)).toFixed(1)
         : "—";
 
+    const avatarUri = profile?.profile_image
+        ? `${getFullMediaUrl(profile.profile_image)}?v=${profileImageVersion}`
+        : null;
+
     return (
         <>
             <ScreenContainer scrollable padded={false} constrained>
@@ -123,26 +180,26 @@ export function DoctorProfileView() {
                 >
                     {/* ── Hero ── */}
                     <View style={styles.hero}>
+                        {/* Edit text button (top-right) */}
                         <TouchableOpacity
                             style={styles.editBtn}
                             onPress={() => setShowEditModal(true)}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('profile.accessibility.editProfile')}
                         >
                             <Ionicons name="create-outline" size={16} color={theme.colors.primary} />
-                            <Text style={styles.editBtnText}>Edit</Text>
+                            <Text style={styles.editBtnText}>{t('profile.editBtn')}</Text>
                         </TouchableOpacity>
 
-                        <View style={styles.avatarRing}>
-                            {profile?.profile_image ? (
-                                <Image source={{ uri: profile.profile_image }} style={styles.avatar} />
-                            ) : (
-                                <Image
-                                    source={require("../../../../assets/images/doctor-avatar.png")}
-                                    style={styles.avatar}
-                                />
-                            )}
-                        </View>
+                        {/* Tapping the avatar also opens the modal */}
+                        <HeroAvatar
+                            imageUri={avatarUri}
+                            onPress={() => setShowEditModal(true)}
+                            theme={theme}
+                            editPhotoLabel={t('profile.accessibility.editPhoto')}
+                        />
 
-                        <Text style={styles.heroName}>Doctor Profile</Text>
+                        <Text style={styles.heroName}>{t('profile.heroName')}</Text>
 
                         <View style={[styles.verifiedBadge, {
                             backgroundColor: profile?.is_verified
@@ -157,7 +214,9 @@ export function DoctorProfileView() {
                             <Text style={[styles.verifiedText, {
                                 color: profile?.is_verified ? theme.colors.success : theme.colors.primary,
                             }]}>
-                                {profile?.is_verified ? "Verified Practitioner" : "Pending Institutional Review"}
+                                {profile?.is_verified
+                                    ? t('profile.verified')
+                                    : t('profile.pendingReview')}
                             </Text>
                         </View>
 
@@ -171,39 +230,91 @@ export function DoctorProfileView() {
                         {/* ── Stats ── */}
                         <Card style={styles.card}>
                             <View style={styles.statsRow}>
-                                <StatCard label="Rating" value={rating} color={theme.colors.warning} icon="star" theme={theme} />
+                                <StatCard
+                                    label={t('profile.stats.rating')}
+                                    value={rating}
+                                    color={theme.colors.warning}
+                                    icon="star"
+                                    theme={theme}
+                                />
                                 <View style={styles.statDivider} />
-                                <StatCard label="Reviews" value={profile?.review_count ?? 0} color={theme.colors.primary} icon="chatbubbles-outline" theme={theme} />
+                                <StatCard
+                                    label={t('profile.stats.reviews')}
+                                    value={profile?.review_count ?? 0}
+                                    color={theme.colors.primary}
+                                    icon="chatbubbles-outline"
+                                    theme={theme}
+                                />
                                 <View style={styles.statDivider} />
-                                <StatCard label="Experience" value={profile?.years_of_experience ? `${profile.years_of_experience}y` : "—"} color={theme.colors.success} icon="briefcase-outline" theme={theme} />
+                                <StatCard
+                                    label={t('profile.stats.experience')}
+                                    value={profile?.years_of_experience ? `${profile.years_of_experience}y` : "—"}
+                                    color={theme.colors.success}
+                                    icon="briefcase-outline"
+                                    theme={theme}
+                                />
                                 <View style={styles.statDivider} />
-                                <StatCard label="Fee" value={fee} color="#8B5CF6" icon="cash-outline" theme={theme} />
+                                <StatCard
+                                    label={t('profile.stats.fee')}
+                                    value={fee}
+                                    color="#8B5CF6"
+                                    icon="cash-outline"
+                                    theme={theme}
+                                />
                             </View>
                         </Card>
 
                         {/* ── Professional Info ── */}
                         <Card style={styles.card}>
-                            <SectionLabel title="Professional Info" theme={theme} />
+                            <SectionLabel title={t('profile.sections.professionalInfo')} theme={theme} />
                             {profile?.specialization && (
-                                <InfoRow icon="medical-outline" label="Specialization" value={profile.specialization} theme={theme} />
+                                <InfoRow
+                                    icon="medical-outline"
+                                    label={t('profile.infoRows.specialization')}
+                                    value={profile.specialization}
+                                    theme={theme}
+                                />
                             )}
                             {profile?.current_working_hospital && (
-                                <InfoRow icon="business-outline" label="Current Hospital" value={profile.current_working_hospital} theme={theme} />
+                                <InfoRow
+                                    icon="business-outline"
+                                    label={t('profile.infoRows.currentHospital')}
+                                    value={profile.current_working_hospital}
+                                    theme={theme}
+                                />
                             )}
                             {profile?.location && (
-                                <InfoRow icon="location-outline" label="Location" value={profile.location} theme={theme} />
+                                <InfoRow
+                                    icon="location-outline"
+                                    label={t('profile.infoRows.location')}
+                                    value={profile.location}
+                                    theme={theme}
+                                />
                             )}
                             {profile?.years_of_experience != null && (
-                                <InfoRow icon="briefcase-outline" label="Experience" value={`${profile.years_of_experience} years`} theme={theme} />
+                                <InfoRow
+                                    icon="briefcase-outline"
+                                    label={t('profile.infoRows.experience')}
+                                    value={t('profile.infoRows.experienceYears', { years: profile.years_of_experience })}
+                                    theme={theme}
+                                />
                             )}
                             {profile?.consultation_fee && (
-                                <InfoRow icon="cash-outline" label="Consultation Fee" value={fee} color="#8B5CF6" theme={theme} />
+                                <InfoRow
+                                    icon="cash-outline"
+                                    label={t('profile.infoRows.consultationFee')}
+                                    value={fee}
+                                    color="#8B5CF6"
+                                    theme={theme}
+                                />
                             )}
                             {!profile?.specialization && !profile?.current_working_hospital &&
                                 !profile?.location && profile?.years_of_experience == null && (
                                     <View style={styles.emptySection}>
                                         <Ionicons name="information-circle-outline" size={24} color={theme.colors.textTertiary} />
-                                        <Text style={styles.emptySectionText}>No professional info added yet.</Text>
+                                        <Text style={styles.emptySectionText}>
+                                            {t('profile.empty.noProfessionalInfo')}
+                                        </Text>
                                     </View>
                                 )}
                         </Card>
@@ -211,7 +322,7 @@ export function DoctorProfileView() {
                         {/* ── Biography ── */}
                         {profile?.biography ? (
                             <Card style={styles.card}>
-                                <SectionLabel title="About" theme={theme} />
+                                <SectionLabel title={t('profile.sections.about')} theme={theme} />
                                 <Text style={styles.biographyText}>{profile.biography}</Text>
                             </Card>
                         ) : null}
@@ -219,12 +330,24 @@ export function DoctorProfileView() {
                         {/* ── Background ── */}
                         {(profile?.education || profile?.experience) ? (
                             <Card style={styles.card}>
-                                <SectionLabel title="Background" theme={theme} />
+                                <SectionLabel title={t('profile.sections.background')} theme={theme} />
                                 {profile?.education && (
-                                    <InfoRow icon="school-outline" label="Education" value={formatDisplayValue(profile.education)} color={theme.colors.primary} theme={theme} />
+                                    <InfoRow
+                                        icon="school-outline"
+                                        label={t('profile.infoRows.education')}
+                                        value={formatDisplayValue(profile.education)}
+                                        color={theme.colors.primary}
+                                        theme={theme}
+                                    />
                                 )}
                                 {profile?.experience && (
-                                    <InfoRow icon="ribbon-outline" label="Experience" value={formatDisplayValue(profile.experience)} color={theme.colors.success} theme={theme} />
+                                    <InfoRow
+                                        icon="ribbon-outline"
+                                        label={t('profile.infoRows.experience')}
+                                        value={formatDisplayValue(profile.experience)}
+                                        color={theme.colors.success}
+                                        theme={theme}
+                                    />
                                 )}
                             </Card>
                         ) : null}
@@ -232,26 +355,34 @@ export function DoctorProfileView() {
                         {/* ── Social Links ── */}
                         {(profile?.youtube_link || profile?.linkedin_link) ? (
                             <Card style={styles.card}>
-                                <SectionLabel title="Social Links" theme={theme} />
+                                <SectionLabel title={t('profile.sections.socialLinks')} theme={theme} />
                                 {profile?.youtube_link && (
-                                    <TouchableOpacity style={styles.socialRow} onPress={() => openLink(profile.youtube_link!)} activeOpacity={0.7}>
+                                    <TouchableOpacity
+                                        style={styles.socialRow}
+                                        onPress={() => openLink(profile.youtube_link!)}
+                                        activeOpacity={0.7}
+                                    >
                                         <View style={[styles.socialIcon, { backgroundColor: "#FF000015" }]}>
                                             <Ionicons name="logo-youtube" size={20} color="#FF0000" />
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={styles.socialLabel}>YouTube Channel</Text>
+                                            <Text style={styles.socialLabel}>{t('profile.social.youtube')}</Text>
                                             <Text style={styles.socialUrl} numberOfLines={1}>{profile.youtube_link}</Text>
                                         </View>
                                         <Ionicons name="open-outline" size={16} color={theme.colors.textTertiary} />
                                     </TouchableOpacity>
                                 )}
                                 {profile?.linkedin_link && (
-                                    <TouchableOpacity style={styles.socialRow} onPress={() => openLink(profile.linkedin_link!)} activeOpacity={0.7}>
+                                    <TouchableOpacity
+                                        style={styles.socialRow}
+                                        onPress={() => openLink(profile.linkedin_link!)}
+                                        activeOpacity={0.7}
+                                    >
                                         <View style={[styles.socialIcon, { backgroundColor: "#0A66C215" }]}>
                                             <Ionicons name="logo-linkedin" size={20} color="#0A66C2" />
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={styles.socialLabel}>LinkedIn Profile</Text>
+                                            <Text style={styles.socialLabel}>{t('profile.social.linkedin')}</Text>
                                             <Text style={styles.socialUrl} numberOfLines={1}>{profile.linkedin_link}</Text>
                                         </View>
                                         <Ionicons name="open-outline" size={16} color={theme.colors.textTertiary} />
@@ -264,13 +395,11 @@ export function DoctorProfileView() {
                         {!profile && !isLoadingProfile && (
                             <View style={styles.fullEmpty}>
                                 <Ionicons name="person-circle-outline" size={64} color={theme.colors.textTertiary} />
-                                <Text style={styles.fullEmptyTitle}>Profile Not Set Up</Text>
-                                <Text style={styles.fullEmptyDesc}>
-                                    Tap "Edit" to add your professional information.
-                                </Text>
+                                <Text style={styles.fullEmptyTitle}>{t('profile.empty.notSetUpTitle')}</Text>
+                                <Text style={styles.fullEmptyDesc}>{t('profile.empty.notSetUpDesc')}</Text>
                                 <TouchableOpacity style={styles.setupBtn} onPress={() => setShowEditModal(true)}>
                                     <Ionicons name="create-outline" size={16} color="#fff" />
-                                    <Text style={styles.setupBtnText}>Set Up Profile</Text>
+                                    <Text style={styles.setupBtnText}>{t('profile.empty.setupBtn')}</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -280,7 +409,10 @@ export function DoctorProfileView() {
 
             <DoctorProfileEditModal
                 visible={showEditModal}
-                onClose={() => setShowEditModal(false)}
+                onClose={async () => {
+                    setShowEditModal(false);
+                    await fetchProfile();
+                }}
             />
         </>
     );
@@ -302,12 +434,6 @@ const createStyles = (theme: Theme) => StyleSheet.create({
         borderWidth: 1, borderColor: theme.colors.primary + "30",
     },
     editBtnText: { fontSize: 13, fontWeight: "600", color: theme.colors.primary },
-    avatarRing: {
-        width: 110, height: 110, borderRadius: 55,
-        borderWidth: 3, borderColor: theme.colors.primary + "40",
-        overflow: "hidden", marginBottom: 14,
-    },
-    avatar: { width: "100%", height: "100%" },
     heroName: { fontSize: 22, fontWeight: "800", color: theme.colors.text, marginBottom: 8 },
     verifiedBadge: {
         flexDirection: "row", alignItems: "center", gap: 5,

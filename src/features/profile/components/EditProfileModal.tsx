@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from '../../../i18n';
+import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +15,7 @@ import { ModalBase } from "../../../components/ui/ModalBase";
 import { useAuthStore } from "../../../store/authStore";
 import { useDiscoveryStore } from "../../../store/discovery.store";
 import { useDoctorStore } from "../../../store/doctor.store";
+import { getFullMediaUrl } from "../../../lib/utils";
 import { Theme, useTheme } from "../../../theme";
 
 interface EditProfileModalProps {
@@ -25,7 +28,7 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { user, isLoading: authLoading, error, fetchProfile, updateProfile, clearError } =
+  const { user, isLoading: authLoading, error, fetchProfile, updateProfile, uploadProfileImage, clearError } =
     useAuthStore();
   const { 
     profile: doctorProfile, 
@@ -46,6 +49,11 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
   const [experience, setExperience] = useState("");
   const [saved, setSaved] = useState(false);
 
+  // Image upload state
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const [original, setOriginal] = useState({
     firstName: "",
     lastName: "",
@@ -65,6 +73,8 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
       }
       setSaved(false);
       clearError();
+      setLocalImageUri(null);
+      setImageError(null);
     }
   }, [visible, fetchProfile, fetchDoctorProfile, clearError, user?.role]);
 
@@ -114,6 +124,37 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
     experience !== original.experience;
 
   const { fetchDoctors } = useDiscoveryStore();
+
+  // ── Image Picker ──────────────────────────────────────────────────────────
+  const handlePickImage = useCallback(async () => {
+    setImageError(null);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      setImageError("Permission to access photos is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const uri = result.assets[0].uri;
+    setLocalImageUri(uri); // Optimistic preview
+    setIsUploadingImage(true);
+    setImageError(null);
+    try {
+      await uploadProfileImage(uri);
+    } catch {
+      setImageError("Failed to upload photo. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }, [uploadProfileImage]);
 
   const handleSave = useCallback(async () => {
     setSaved(false);
@@ -166,6 +207,11 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
     onClose,
   ]);
 
+  // Determine avatar: local preview > stored user avatar/profile_image > initials
+  const currentAvatarUri = localImageUri
+    ?? (user?.profile_image ? getFullMediaUrl(user.profile_image) : null)
+    ?? (user?.avatar ? getFullMediaUrl(user.avatar) : null);
+
   const initials = `${user?.first_name?.[0] ?? "U"}${user?.last_name?.[0] ?? ""}`;
 
   return (
@@ -181,14 +227,45 @@ export function EditProfileModal({ visible, onClose }: EditProfileModalProps) {
       >
         {/* ── Avatar with Camera Badge ── */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarOuter}>
+          <TouchableOpacity
+            style={styles.avatarOuter}
+            onPress={handlePickImage}
+            activeOpacity={0.8}
+            disabled={isUploadingImage}
+            accessibilityRole="button"
+            accessibilityLabel="Change profile photo"
+          >
             <View style={styles.avatar}>
-              <Text style={styles.avatarInitials}>{initials}</Text>
+              {currentAvatarUri ? (
+                <Image
+                  source={{ uri: currentAvatarUri }}
+                  style={{ width: "100%", height: "100%", borderRadius: 50 }}
+                />
+              ) : (
+                <Text style={styles.avatarInitials}>{initials}</Text>
+              )}
             </View>
-            <TouchableOpacity style={styles.cameraBadge} activeOpacity={0.7}>
-              <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
+            <TouchableOpacity
+              style={styles.cameraBadge}
+              activeOpacity={0.7}
+              onPress={handlePickImage}
+              disabled={isUploadingImage}
+            >
+              {isUploadingImage ? (
+                <Ionicons name="hourglass-outline" size={15} color="#FFFFFF" />
+              ) : (
+                <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
+              )}
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 12, color: theme.colors.textTertiary, marginTop: 8 }}>
+            {isUploadingImage ? "Uploading…" : "Tap photo to change"}
+          </Text>
+          {imageError ? (
+            <Text style={{ fontSize: 12, color: theme.colors.error, marginTop: 4 }}>
+              {imageError}
+            </Text>
+          ) : null}
         </View>
 
         {/* ── Banners ── */}
@@ -338,6 +415,7 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors.primaryLight + "40",
       justifyContent: "center",
       alignItems: "center",
+      overflow: "hidden",
     },
     avatarInitials: {
       fontSize: 36,

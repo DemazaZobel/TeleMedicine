@@ -1,19 +1,19 @@
+import { useTranslation } from "@/i18n";
 import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from '../../../i18n';
+import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { Button } from "../../../components/ui";
+import { useAuthStore } from "../../../store/authStore";
 import { useBookingStore } from "../../../store/booking.store";
-import { useDiscoveryStore } from "../../../store/discovery.store";
-import type { Theme } from "../../../theme";
 import { useTheme } from "../../../theme";
 import type { AppointmentDetail } from "../types/bookingTypes";
 import { CancelAppointmentModal } from "./CancelAppointmentModal";
@@ -24,6 +24,7 @@ interface AppointmentCardProps {
   isDoctor: boolean;
   onCancel?: (id: string | number, reason: string) => void;
   onAccept?: (id: string | number) => void;
+  onRefreshList?: () => void;
 }
 
 export function AppointmentCard({
@@ -31,50 +32,64 @@ export function AppointmentCard({
   isDoctor,
   onCancel,
   onAccept,
+  onRefreshList
 }: AppointmentCardProps) {
-  const { t } = useTranslation();
+  const router = useRouter();
   const { theme } = useTheme();
+  const { t } = useTranslation("appointmentCard");
   const styles = useMemo(() => createStyles(theme), [theme]);
   const {
     doctorDecision,
     requestReschedule,
-    respondToChangeRequest,
-    isLoading,
+    acceptReschedule,
+    rejectReschedule,
     cancelAppointment,
   } = useBookingStore();
-  const { doctors } = useDiscoveryStore();
+  const user = useAuthStore((s) => s.user);
 
   const [rescheduleVisible, setRescheduleVisible] = useState(false);
   const [cancelVisible, setCancelVisible] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
 
-  const start = new Date(appointment.scheduled_start);
-  const end = new Date(appointment.scheduled_end);
-  const isPast = end < new Date();
+  const [localStart, setLocalStart] = useState<Date>(new Date(appointment.scheduled_start));
+  const [localEnd, setLocalEnd] = useState<Date>(new Date(appointment.scheduled_end));
+  const [localProposalHidden, setLocalProposalHidden] = useState(false);
 
-  const dateStr = start.toLocaleDateString(undefined, {
+  useEffect(() => {
+    const incomingStart = new Date(appointment.scheduled_start);
+    const incomingEnd = new Date(appointment.scheduled_end);
+
+    if (!localProposalHidden) {
+      setLocalStart(incomingStart);
+      setLocalEnd(incomingEnd);
+    }
+  }, [appointment.scheduled_start, appointment.scheduled_end, localProposalHidden]);
+
+  const isPast = localEnd < new Date();
+
+  const dateStr = localStart.toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
-  const timeStr = `${start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+  const timeStr = `${localStart.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} - ${localEnd.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}`;
 
   const getStatus = () => {
     const status = appointment.status?.toUpperCase() || "UNKNOWN";
 
-    // Virtual status override for expired appointments
     if (isPast && !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(status)) {
-      return { label: "Expired", color: theme.colors.textTertiary };
+      return { label: t("status.expired"), color: theme.colors.textTertiary };
     }
 
     const map: Record<string, { label: string; color: string }> = {
       CONFIRMED: {
         label:
           appointment.payment_status === "paid"
-            ? "Confirmed"
+            ? t("status.confirmed")
             : appointment.payment_status === "charge_pending"
-              ? t("common:verifying")
-              : "Unpaid",
+              ? t("status.verifying")
+              : t("status.unpaid"),
         color:
           appointment.payment_status === "paid"
             ? theme.colors.success
@@ -82,27 +97,26 @@ export function AppointmentCard({
               ? theme.colors.primary
               : theme.colors.warning,
       },
-      REQUESTED: { label: "Pending", color: theme.colors.textTertiary },
-      COMPLETED: { label: "Completed", color: theme.colors.primary },
-      CANCELLED: { label: "Cancelled", color: theme.colors.error },
-      NO_SHOW: { label: "No Show", color: theme.colors.error },
-      EXPIRED: { label: "Expired", color: theme.colors.textTertiary },
+      REQUESTED: { label: t("status.pending"), color: theme.colors.warning },
+      COMPLETED: { label: t("status.completed"), color: theme.colors.primary },
+      CANCELLED: { label: t("status.cancelled"), color: theme.colors.error },
+      NO_SHOW: { label: t("status.no_show"), color: theme.colors.error },
+      EXPIRED: { label: t("status.expired"), color: theme.colors.textTertiary },
     };
     return map[status] || { label: status, color: theme.colors.textSecondary };
   };
   const { label: statusLabel, color: statusColor } = getStatus();
 
-  // Name Logic: handle both flat fields (new API) and nested objects (legacy)
   const a = appointment as any;
   const patientName =
     `${a.patient_first_name || a.patient?.user?.first_name || ""} ${a.patient_last_name || a.patient?.user?.last_name || ""}`.trim() ||
-    "Patient";
-  const doctorFirstName =
-    a.doctor_first_name || a.doctor?.user?.first_name || "";
+    t("name.patient_fallback");
+  const doctorFirstName = a.doctor_first_name || a.doctor?.user?.first_name || "";
   const doctorLastName = a.doctor_last_name || a.doctor?.user?.last_name || "";
   const doctorName = `${doctorFirstName} ${doctorLastName}`.trim();
-  const formattedDoctorName = doctorName ? `Dr. ${doctorName}` : "Doctor";
-
+  const formattedDoctorName = doctorName
+    ? `${t("name.doctor_prefix")} ${doctorName}`
+    : t("name.doctor_fallback");
   const displayName = isDoctor ? patientName : formattedDoctorName;
 
   const handleJoin = async () => {
@@ -113,8 +127,8 @@ export function AppointmentCard({
       await WebBrowser.openBrowserAsync(link);
     } catch (error: any) {
       Alert.alert(
-        "Cannot Join Yet",
-        error.response?.data?.detail || error.message || "Consultation is not open yet."
+        t("alerts.join_error_title"),
+        error.response?.data?.detail || error.message || t("alerts.join_error_default")
       );
     } finally {
       setLocalLoading(false);
@@ -124,130 +138,61 @@ export function AppointmentCard({
   const handlePay = async () => {
     try {
       setLocalLoading(true);
-
-      const {
-        fetchPaymentMethods,
-        initiatePayment,
-        addPaymentMethod,
-        verifyPaymentMethod,
-      } = useBookingStore.getState();
-
+      const { fetchPaymentMethods, initiatePayment, addPaymentMethod, verifyPaymentMethod } = useBookingStore.getState();
       await fetchPaymentMethods();
-
       let { paymentMethods } = useBookingStore.getState();
+      let methodToUse = paymentMethods?.find((m: any) => m.is_verified) || null;
 
-      // Try existing verified method first
-      let methodToUse =
-        paymentMethods?.find((m: any) => m.is_verified) || null;
-
-      // Create TELEBIRR method if none exists
       if (!methodToUse) {
-        methodToUse = await addPaymentMethod({
-          provider: "TELEBIRR",
-          account_number: "0912345678",
-        });
-
-        // Verify if backend requires verification
+        methodToUse = await addPaymentMethod({ provider: "TELEBIRR", account_number: "0912345678" });
         if (methodToUse && !methodToUse.is_verified) {
           try {
-            methodToUse = await verifyPaymentMethod(
-              methodToUse.id,
-              "1234"
-            );
+            methodToUse = await verifyPaymentMethod(methodToUse.id, "1234");
           } catch (err) {
-            Alert.alert(
-              "Verification Failed",
-              "Could not verify payment method."
-            );
+            Alert.alert(t("alerts.payment_error_title"), t("alerts.payment_verify_failed"));
             return;
           }
         }
       }
 
       if (!methodToUse) {
-        Alert.alert(
-          "Payment Error",
-          "Unable to create payment method."
-        );
+        Alert.alert(t("alerts.payment_error_title"), t("alerts.payment_no_method"));
         return;
       }
 
-      // Initiate Chapa payment through backend
-      const checkoutUrl = await initiatePayment(
-        appointment.id,
-        methodToUse.id
-      );
-
+      const checkoutUrl = await initiatePayment(appointment.id, methodToUse.id);
       if (!checkoutUrl) {
-        Alert.alert(
-          "Payment Error",
-          "No checkout URL returned."
-        );
+        Alert.alert(t("alerts.payment_error_title"), t("alerts.payment_no_url"));
         return;
       }
 
-      // Open Chapa checkout
       await WebBrowser.openBrowserAsync(checkoutUrl);
 
-      // Start verification polling
       let attempts = 0;
       const maxAttempts = 12;
 
       const poll = async () => {
         try {
           if (attempts >= maxAttempts) return;
-
           attempts++;
-
           const { verifyPayment } = useBookingStore.getState();
-
           await verifyPayment(appointment.id);
+          const updated = useBookingStore.getState().appointments.find((a) => a.id === appointment.id);
 
-          const updated = useBookingStore
-            .getState()
-            .appointments.find(
-              (a) => a.id === appointment.id
-            );
-
-          if (
-            updated &&
-            updated.payment_status === "paid"
-          ) {
-            Alert.alert(
-              "Payment Successful",
-              "Your payment has been confirmed."
-            );
+          if (updated && updated.payment_status === "paid") {
+            Alert.alert(t("alerts.payment_success_title"), t("alerts.payment_success_body"));
             return;
           }
-
           setTimeout(poll, 5000);
         } catch (e) {
           console.log("Polling error:", e);
         }
       };
-
       setTimeout(poll, 3000);
     } catch (error: any) {
-      console.log("FULL ERROR", error?.response?.data);
-
-      const backendError = error?.response?.data;
-
-      let errorMessage =
-        backendError?.detail ||
-        backendError?.message ||
-        error?.message ||
-        "Failed to initiate payment.";
-      if (
-        errorMessage.includes("already been initiated") ||
-        errorMessage.includes("charge_pending")
-      ) {
-        Alert.alert(
-          "Payment In Progress",
-          'Your payment is being verified. Tap "Refresh Status" to check for updates.',
-        );
-      } else {
-        Alert.alert(t("errors:paymentError"), errorMessage);
-      }
+      Alert.alert(t("alerts.payment_error_title"), error?.message || t("alerts.payment_failed"));
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -265,55 +210,67 @@ export function AppointmentCard({
   const handleProposeConfirm = async (payload: any) => {
     try {
       setLocalLoading(true);
-      const expiresAt = new Date(
-        Date.now() + 24 * 60 * 60 * 1000,
-      ).toISOString();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       if (isDoctor) {
-        await doctorDecision(appointment.id, {
-          action: "propose_change",
-          ...payload,
-          expires_at: expiresAt,
-        });
+        await doctorDecision(appointment.id, { action: "propose_change", ...payload, expires_at: expiresAt });
       } else {
-        await requestReschedule(appointment.id, {
-          ...payload,
-          expires_at: expiresAt,
-        });
+        await requestReschedule(appointment.id, { ...payload, expires_at: expiresAt });
       }
       setRescheduleVisible(false);
-      Alert.alert("Success", t("appointment:rescheduleSentSuccess"));
-    } catch (error) {
+      Alert.alert("Success", t("alerts.reschedule_success"));
+      if (onRefreshList) onRefreshList();
+    } catch (error: any) {
+      Alert.alert(
+        t("alerts.reschedule_error_title"),
+        error?.response?.data?.detail || t("alerts.reschedule_failed")
+      );
     } finally {
       setLocalLoading(false);
     }
   };
 
   const handleRespondChange = async (action: "accept" | "reject") => {
-    if (!appointment.latest_change_request) return;
+    const changeReq = appointment.latest_change_request;
+
+    if (!changeReq || typeof changeReq !== "object") {
+      Alert.alert("Error", t("alerts.respond_no_data"));
+      return;
+    }
+
+    const changeRequestId = changeReq.id;
+    if (!changeRequestId) {
+      Alert.alert("Error", t("alerts.respond_missing_id"));
+      return;
+    }
+
     try {
-      const msg =
-        action === "accept"
-          ? "Accept this new time?"
-          : "Reject this proposed change?";
-      const confirmed =
-        Platform.OS === "web"
-          ? window.confirm(msg)
-          : await new Promise((resolve) => {
-              Alert.alert(t("appointment:reviewReschedule"), msg, [
-                { text: "No", style: "cancel", onPress: () => resolve(false) },
-                { text: "Yes", style: "default", onPress: () => resolve(true) },
-              ]);
-            });
-
-      if (!confirmed) return;
-
       setLocalLoading(true);
-      await respondToChangeRequest(appointment.latest_change_request.id, {
-        action,
-      });
-      Alert.alert("Success", `Reschedule ${action}ed.`);
+
+      if (action === "accept") {
+        await acceptReschedule(appointment.id, changeRequestId, isDoctor);
+
+        if (changeReq.proposed_start && changeReq.proposed_end) {
+          setLocalStart(new Date(changeReq.proposed_start));
+          setLocalEnd(new Date(changeReq.proposed_end));
+        }
+      } else {
+        await rejectReschedule(appointment.id, changeRequestId, isDoctor);
+      }
+
+      setLocalProposalHidden(true);
+      Alert.alert(
+        "Success",
+        action === "accept" ? t("alerts.respond_accepted") : t("alerts.respond_rejected")
+      );
+
+      if (onRefreshList) {
+        onRefreshList();
+      }
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to respond.");
+      Alert.alert(
+        t("alerts.respond_error_title"),
+        error.response?.data?.detail || error.message || t("alerts.respond_error_default")
+      );
     } finally {
       setLocalLoading(false);
     }
@@ -322,45 +279,90 @@ export function AppointmentCard({
   const handleConfirmCancel = async (reason: string) => {
     try {
       setLocalLoading(true);
-      const result = await cancelAppointment(appointment.id, { confirm: true });
+      await cancelAppointment(appointment.id, { confirm: true });
       setCancelVisible(false);
-
-      if (result.late_cancellation) {
-        Alert.alert("Late Cancellation", result.message);
-      } else {
-        Alert.alert("Success", result.message || "Appointment cancelled.");
-      }
+      Alert.alert("Success", t("alerts.cancel_success"));
+      if (onRefreshList) onRefreshList();
     } catch (err: any) {
-      Alert.alert(
-        "Cancel Error",
-        err.response?.data?.detail ||
-        JSON.stringify(err.response?.data) ||
-        err.message ||
-        "Failed to cancel appointment.",
-      );
+      Alert.alert(t("alerts.cancel_error_title"), err.message || t("alerts.cancel_error_default"));
     } finally {
       setLocalLoading(false);
     }
   };
 
-  const handleComplete = async () => {
-    try {
-      setLocalLoading(true);
-      const { completeAppointment } = useBookingStore.getState();
-      await completeAppointment(appointment.id);
-      Alert.alert("Success", t("appointment:consultationCompleted"));
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to complete.");
-    } finally {
-      setLocalLoading(false);
-    }
-  };
-
-  const isCancelled = appointment.status?.toUpperCase() === "CANCELLED";
-  const isCompleted = appointment.status?.toUpperCase() === "COMPLETED";
-  const isNoShow = appointment.status?.toUpperCase() === "NO_SHOW";
-  const isExpired = appointment.status?.toUpperCase() === "EXPIRED" || (isPast && !isCompleted && !isCancelled);
+  const statusUpper = appointment.status?.toUpperCase() || "";
+  const isCancelled = statusUpper === "CANCELLED";
+  const isCompleted = statusUpper === "COMPLETED";
+  const isNoShow = statusUpper === "NO_SHOW";
+  const isExpired = statusUpper === "EXPIRED" || (isPast && !isCompleted && !isCancelled);
   const isFinalized = isCancelled || isCompleted || isNoShow || isExpired;
+
+  const hasPrimaryBtn =
+    statusUpper === "CONFIRMED" &&
+    (appointment.payment_status !== "paid" || appointment.mode === "ONLINE");
+
+  const showProposal =
+    !localProposalHidden &&
+    appointment.latest_change_request &&
+    appointment.latest_change_request.status?.toUpperCase() === "PENDING";
+
+  // ─── PROPOSAL BANNER: Determine who should respond ───
+  const proposalVisuals = useMemo(() => {
+    const changeReq = appointment.latest_change_request;
+    if (!showProposal || !changeReq) return null;
+
+    console.log("[AppointmentCard] 🔍 changeReq raw:", JSON.stringify(changeReq, null, 2));
+    console.log("[AppointmentCard] 👤 current user:", user?.id, "isDoctor:", isDoctor);
+
+    const proposedDate = new Date(changeReq.proposed_start);
+    const expirationDate = changeReq.expires_at ? new Date(changeReq.expires_at) : null;
+    const now = new Date();
+    const isExpiredToken = expirationDate ? now > expirationDate : false;
+
+    const visualDateStr = proposedDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const visualTimeStr = proposedDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+
+    const reqBy = changeReq.requested_by as any;
+    const reqById = reqBy && typeof reqBy === "object" ? String(reqBy.id ?? "") : String(reqBy ?? "");
+    const currentUserId = String(user?.id ?? "");
+
+    if (currentUserId && reqById && reqById !== "" && currentUserId !== "") {
+      const isRecipient = reqById !== currentUserId;
+      return { visualDateStr, visualTimeStr, isRecipientOfReschedule: isRecipient, isExpiredToken };
+    }
+
+    const createdByRole = (changeReq.created_by_role as string | undefined)?.toUpperCase();
+    if (createdByRole === "DOCTOR" || createdByRole === "PATIENT") {
+      const isRecipient = isDoctor ? createdByRole === "PATIENT" : createdByRole === "DOCTOR";
+      return { visualDateStr, visualTimeStr, isRecipientOfReschedule: isRecipient, isExpiredToken };
+    }
+
+    const reqByRole = (reqBy && typeof reqBy === "object" ? reqBy.role : undefined)?.toUpperCase();
+    if (reqByRole === "DOCTOR" || reqByRole === "PATIENT") {
+      const isRecipient = isDoctor ? reqByRole === "PATIENT" : reqByRole === "DOCTOR";
+      return { visualDateStr, visualTimeStr, isRecipientOfReschedule: isRecipient, isExpiredToken };
+    }
+
+    if (reqById) {
+      const doctorUserId = String(
+        (appointment as any).doctor_user_id || appointment.doctor?.user?.id || ""
+      );
+      const patientUserId = String(
+        (appointment as any).patient_user_id || appointment.patient?.user?.id || ""
+      );
+      if (reqById === doctorUserId) {
+        const isRecipient = !isDoctor;
+        return { visualDateStr, visualTimeStr, isRecipientOfReschedule: isRecipient, isExpiredToken };
+      }
+      if (reqById === patientUserId) {
+        const isRecipient = isDoctor;
+        return { visualDateStr, visualTimeStr, isRecipientOfReschedule: isRecipient, isExpiredToken };
+      }
+    }
+
+    console.warn("[AppointmentCard] ⚠️ Layer 5 fallback: cannot determine proposer, defaulting isRecipient=true");
+    return { visualDateStr, visualTimeStr, isRecipientOfReschedule: true, isExpiredToken };
+  }, [showProposal, appointment.latest_change_request, isDoctor, user]);
 
   return (
     <View style={[styles.card, (isCancelled || isExpired) && { opacity: 0.6 }]}>
@@ -378,7 +380,7 @@ export function AppointmentCard({
                 color={theme.colors.textTertiary}
               />
               <Text style={styles.modeText}>
-                {appointment.mode === "ONLINE" ? "Online" : "In-Person"}
+                {appointment.mode === "ONLINE" ? t("mode.online") : t("mode.in_person")}
               </Text>
             </View>
           </View>
@@ -403,120 +405,206 @@ export function AppointmentCard({
 
         {appointment.reason && (
           <View style={styles.infoSection}>
-            <Text style={styles.infoLabel}>REASON FOR VISIT</Text>
+            <Text style={styles.infoLabel}>{t("reason_label")}</Text>
             <Text style={styles.infoValue} numberOfLines={2}>{appointment.reason}</Text>
           </View>
         )}
 
-        {isDoctor && appointment.patient_allergies && (
-          <View style={styles.infoSection}>
-            <Text style={styles.infoLabel}>{t("doctor:allergiesTitle")}</Text>
-            <Text style={[styles.infoValue, { color: theme.colors.error }]} numberOfLines={2}>{appointment.patient_allergies}</Text>
-          </View>
-        )}
-
-        {isDoctor && appointment.patient_medical_history && (
-          <View style={styles.infoSection}>
-            <Text style={styles.infoLabel}>MEDICAL HISTORY</Text>
-            <Text style={styles.infoValue} numberOfLines={3}>{appointment.patient_medical_history}</Text>
-          </View>
-        )}
-
-        {appointment.latest_change_request && appointment.latest_change_request.status === 'PENDING' && (
-          <View style={styles.proposalCard}>
-            <View style={styles.proposalTag}>
-              <Ionicons name="swap-horizontal" size={12} color={theme.colors.warning} />
-              <Text style={styles.proposalTagText}>{t("appointment:proposedChange")}</Text>
+        {/* ─── PROPOSAL BANNER ─── */}
+        {showProposal && proposalVisuals && (
+          <View
+            style={[
+              styles.proposalCard,
+              {
+                marginTop: 12,
+                padding: 12,
+                backgroundColor: theme.colors.warning + "0A",
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: theme.colors.warning,
+              },
+            ]}
+          >
+            <View style={styles.proposalHeaderRow}>
+              <View style={styles.proposalTag}>
+                <Ionicons name="time" size={14} color={theme.colors.warning} />
+                <Text style={styles.proposalTagText}>{t("proposal.badge")}</Text>
+              </View>
+              <Text style={styles.proposalDateTimeBubble}>
+                {proposalVisuals.visualDateStr} @ {proposalVisuals.visualTimeStr}
+              </Text>
             </View>
-            <Text style={styles.proposalDetails}>
-              {new Date(appointment.latest_change_request.proposed_start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} @ {new Date(appointment.latest_change_request.proposed_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Text>
 
-            {((!isDoctor && appointment.latest_change_request.requested_by?.role === 'DOCTOR') ||
-              (isDoctor && appointment.latest_change_request.requested_by?.role === 'PATIENT')) && (
-              <View style={styles.proposalActions}>
-                <TouchableOpacity 
-                  style={styles.proposalBtnReject} 
-                  onPress={() => handleRespondChange('reject')}
-                >
-                  <Text style={styles.proposalBtnRejectText}>{t("common:decline")}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.proposalBtnAccept} 
-                  onPress={() => handleRespondChange('accept')}
-                >
-                  <Text style={styles.proposalBtnAcceptText}>{t("common:accept")}</Text>
-                </TouchableOpacity>
+            {proposalVisuals.isRecipientOfReschedule ? (
+              <View style={styles.proposalActionBlock}>
+                {proposalVisuals.isExpiredToken ? (
+                  <Text style={[styles.proposalPromptText, { color: theme.colors.error, fontWeight: "500" }]}>
+                    {t("proposal.expired_warning")}
+                  </Text>
+                ) : (
+                  <Text style={styles.proposalPromptText}>
+                    {isDoctor ? t("proposal.prompt_doctor") : t("proposal.prompt_patient")}
+                  </Text>
+                )}
+
+                <View style={styles.proposalActions}>
+                  <TouchableOpacity
+                    style={[styles.proposalBtnReject, proposalVisuals.isExpiredToken && { opacity: 0.4 }]}
+                    onPress={() => handleRespondChange("reject")}
+                    disabled={localLoading || proposalVisuals.isExpiredToken}
+                  >
+                    <Text style={styles.proposalBtnRejectText}>{t("proposal.decline")}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.proposalBtnAccept,
+                      { backgroundColor: proposalVisuals.isExpiredToken ? "#BDC3C7" : "#2ECC71" },
+                    ]}
+                    onPress={() => handleRespondChange("accept")}
+                    disabled={localLoading || proposalVisuals.isExpiredToken}
+                  >
+                    {localLoading ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <Text style={styles.proposalBtnAcceptText}>{t("proposal.accept")}</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.proposalWaitingBlock}>
+                <ActivityIndicator size="small" color={theme.colors.warning} style={{ marginRight: 8 }} />
+                <Text style={styles.proposalPendingText}>
+                  {isDoctor ? t("proposal.awaiting_patient") : t("proposal.awaiting_doctor")}
+                </Text>
               </View>
             )}
           </View>
         )}
       </View>
 
+      {/* ─── FOOTER CARD MAIN ACTIONS ─── */}
       {!isFinalized && (
         <View style={styles.cardActions}>
-          {["REQUESTED", "CONFIRMED"].includes(
-            appointment.status?.toUpperCase() || "",
-          ) &&
-            !isPast && (
+          {statusUpper === "REQUESTED" && isDoctor ? (
+            <View style={styles.workflowRow}>
               <Button
-                title="Cancel"
+                title={t("actions.decline")}
                 variant="danger"
                 size="sm"
-                onPress={() => setCancelVisible(true)}
-                style={styles.actionBtn}
+                onPress={() => doctorDecision(appointment.id, { action: "reject" })}
+                loading={localLoading}
+                style={styles.splitActionBtn}
               />
-            )}
-
-          {["REQUESTED", "CONFIRMED"].includes(
-            appointment.status?.toUpperCase() || "",
-          ) &&
-            !isPast && (
               <Button
-                title="Reschedule"
+                title={t("actions.reschedule")}
                 variant="outline"
                 size="sm"
                 onPress={() => setRescheduleVisible(true)}
-                style={styles.actionBtn}
+                style={styles.splitActionBtn}
               />
-            )}
-
-          {appointment.status?.toUpperCase() === "CONFIRMED" && (
-            appointment.payment_status === "paid" ? (
-              <Button title={t("common:join")} size="sm" onPress={handleJoin} loading={localLoading} style={styles.mainBtn} />
-            ) : (
-              !isDoctor && (
-                appointment.payment_status === "charge_pending" ? (
-                  <Button title={t("common:verifying")} size="sm" onPress={handleRefresh} loading={localLoading} style={styles.mainBtn} />
-                ) : (
-                  <Button title={t("appointment:payNow")} size="sm" variant="secondary" onPress={handlePay} loading={localLoading} style={styles.payBtn} />
-                )
-              )
-            )
-          )}
-
-          {isDoctor && appointment.status?.toUpperCase() === "REQUESTED" && (
-            <Button 
-              title={t("common:accept")} 
-              size="sm"
-              onPress={async () => {
-                try {
-                  setLocalLoading(true);
-                  await onAccept?.(appointment.id);
-                } finally {
-                  setLocalLoading(false);
+              <Button
+                title={t("actions.accept")}
+                variant="primary"
+                size="sm"
+                onPress={() =>
+                  onAccept
+                    ? onAccept(appointment.id)
+                    : doctorDecision(appointment.id, { action: "accept" })
                 }
-              }}
-              loading={localLoading}
-              style={styles.mainBtn}
-            />
+                loading={localLoading}
+                style={styles.splitMainBtn}
+              />
+            </View>
+          ) : (
+            <View style={styles.workflowRow}>
+              {!isDoctor &&
+                ((statusUpper === "CONFIRMED" && !isPast) ||
+                  (statusUpper === "REQUESTED" && !isPast)) && (
+                  <Button
+                    title={t("actions.cancel")}
+                    variant="outline"
+                    size="sm"
+                    onPress={() => setCancelVisible(true)}
+                    style={[
+                      styles.cancelBtn,
+                      !hasPrimaryBtn && { flex: 0, minWidth: 100, alignSelf: "flex-start" },
+                    ]}
+                    textStyle={styles.cancelBtnText}
+                  />
+                )}
+
+              {isDoctor && ["REQUESTED", "CONFIRMED"].includes(statusUpper) && !isPast && (
+                <Button
+                  title={t("actions.reschedule")}
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setRescheduleVisible(true)}
+                  style={styles.splitActionBtn}
+                />
+              )}
+
+              {statusUpper === "CONFIRMED" &&
+                (appointment.payment_status === "paid" ? (
+                  appointment.mode === "ONLINE" ? (
+                    (() => {
+                      const now = new Date();
+                      const entryBufferMs = 10 * 60 * 1000;
+                      const windowOpenTime = new Date(localStart.getTime() - entryBufferMs);
+                      const isJoinWindowActive = now >= windowOpenTime && now <= localEnd;
+
+                      return (
+                        <Button
+                          title={t("actions.join")}
+                          size="sm"
+                          onPress={handleJoin}
+                          loading={localLoading}
+                          disabled={!isJoinWindowActive}
+                          style={[styles.splitMainBtn, !isJoinWindowActive && { opacity: 0.5 }]}
+                        />
+                      );
+                    })()
+                  ) : (
+                    <View style={styles.inPersonBadge}>
+                      <Ionicons name="location-outline" size={14} color={theme.colors?.primary || "#2ECC71"} />
+                      <Text style={styles.inPersonText}>{t("in_person_badge")}</Text>
+                    </View>
+                  )
+                ) : (
+                  !isDoctor &&
+                  (appointment.payment_status === "charge_pending" ? (
+                    <Button
+                      title={t("actions.verifying")}
+                      size="sm"
+                      onPress={handleRefresh}
+                      loading={localLoading}
+                      style={styles.splitMainBtn}
+                    />
+                  ) : (
+                    <Button
+                      title={t("actions.pay_now")}
+                      size="sm"
+                      variant="primary"
+                      onPress={handlePay}
+                      loading={localLoading}
+                      style={styles.splitMainBtn}
+                    />
+                  ))
+                ))}
+            </View>
           )}
         </View>
       )}
 
       <RescheduleModal
         visible={rescheduleVisible}
-        doctorId={appointment.doctor?.id || (appointment as any).doctor_id || (appointment as any).doctor}
+        doctorId={
+          appointment.doctor?.id ||
+          (appointment as any).doctor_id ||
+          (appointment as any).doctor
+        }
+        isDoctor={isDoctor}
         onClose={() => setRescheduleVisible(false)}
         onConfirm={handleProposeConfirm}
         isLoading={localLoading}
@@ -532,215 +620,86 @@ export function AppointmentCard({
   );
 }
 
-const createStyles = (theme: Theme) =>
-  StyleSheet.create({
-    card: {
-      flex: 1,
-      backgroundColor: theme.colors.surface,
-      borderRadius: 20,
-      padding: 16,
-      marginBottom: 16,
-      borderWidth: 1,
-      borderColor: "rgba(0,0,0,0.04)",
-      ...theme.shadows.sm,
-    },
-    cardHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: 16,
-    },
-    identity: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-    },
-    avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.colors.primary + '10',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: theme.colors.primary + '20',
-    },
-    avatarText: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: theme.colors.primary,
-    },
-    name: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.colors.text,
-      marginBottom: 2,
-    },
-    modeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    modeText: {
-      fontSize: 12,
-      color: theme.colors.textTertiary,
-    },
-    statusBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: 12,
-      gap: 6,
-    },
-    statusDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-    },
-    statusText: {
-      fontSize: 12,
-      fontWeight: '700',
-    },
-    cardContent: {
-      flex: 1,
-      marginBottom: 20,
-    },
-    dateTimeContainer: {
-      flexDirection: 'row',
-      gap: 16,
-      marginBottom: 16,
-      backgroundColor: theme.colors.background,
-      padding: 12,
-      borderRadius: 12,
-    },
-    dateTimeItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    dateTimeText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.colors.textSecondary,
-    },
-    infoSection: {
-      marginBottom: 12,
-    },
-    infoLabel: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: theme.colors.textTertiary,
-      letterSpacing: 1,
-      marginBottom: 4,
-    },
-    infoValue: {
-      fontSize: 14,
-      color: theme.colors.textSecondary,
-      lineHeight: 20,
-    },
-    proposalCard: {
-      backgroundColor: theme.colors.warning + '08',
-      borderRadius: 14,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: theme.colors.warning + '20',
-      marginTop: 4,
-    },
-    proposalTag: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      marginBottom: 4,
-    },
-    proposalTagText: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: theme.colors.warning,
-    },
-    proposalDetails: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: theme.colors.text,
-      marginBottom: 10,
-    },
-    proposalActions: {
-      flexDirection: 'row',
-      gap: 8,
-    },
-    proposalBtnReject: {
-      flex: 1,
-      height: 32,
-      borderRadius: 8,
-      backgroundColor: theme.colors.error + '10',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    proposalBtnRejectText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: theme.colors.error,
-    },
-    proposalBtnAccept: {
-      flex: 1,
-      height: 32,
-      borderRadius: 8,
-      backgroundColor: theme.colors.success,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    proposalBtnAcceptText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: '#FFF',
-    },
+function createStyles(theme: any) {
+  return StyleSheet.create({
+    card: { padding: 16, backgroundColor: '#FFF', borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#EAEAEA' },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    identity: { flexDirection: 'row', alignItems: 'center' },
+    avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    avatarText: { fontSize: 16, fontWeight: 'bold' },
+    name: { fontSize: 16, fontWeight: '600' },
+    modeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+    modeText: { fontSize: 12, marginLeft: 4 },
+    statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+    statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+    statusText: { fontSize: 12, fontWeight: '600' },
+    cardContent: { marginBottom: 16 },
+    dateTimeContainer: { flexDirection: 'row', backgroundColor: '#F8F9FA', padding: 8, borderRadius: 8, marginBottom: 12 },
+    dateTimeItem: { flexDirection: 'row', alignItems: 'center', marginRight: 24 },
+    dateTimeText: { fontSize: 14, marginLeft: 6, fontWeight: '500' },
+    infoSection: { marginTop: 8 },
+    infoLabel: { fontSize: 10, fontWeight: '700', color: '#999', marginBottom: 2 },
+    infoValue: { fontSize: 14, color: '#333' },
+    proposalCard: {},
+    proposalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    proposalTag: { flexDirection: 'row', alignItems: 'center' },
+    proposalTagText: { fontSize: 11, fontWeight: 'bold', color: '#E67E22', marginLeft: 4 },
+    proposalDateTimeBubble: { backgroundColor: '#FFF', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, fontSize: 12, fontWeight: '600', borderWidth: 1, borderColor: '#FFE0B2' },
+    proposalActionBlock: { marginTop: 4 },
+    proposalPromptText: { fontSize: 13, color: '#666', marginBottom: 12, lineHeight: 18 },
+    proposalActions: { flexDirection: 'row', justifyContent: 'flex-end' },
+    proposalBtnReject: { paddingHorizontal: 16, paddingVertical: 8, marginRight: 8, borderRadius: 6, backgroundColor: '#FFF5F5', borderWidth: 1, borderColor: '#FED7D7' },
+    proposalBtnRejectText: { color: '#E53E3E', fontWeight: '600', fontSize: 13 },
+    proposalBtnAccept: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6, backgroundColor: '#2ECC71', justifyContent: 'center', alignItems: 'center' },
+    proposalBtnAcceptText: { color: '#FFF', fontWeight: '600', fontSize: 13 },
+    proposalWaitingBlock: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+    proposalPendingText: { fontSize: 13, color: '#E67E22', fontStyle: 'italic' },
+
+    /* ── FIXED FLEX CONTROLS ── */
     cardActions: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0,0,0,0.04)',
-      paddingTop: 16,
-      flexWrap: 'wrap',
-      gap: 10,
+      borderTopColor: '#F0F0F0',
+      paddingTop: 12,
+      marginTop: 8
     },
-    actionBtn: {
-      paddingHorizontal: 16,
+    workflowRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      width: '100%',
+      flexWrap: 'wrap' // Gracefully wraps into multiple lines on narrow columns
     },
-    rescheduleBtn: {
-      paddingVertical: 8,
-      paddingHorizontal: 12,
+    splitMainBtn: {
+      flex: 1.2,
+      minWidth: 100
     },
-    rescheduleBtnText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.colors.primary,
+    splitActionBtn: {
+      flex: 1,
+      minWidth: 90
     },
-    mainBtn: {
-      minWidth: 80,
-    },
-    payBtn: {
+    cancelBtn: {
+      flex: 1,
       minWidth: 90,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
-    acceptBtn: {
-      height: 36,
-      paddingHorizontal: 20,
-      borderRadius: 18,
-      minWidth: 90,
+    cancelBtnText: {
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
     },
     inPersonBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      backgroundColor: theme.colors.primary + "12",
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderRadius: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 6
     },
-
     inPersonText: {
+      marginLeft: 4,
       fontSize: 13,
-      fontWeight: "700",
-      color: theme.colors.primary,
-    },
+      fontWeight: '600',
+      color: '#666'
+    }
   });
+}

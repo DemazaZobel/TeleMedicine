@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../../i18n';
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View, Platform, ScrollView, Linking } from 'react-native';
+import { StyleSheet, Text, View, Platform, ScrollView, Linking, Image } from 'react-native';
 import { Button, ModalBase, StarRating } from '../../../components/ui';
 import { BookingModal } from '../../booking/components/BookingModal';
 import { Theme, useTheme } from '../../../theme';
 import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
 import { useRouter } from 'expo-router';
 import { useBookingStore } from '../../../store/booking.store';
+import { getFullMediaUrl } from '../../../lib/utils';
 
 interface DoctorDetailsModalProps {
   visible: boolean;
@@ -46,7 +47,14 @@ export function DoctorDetailsModal({ visible, onClose, doctor }: DoctorDetailsMo
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>👨‍⚕️</Text>
+            {doctor.profile_image ? (
+              <Image
+                source={{ uri: getFullMediaUrl(doctor.profile_image) || "" }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <Text style={styles.avatarText}>👨‍⚕️</Text>
+            )}
           </View>
           <View style={styles.nameContainer}>
             <Text style={styles.name}>
@@ -176,6 +184,11 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       borderStyle: 'dashed',
+      overflow: 'hidden',
+    },
+    avatarImage: {
+      width: '100%',
+      height: '100%',
     },
     avatarText: {
       fontSize: 48,

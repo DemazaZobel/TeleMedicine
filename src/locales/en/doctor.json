@@ -143,5 +143,18 @@
   "selectDay": "Select Day",
   "selectSpecificDate": "Select Specific Date",
   "startTime": "Start Time",
-  "workingHoursTitle": "Working Hours"
+  "workingHoursTitle": "Working Hours",
+  "doctorPrefix": "Dr.",
+  "specialist": "Specialist",
+  "reviews": "{{count}} reviews",
+  "yearsExp": "{{count}}+ Yrs",
+  "experience": "Experience",
+  "bookAppointment": "Book Appointment",
+  "educationCertifications": "Education & Certifications",
+  "currentFacility": "Current Facility",
+  "verifiedProviderDesc": "Credentials verified by the MedLink clinical team.",
+  "noUpcomingSlots": "No upcoming slots found.",
+  "todayLabel": "Today",
+  "profileUnavailable": "Doctor profile not available",
+  "consultation": "Consultation"
 }

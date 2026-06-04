@@ -154,13 +154,20 @@ export function MedicalInfoModal({ visible, onClose }: MedicalInfoModalProps) {
     formData.append('city', city.trim());
     formData.append('country', country.trim());
 
-    documents.forEach((doc, index) => {
-      formData.append('medical_documents', {
-        uri: Platform.OS === 'ios' ? doc.uri.replace('file://', '') : doc.uri,
-        name: doc.name || `document_${index}`,
-        type: doc.mimeType || 'application/pdf',
-      } as any);
-    });
+    for (let i = 0; i < documents.length; i++) {
+      const doc = documents[i];
+      if (Platform.OS === 'web') {
+        const response = await fetch(doc.uri);
+        const blob = await response.blob();
+        formData.append('medical_documents', blob, doc.name || `document_${i}`);
+      } else {
+        formData.append('medical_documents', {
+          uri: doc.uri,
+          name: doc.name || `document_${i}`,
+          type: doc.mimeType || 'application/pdf',
+        } as any);
+      }
+    }
 
     try {
       await updateMedicalInfo(formData);

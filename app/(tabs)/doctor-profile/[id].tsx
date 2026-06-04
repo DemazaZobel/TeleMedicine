@@ -1,5 +1,6 @@
+import { Button, Card, ScreenContainer, StarRating } from "@/components/ui";
 import { useBookingStore } from "@/store/booking.store";
-import { useTranslation } from '../../../src/i18n';
+import { formatDisplayValue } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
@@ -13,16 +14,16 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { Button, Card, ScreenContainer, StarRating } from "@/components/ui";
 import { BookingModal } from "../../../src/features/booking/components/BookingModal";
 import { doctorApi } from "../../../src/features/doctor/services/doctor.api";
 import type { ProviderSearchResult } from "../../../src/features/doctor/types/doctor.types";
+import { useTranslation } from '../../../src/i18n';
 import { useDiscoveryStore } from "../../../src/store/discovery.store";
 import { Theme, useTheme } from "../../../src/theme";
-import { formatDisplayValue } from "@/utils";
 
 export default function DoctorProfilePage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('doctor');
+  const { t: tCommon } = useTranslation('common');
   const { id } = useLocalSearchParams();
   const doctorId = typeof id === "string" ? id : id?.[0];
   const router = useRouter();
@@ -41,7 +42,6 @@ export default function DoctorProfilePage() {
   const [bookingVisible, setBookingVisible] = useState(false);
   const [selectedSlotIdx, setSelectedSlotIdx] = useState(0);
 
-  // Booking Store for Availability
   const {
     fetchDoctorAvailability,
     doctorAvailabilityRules,
@@ -51,12 +51,10 @@ export default function DoctorProfilePage() {
   React.useEffect(() => {
     const fetchDetail = async () => {
       if (!doctorId) return;
-
       setIsLoading(true);
       try {
         const detail = await doctorApi.getProviderDetail(doctorId);
         setDoctor(detail);
-        // Also fetch availability for the sidebar
         fetchDoctorAvailability(doctorId);
       } catch (error) {
         console.error("[DoctorProfilePage] Failed to fetch detail:", error);
@@ -64,11 +62,9 @@ export default function DoctorProfilePage() {
         setIsLoading(false);
       }
     };
-
     fetchDetail();
   }, [doctorId]);
 
-  // Logic to generate slots (same as BookingModal)
   const availableSlots = useMemo(() => {
     if (!doctorAvailabilityRules || doctorAvailabilityRules.length === 0)
       return [];
@@ -89,7 +85,6 @@ export default function DoctorProfilePage() {
         const [h, m] = rule.start_time.split(":").map(Number);
         const start = new Date(currentDay);
         start.setHours(h, m, 0, 0);
-
         if (dayOffset === 0 && start.getTime() < today.getTime()) continue;
         generatedSlots.push(start);
       }
@@ -110,10 +105,10 @@ export default function DoctorProfilePage() {
     return (
       <ScreenContainer centered>
         <Text style={{ color: theme.colors.text }}>
-          Doctor profile not available
+          {t('profileUnavailable')}
         </Text>
         <Button
-          title="Go Back"
+          title={tCommon('goBack')}
           onPress={() => router.back()}
           style={{ marginTop: 20 }}
         />
@@ -173,10 +168,10 @@ export default function DoctorProfilePage() {
             <View style={styles.headerTopRow}>
               <View style={styles.nameSection}>
                 <Text style={styles.name}>
-                  Dr. {doctor.first_name} {doctor.last_name}
+                  {t('doctorPrefix')} {doctor.first_name} {doctor.last_name}
                 </Text>
                 <Text style={styles.tagline}>
-                  {doctor.specialization} Specialist
+                  {doctor.specialization} {t('specialist')}
                 </Text>
 
                 {doctor.location && (
@@ -193,24 +188,26 @@ export default function DoctorProfilePage() {
                 <View style={styles.ratingBrief}>
                   <StarRating rating={Number(doctor.average_rating) || 0} size={16} />
                   <Text style={styles.ratingText}>
-                    ({doctor.review_count} reviews)
+                    ({t('reviews', { count: doctor.review_count })})
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.quickStatsGrid}>
                 <View style={styles.quickStatBox}>
                   <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
                   <View>
-                    <Text style={styles.quickStatVal}>{doctor.years_of_experience}+ Yrs</Text>
-                    <Text style={styles.quickStatLabel}>Experience</Text>
+                    <Text style={styles.quickStatVal}>
+                      {t('yearsExp', { count: doctor.years_of_experience })}
+                    </Text>
+                    <Text style={styles.quickStatLabel}>{t('experience')}</Text>
                   </View>
                 </View>
                 <View style={styles.quickStatBox}>
                   <Ionicons name="cash-outline" size={20} color={theme.colors.primary} />
                   <View>
                     <Text style={styles.quickStatVal}>Br {doctor.consultation_fee}</Text>
-                    <Text style={styles.quickStatLabel}>{t("appointment:consultation")}</Text>
+                    <Text style={styles.quickStatLabel}>{t('consultation')}</Text>
                   </View>
                 </View>
               </View>
@@ -218,7 +215,7 @@ export default function DoctorProfilePage() {
 
             <View style={styles.actionRow}>
               <Button
-                title="Book Appointment"
+                title={t('bookAppointment')}
                 onPress={() => {
                   setSelectedSlotIdx(0);
                   setBookingVisible(true);
@@ -226,9 +223,9 @@ export default function DoctorProfilePage() {
                 style={styles.primaryActionBtn}
               />
               <Button
-                title={t("patient:message")}
+                title={t('patient:message')}
                 variant="outline"
-                onPress={() => {}}
+                onPress={() => { }}
                 style={styles.secondaryActionBtn}
               />
             </View>
@@ -239,7 +236,7 @@ export default function DoctorProfilePage() {
       {/* ── ABOUT SECTION ── */}
       {doctor.biography || (doctor as any).bio ? (
         <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>{t("doctor:professionalSummary")}</Text>
+          <Text style={styles.sectionTitle}>{t('professionalSummary')}</Text>
           <Text style={styles.bioText}>
             {doctor.biography || (doctor as any).bio}
           </Text>
@@ -254,7 +251,7 @@ export default function DoctorProfilePage() {
 
         return (
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>{t("doctor:clinicalExperience")}</Text>
+            <Text style={styles.sectionTitle}>{t('clinicalExperience')}</Text>
             <View style={styles.listContainer}>
               <View style={styles.experienceItem}>
                 <View style={styles.experienceIcon}>
@@ -265,9 +262,7 @@ export default function DoctorProfilePage() {
                   />
                 </View>
                 <View style={styles.experienceDetails}>
-                  <Text style={styles.bioText}>
-                    {formattedExp}
-                  </Text>
+                  <Text style={styles.bioText}>{formattedExp}</Text>
                 </View>
               </View>
             </View>
@@ -277,11 +272,10 @@ export default function DoctorProfilePage() {
 
       {!isDesktop && (
         <>
-          {/* Mobile Education Card */}
           {doctor.education && formatDisplayValue(doctor.education) ? (
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>
-                Education & Certifications
+                {t('educationCertifications')}
               </Text>
               <Text style={styles.bioText}>
                 {formatDisplayValue(doctor.education)}
@@ -303,7 +297,7 @@ export default function DoctorProfilePage() {
             size={20}
             color={theme.colors.primary}
           />
-          <Text style={styles.miniCardTitle}>{t("doctor:quickAvailability")}</Text>
+          <Text style={styles.miniCardTitle}>{t('quickAvailability')}</Text>
         </View>
 
         {isAvailabilityLoading ? (
@@ -322,7 +316,7 @@ export default function DoctorProfilePage() {
                 hour12: true,
               });
               const dayStr = isToday
-                ? "Today"
+                ? t('todayLabel')
                 : date.toLocaleDateString(undefined, { weekday: "short" });
 
               return (
@@ -348,12 +342,12 @@ export default function DoctorProfilePage() {
           </View>
         ) : (
           <Text style={styles.emptyAvailabilityText}>
-            No upcoming slots found.
+            {t('noUpcomingSlots')}
           </Text>
         )}
 
         <Button
-          title={t("doctor:seeFullSchedule")}
+          title={t('seeFullSchedule')}
           variant="outline"
           size="sm"
           onPress={() => {
@@ -373,7 +367,7 @@ export default function DoctorProfilePage() {
               size={20}
               color={theme.colors.primary}
             />
-            <Text style={styles.miniCardTitle}>{t("doctor:education")}</Text>
+            <Text style={styles.miniCardTitle}>{t('education')}</Text>
           </View>
           <Text style={styles.miniCardText}>
             {formatDisplayValue(doctor.education)}
@@ -394,7 +388,7 @@ export default function DoctorProfilePage() {
                   color={theme.colors.primary}
                 />
                 <Text style={[styles.miniCardTitle, { fontSize: 14 }]}>
-                  Current Facility
+                  {t('currentFacility')}
                 </Text>
               </View>
               <Text style={styles.miniCardText}>
@@ -412,10 +406,10 @@ export default function DoctorProfilePage() {
             size={20}
             color={theme.colors.primary}
           />
-          <Text style={styles.miniCardTitle}>{t("doctor:verifiedProvider")}</Text>
+          <Text style={styles.miniCardTitle}>{t('verifiedProvider')}</Text>
         </View>
         <Text style={styles.miniCardText}>
-          Credentials verified by the MedLink clinical team.
+          {t('verifiedProviderDesc')}
         </Text>
       </Card>
     </View>
@@ -447,7 +441,6 @@ export default function DoctorProfilePage() {
     </ScreenContainer>
   );
 }
-
 const createStyles = (theme: Theme, isDark: boolean, width: number) => {
   const isDesktop = width > 992;
 
