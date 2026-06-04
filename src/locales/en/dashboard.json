@@ -1,11 +1,46 @@
 {
-  "welcome": "Welcome,",
-  "upcomingAppointments": "Upcoming Appointments",
-  "noUpcoming": "No upcoming appointments found.",
-  "activePatients": "Active Patients",
-  "completedSessions": "Completed Sessions",
-  "pendingAppr": "Pending Approval",
-  "apprDesc": "Your professional credentials are currently under review by our medical board.",
-  "totalEarnings": "Total Earnings",
-  "withdraw": "Withdraw Funds"
+  "doctor": {
+    "welcome": "Welcome Dr. {{lastName}}!",
+    "subtitle": "Manage your patients and appointments",
+    "dashboardTitle": "Your Dashboard",
+    "stats": {
+      "upcoming": "Upcoming",
+      "pendingReview": "Pending review",
+      "thisWeek": "This week",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "noShows": "No-shows"
+    }
+  },
+  "patient": {
+    "greeting": "Hello, {{firstName}}!",
+    "subtitle": "Find your doctor and book an appointment",
+    "defaultName": "Patient",
+    "emptyTitle": "No Doctors Found",
+    "emptyDescription": "Try adjusting your search or selecting a different specialization.",
+    "search": {
+      "placeholder": "Search doctors...",
+      "filterLabel": "Filters"
+    },
+    "filters": {
+      "today": "Today",
+      "thisWeek": "This Week",
+      "underFee": "Under Br {{max}}",
+      "aboveFee": "Above Br {{min}}",
+      "feeRange": "Br {{min}}-{{max}}",
+      "ratingLabel": "{{rating}}+ Stars"
+    },
+    "empty": {
+      "title": "No Doctors Found",
+      "description": "Try adjusting your search or selecting a different specialization."
+    }
+  },
+  "notifications": {
+    "iconLabel": "Notifications",
+    "unreadBadge": "9+"
+  },
+  "loading": {
+    "profile": "Loading profile...",
+    "doctors": "Loading doctors..."
+  }
 }

@@ -16,6 +16,7 @@ import { Button, Card, Input } from "../../../components/ui";
 import { ModalBase } from "../../../components/ui/ModalBase";
 import { useDoctorStore } from "../../../store/doctor.store";
 import { Theme, useTheme } from "../../../theme";
+import { getFullMediaUrl } from "../../../lib/utils";
 import type { DoctorProfileUpdate } from "../types/doctor.types";
 
 interface DoctorProfileModalProps {
@@ -314,7 +315,11 @@ export function DoctorProfileModal({
       <View style={styles.container}>
         <View style={styles.header}>
           <Image
-            source={require("../../../../assets/images/doctor-avatar.png")}
+            source={
+              profile?.profile_image
+                ? { uri: getFullMediaUrl(profile.profile_image) || "" }
+                : require("../../../../assets/images/doctor-avatar.png")
+            }
             style={styles.avatar}
           />
           <Text style={styles.title}>

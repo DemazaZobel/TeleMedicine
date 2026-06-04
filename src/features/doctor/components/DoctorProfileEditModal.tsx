@@ -1,9 +1,12 @@
 import { Button, Input } from "@/components/ui";
 import { ModalBase } from "@/components/ui/ModalBase";
+import { getFullMediaUrl } from "@/lib/utils";
 import { useDoctorStore } from "@/store/doctor.store";
 import { useTheme, type Theme } from "@/theme";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { DoctorProfileUpdate } from "../types/doctor.types";
 
 
@@ -29,7 +32,7 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
     const { theme } = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
 
-    const { profile, isUpdatingProfile, isLoadingProfile, error, updateProfile, clearError } = useDoctorStore();
+    const { profile, isUpdatingProfile, isLoadingProfile, error, updateProfile, uploadProfileImage, clearError } = useDoctorStore();
 
     const [specialization, setSpecialization] = useState("");
     const [yearsOfExp, setYearsOfExp] = useState("");
@@ -42,6 +45,11 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
     const [youtube, setYoutube] = useState("");
     const [linkedin, setLinkedin] = useState("");
     const [saved, setSaved] = useState(false);
+
+    // Local image state for optimistic preview
+    const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [imageError, setImageError] = useState<string | null>(null);
 
     useEffect(() => {
         if (visible && profile) {
@@ -93,6 +101,8 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
             setYoutube(str(profile.youtube_link));
             setLinkedin(str(profile.linkedin_link));
             setSaved(false);
+            setLocalImageUri(null);
+            setImageError(null);
             clearError();
         }
     }, [visible, profile]);
@@ -101,6 +111,38 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
         setter(t); clearError(); setSaved(false);
     };
 
+    // ── Image Picker ──────────────────────────────────────────────────────────
+    const handlePickImage = useCallback(async () => {
+        setImageError(null);
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+            setImageError("Permission to access photos is required.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (result.canceled || !result.assets?.[0]) return;
+
+        const uri = result.assets[0].uri;
+        setLocalImageUri(uri); // Optimistic preview
+        setIsUploadingImage(true);
+        setImageError(null);
+        try {
+            await uploadProfileImage(uri);
+        } catch {
+            setImageError("Failed to upload image. Please try again.");
+        } finally {
+            setIsUploadingImage(false);
+        }
+    }, [uploadProfileImage]);
+
+    // ── Save ──────────────────────────────────────────────────────────────────
     const handleSave = useCallback(async () => {
         setSaved(false);
 
@@ -134,6 +176,11 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
         } catch { /* error in store */ }
     }, [specialization, yearsOfExp, fee, location, hospital, biography,
         experience, education, youtube, linkedin, updateProfile, onClose]);
+
+    // Determine avatar URI: local preview first, then stored profile image
+    const currentAvatarUri = localImageUri
+        ?? (profile?.profile_image ? getFullMediaUrl(profile.profile_image) : null);
+
     return (
         <ModalBase visible={visible} onClose={onClose}
             title="Edit Profile" subtitle="Update your professional information"
@@ -141,6 +188,41 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
         >
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 520 }}>
                 <View style={styles.body}>
+
+                    {/* ── Profile Image Picker ── */}
+                    <View style={styles.avatarSection}>
+                        <TouchableOpacity
+                            onPress={handlePickImage}
+                            activeOpacity={0.8}
+                            style={styles.avatarWrapper}
+                            accessibilityRole="button"
+                            accessibilityLabel="Change profile photo"
+                            disabled={isUploadingImage}
+                        >
+                            <View style={[styles.avatarRing, { borderColor: theme.colors.primary + "40" }]}>
+                                {currentAvatarUri ? (
+                                    <Image source={{ uri: currentAvatarUri }} style={styles.avatarImage} />
+                                ) : (
+                                    <Ionicons name="person" size={40} color={theme.colors.textTertiary} />
+                                )}
+                            </View>
+                            <View style={[styles.cameraBadge, { backgroundColor: theme.colors.primary }]}>
+                                {isUploadingImage ? (
+                                    <Ionicons name="hourglass-outline" size={13} color="#fff" />
+                                ) : (
+                                    <Ionicons name="camera" size={13} color="#fff" />
+                                )}
+                            </View>
+                        </TouchableOpacity>
+                        <Text style={{ fontSize: 12, color: theme.colors.textTertiary, marginTop: 6 }}>
+                            {isUploadingImage ? "Uploading…" : "Tap to change photo"}
+                        </Text>
+                        {imageError ? (
+                            <Text style={{ fontSize: 12, color: theme.colors.error, marginTop: 4 }}>
+                                {imageError}
+                            </Text>
+                        ) : null}
+                    </View>
 
                     {error ? (
                         <View style={[styles.banner, { backgroundColor: theme.colors.errorLight }]}>
@@ -191,7 +273,7 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
 
             <View style={styles.footer}>
                 <Button title="Cancel" variant="outline" onPress={onClose}
-                    disabled={isUpdatingProfile} style={styles.footerBtn} />
+                    disabled={isUpdatingProfile || isUploadingImage} style={styles.footerBtn} />
                 <Button title="Save Changes" onPress={handleSave}
                     loading={isUpdatingProfile || isLoadingProfile} style={styles.footerBtn} />
             </View>
@@ -201,6 +283,36 @@ export function DoctorProfileEditModal({ visible, onClose }: Props) {
 
 const createStyles = (theme: Theme) => StyleSheet.create({
     body: { paddingHorizontal: 2, paddingBottom: 8 },
+    avatarSection: {
+        alignItems: "center",
+        paddingVertical: 16,
+    },
+    avatarWrapper: {
+        position: "relative",
+    },
+    avatarRing: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        borderWidth: 3,
+        overflow: "hidden",
+        backgroundColor: theme.colors.surface,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    avatarImage: { width: "100%", height: "100%" },
+    cameraBadge: {
+        position: "absolute",
+        bottom: 2,
+        right: 2,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 2,
+        borderColor: theme.colors.background,
+    },
     banner: { borderRadius: theme.radius.md, padding: theme.spacing.md, marginBottom: theme.spacing.md },
     row: { flexDirection: "row", gap: theme.spacing.md },
     half: { flex: 1 },

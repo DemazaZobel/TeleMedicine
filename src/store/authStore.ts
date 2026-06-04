@@ -15,6 +15,7 @@ import type {
 import { authService } from '../features/auth/services/authService';
 import { STORAGE_KEYS } from '../services/api';
 import { resetAllStores } from './resetAllStores';
+import { parseBackendError } from '../lib/utils';
 
 // ─── State Shape ─────────────────────────────────────────
 interface AuthState {
@@ -24,6 +25,7 @@ interface AuthState {
   isLoading: boolean;
   isBootstrapping: boolean;
   error: string | null;
+  profileImageVersion: number; // bumped on every successful image upload
   // Linked Accounts
   linkedAccount: LinkedAccount | null;
   hasLinkedAccount: boolean;
@@ -38,6 +40,7 @@ interface AuthActions {
   refreshToken: () => Promise<void>;
   fetchProfile: () => Promise<void>;
   updateProfile: (payload: UpdateProfileRequest) => Promise<void>;
+  uploadProfileImage: (imageUri: string) => Promise<void>;
   changePassword: (payload: ChangePasswordRequest) => Promise<void>;
   setUser: (user: User) => void;
   clearError: () => void;
@@ -59,6 +62,7 @@ const initialState: AuthState = {
   isLoading: false,
   isBootstrapping: true,
   error: null,
+  profileImageVersion: 0,
   linkedAccount: null,
   hasLinkedAccount: false,
   isSwitchingAccount: false,
@@ -282,16 +286,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: true, error: null });
       const profileData = await authService.getProfile();
       const existingUser = get().user;
-      // Merge: keep existing fields (like role), overlay with fresh profile data
+      // Merge: keep existing fields (like role), overlay with fresh profile data.
+      // IMPORTANT: preserve profile_image / avatar from the existing user if the
+      // GET profile endpoint doesn't return them — prevents wiping a just-uploaded image.
       const mergedUser = existingUser
-        ? { ...existingUser, ...profileData, role: existingUser.role }
+        ? {
+            ...existingUser,
+            ...profileData,
+            role: existingUser.role,
+            profile_image: profileData.profile_image || existingUser.profile_image,
+            avatar: profileData.avatar || existingUser.avatar,
+          }
         : profileData;
       await Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
       set({ user: mergedUser, isLoading: false });
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: Record<string, unknown> } };
-      const message =
-        (axiosError?.response?.data?.detail as string) || 'Failed to load profile.';
+      const message = parseBackendError(error);
       set({ isLoading: false, error: message });
     }
   },
@@ -310,9 +320,28 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       await Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
       set({ user: mergedUser, isLoading: false });
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: Record<string, unknown> } };
-      const message =
-        (axiosError?.response?.data?.detail as string) || 'Failed to update profile.';
+      const message = parseBackendError(error);
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  /**
+   * Upload profile image: PATCH /auth/profile/ with multipart/form-data.
+   */
+  uploadProfileImage: async (imageUri: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      const profileData = await authService.uploadProfileImage(imageUri);
+      const existingUser = get().user;
+      const mergedUser = existingUser
+        ? { ...existingUser, ...profileData, role: existingUser.role }
+        : profileData;
+      await Storage.setItemAsync(STORAGE_KEYS.USER, JSON.stringify(mergedUser));
+      // Bump version so any subscriber using profileImageVersion as a cache-buster re-renders
+      set((state) => ({ user: mergedUser, isLoading: false, profileImageVersion: state.profileImageVersion + 1 }));
+    } catch (error: unknown) {
+      const message = parseBackendError(error);
       set({ isLoading: false, error: message });
       throw error;
     }

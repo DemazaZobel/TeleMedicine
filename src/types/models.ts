@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   phone_number?: string;
   avatar?: string;
+  profile_image?: string;
   is_verified: boolean;
   is_doctor_approved: boolean;
   preferred_language?: 'en' | 'am' | 'fr';

@@ -1,9 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "../../src/i18n";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,52 +12,54 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-
-import {
-  EmptyState,
-  PageHeader,
-  ScreenContainer,
-} from "../../src/components/ui";
-
+import { EmptyState, PageHeader, ScreenContainer } from "../../src/components/ui";
 import { AppointmentCard } from "../../src/features/booking/components/AppointmentCard";
 import { PendingApproval } from "../../src/features/doctor/components/PendingApproval";
-
+import { useTranslation } from "../../src/i18n";
 import { useAuthStore } from "../../src/store/authStore";
 import { useBookingStore } from "../../src/store/booking.store";
 import { useDoctorStore } from "../../src/store/doctor.store";
-
 import type { Theme } from "../../src/theme";
 import { useTheme } from "../../src/theme";
 
-type DoctorFilter = "all" | "requests" | "confirmed";
+type FilterKey = "all" | "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
 
-const FILTERS: { key: DoctorFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "requests", label: "Pending" },
-  { key: "confirmed", label: "Confirmed" },
-];
+// Counts per filter key
+function getCounts(appointments: any[]) {
+  return {
+    all: appointments.filter(a => a.status !== 'CANCELLED').length,
+    REQUESTED: appointments.filter(a => a.status === 'REQUESTED').length,
+    CONFIRMED: appointments.filter(a => a.status === 'CONFIRMED').length,
+    COMPLETED: appointments.filter(a => a.status === 'COMPLETED').length,
+    CANCELLED: appointments.filter(a => a.status === 'CANCELLED').length,
+  };
+}
 
 export default function DoctorAppointmentsScreen() {
-  const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { theme } = useTheme();
+  const { t } = useTranslation('appointment');
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const router = useRouter();
+  const { width } = useWindowDimensions();
 
   const user = useAuthStore((s) => s.user);
   const isVerified = useDoctorStore((s) => s.isDoctorVerified());
+  const { appointments, isLoading, fetchMyAppointments, doctorDecision } = useBookingStore();
 
-  const {
-    appointments,
-    isLoading,
-    fetchMyAppointments,
-    doctorDecision,
-  } = useBookingStore();
-
-  const [activeTab, setActiveTab] = useState<DoctorFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [refreshing, setRefreshing] = useState(false);
-  const [actingOn, setActingOn] = useState<string | null>(null);
-  const { width } = useWindowDimensions();
+
+  const isDesktop = width > 900;
   const numColumns = width > 1200 ? 3 : width > 768 ? 2 : 1;
+
+  // Built here so labels are reactive to language changes
+  const FILTERS: { key: FilterKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+    { key: "all", label: t('filters.all'), icon: "apps-outline" },
+    { key: "REQUESTED", label: t('filters.requested'), icon: "time-outline" },
+    { key: "CONFIRMED", label: t('filters.confirmed'), icon: "checkmark-circle-outline" },
+    { key: "COMPLETED", label: t('filters.completed'), icon: "trophy-outline" },
+    { key: "CANCELLED", label: t('filters.cancelled'), icon: "close-circle-outline" },
+  ];
 
   useEffect(() => {
     if (isVerified) fetchMyAppointments();
@@ -73,254 +72,320 @@ export default function DoctorAppointmentsScreen() {
   }, [fetchMyAppointments]);
 
   const handleAccept = async (id: string | number) => {
-    setActingOn(String(id));
     try {
       await doctorDecision(id, { action: "accept" });
       Alert.alert(
-        t("appointment:accepted"),
-        t("appointment:confirmedSuccessMessage")
+        t('alerts.acceptSuccess.title'),
+        t('alerts.acceptSuccess.message')
       );
     } catch {
-      Alert.alert("Error", t("errors:acceptFailed"));
-    } finally {
-      setActingOn(null);
+      Alert.alert(
+        t('alerts.acceptError.title'),
+        t('alerts.acceptError.message')
+      );
     }
-  };
-
-  const handleViewDetails = (id: string | number) => {
-    router.push({
-      pathname: "/appointment/[id]",
-      params: { id },
-    } as any);
   };
 
   if (!isVerified) return <PendingApproval />;
 
+  const counts = getCounts(appointments);
+
   const filtered = appointments.filter((a) => {
-    if (activeTab === "requests") return a.status === "REQUESTED";
-    if (activeTab === "confirmed") return a.status === "CONFIRMED";
-    return a.status?.toUpperCase() !== "CANCELLED";
+    if (activeFilter === "all") return a.status !== "CANCELLED";
+    return a.status === activeFilter;
   });
 
-  const requestCount = appointments.filter(
-    (a) => a.status === "REQUESTED"
-  ).length;
+  // Sort: REQUESTED first, then by date
+  const sorted = [...filtered].sort((a, b) => {
+    if (a.status === 'REQUESTED' && b.status !== 'REQUESTED') return -1;
+    if (b.status === 'REQUESTED' && a.status !== 'REQUESTED') return 1;
+    return new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime();
+  });
+
+  // Map FilterKey → lowercase JSON key
+  const filterKeyMap: Record<FilterKey, string> = {
+    all: 'all',
+    REQUESTED: 'requested',
+    CONFIRMED: 'confirmed',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+  };
+
+  const renderEmpty = () => {
+    if (isLoading && !refreshing) return null;
+    const jsonKey = filterKeyMap[activeFilter];
+    return (
+      <EmptyState
+        icon="calendar-outline"
+        title={t(`empty.${jsonKey}.title`)}
+        description={t(`empty.${jsonKey}.desc`)}
+      />
+    );
+  };
+
+  const summaryItems = [
+    { label: t('summary.upcoming'), value: counts.CONFIRMED, color: theme.colors.primary },
+    { label: t('summary.pending'), value: counts.REQUESTED, color: theme.colors.warning },
+    { label: t('summary.completed'), value: counts.COMPLETED, color: theme.colors.success },
+    { label: t('summary.cancelled'), value: counts.CANCELLED, color: theme.colors.error },
+  ];
 
   return (
-    <ScreenContainer scrollable={false} padded={false}>
+    <ScreenContainer scrollable={false} padded={false} constrained>
       <View style={styles.pageWrapper}>
-        {/* Header */}
+
+        {/* ── Header ── */}
         <PageHeader
-          title="Appointments"
-          subtitle="Manage your schedule"
+          title={t('screen.title')}
+          subtitle={t('screen.subtitle', { active: counts.all, pending: counts.REQUESTED })}
           rightElement={
-            requestCount > 0 ? (
-              <View style={styles.countBadge}>
-                <Text style={styles.countText}>
-                  {requestCount} pending
+            counts.REQUESTED > 0 ? (
+              <View style={styles.pendingBadge}>
+                <View style={styles.pendingDot} />
+                <Text style={styles.pendingText}>
+                  {t('screen.pendingBadge', { count: counts.REQUESTED })}
                 </Text>
               </View>
             ) : undefined
           }
         />
 
-        {/* Filter Tabs */}
-        <View style={styles.filterRow}>
-          {FILTERS.map((tab) => {
-            const isActive = activeTab === tab.key;
-
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={[
-                  styles.filterTab,
-                  isActive && styles.filterTabActive,
-                ]}
-                onPress={() => setActiveTab(tab.key)}
-              >
-                <Text
-                  style={[
-                    styles.filterLabel,
-                    isActive && styles.filterLabelActive,
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        {/* ── Summary strip ── */}
+        <View style={styles.summaryStrip}>
+          {summaryItems.map((s, i, arr) => (
+            <React.Fragment key={s.label}>
+              <View style={styles.summaryItem}>
+                <Text style={[styles.summaryVal, { color: s.color }]}>{s.value}</Text>
+                <Text style={styles.summaryLabel}>{s.label}</Text>
+              </View>
+              {i < arr.length - 1 && <View style={styles.summaryDivider} />}
+            </React.Fragment>
+          ))}
         </View>
 
-        {/* Loading */}
-        {isLoading && appointments.length === 0 ? (
+        {/* ── Filter tabs ── */}
+        <View style={styles.filterWrap}>
+          <FlatList
+            horizontal
+            data={FILTERS}
+            keyExtractor={f => f.key}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterList}
+            renderItem={({ item: f }) => {
+              const isActive = activeFilter === f.key;
+              const count = counts[f.key];
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.filterChip, isActive && styles.filterChipActive]}
+                  onPress={() => setActiveFilter(f.key)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={f.icon}
+                    size={14}
+                    color={isActive ? '#fff' : theme.colors.textSecondary}
+                  />
+                  <Text style={[styles.filterLabel, isActive && styles.filterLabelActive]}>
+                    {f.label}
+                  </Text>
+                  {count > 0 && (
+                    <View style={[
+                      styles.filterCount,
+                      isActive ? styles.filterCountActive : null,
+                    ]}>
+                      <Text style={[
+                        styles.filterCountText,
+                        isActive && styles.filterCountTextActive,
+                      ]}>
+                        {count}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+
+        {/* ── List ── */}
+        {isLoading && !refreshing && appointments.length === 0 ? (
           <View style={styles.loader}>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
           </View>
         ) : (
           <FlatList
-            data={filtered}
+            key={`grid-${numColumns}`}
+            data={sorted}
+            numColumns={numColumns}
             keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={styles.listContent}
+            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
+            renderItem={({ item }) => (
+              <View style={[styles.cardWrap, { maxWidth: `${100 / numColumns}%` as any }]}>
+                <AppointmentCard
+                  appointment={item}
+                  isDoctor
+                  onAccept={() => handleAccept(item.id)}
+                  onRefreshList={onRefresh}
+                  onCancel={() => router.push({
+                    pathname: "/appointment/[id]",
+                    params: { id: item.id },
+                  } as any)}
+                />
+              </View>
+            )}
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
+                tintColor={theme.colors.primary}
+                colors={[theme.colors.primary]}
               />
             }
-            ListEmptyComponent={
-              <EmptyState
-                icon="calendar-outline"
-                title="No Appointments"
-                description={
-                  activeTab === "requests"
-                    ? "No pending appointment requests"
-                    : "No appointments found"
-                }
-              />
-            }
-            renderItem={({ item }) => (
-              <View>
-                <AppointmentCard
-                  appointment={item}
-                  isDoctor
-                />
-
-                {/* Quick actions */}
-                {item.status === "REQUESTED" && (
-                  <View style={styles.quickActions}>
-                    <TouchableOpacity
-                      style={styles.quickAccept}
-                      onPress={() => handleAccept(item.id)}
-                      disabled={actingOn === String(item.id)}
-                    >
-                      {actingOn === String(item.id) ? (
-                        <ActivityIndicator color="#fff" />
-                      ) : (
-                        <>
-                          <Ionicons
-                            name="checkmark"
-                            size={16}
-                            color="#fff"
-                          />
-                          <Text style={styles.quickAcceptText}>
-                            {t("common:accept")}
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.quickView}
-                      onPress={() => handleViewDetails(item.id)}
-                    >
-                      <Ionicons
-                        name="eye-outline"
-                        size={16}
-                        color={theme.colors.primary}
-                      />
-                      <Text style={styles.quickViewText}>
-                        {t("appointment:viewDetails")}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            )}
           />
         )}
       </View>
     </ScreenContainer>
   );
 }
+const createStyles = (theme: Theme) =>
+  StyleSheet.create({
+    pageWrapper: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 1200,
+      alignSelf: "center",
+    },
 
-const styles = StyleSheet.create({
-  pageWrapper: {
-    flex: 1,
-    width: "100%",
-    maxWidth: 1100,
-    alignSelf: "center",
-  },
+    // ── Pending badge ────────────────────────────────────
+    pendingBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: theme.colors.warning + '18',
+      borderRadius: theme.radius.full,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.colors.warning + '35',
+    },
+    pendingDot: {
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+      backgroundColor: theme.colors.warning,
+    },
+    pendingText: {
+      color: theme.colors.warning,
+      fontSize: 12,
+      fontWeight: '700',
+    },
 
-  filterRow: {
-    flexDirection: "row",
-    marginBottom: 12,
-    gap: 8,
-  },
+    // ── Summary strip ────────────────────────────────────
+    summaryStrip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginHorizontal: theme.spacing.xl,
+      marginBottom: theme.spacing.md,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      overflow: 'hidden',
+      ...theme.shadows.sm,
+    },
+    summaryItem: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: theme.spacing.md,
+    },
+    summaryVal: {
+      fontSize: 22,
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    summaryLabel: {
+      fontSize: 11,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
+    },
+    summaryDivider: {
+      width: 1,
+      height: 36,
+      backgroundColor: theme.colors.border,
+    },
 
-  filterTab: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
+    // ── Filter chips ─────────────────────────────────────
+    filterWrap: {
+      marginBottom: theme.spacing.md,
+    },
+    filterList: {
+      paddingHorizontal: theme.spacing.xl,
+      gap: theme.spacing.sm,
+    },
+    filterChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.radius.full,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    filterChipActive: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+    filterLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    filterLabelActive: {
+      color: '#fff',
+    },
+    filterCount: {
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: theme.colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    filterCountActive: {
+      backgroundColor: 'rgba(255,255,255,0.25)',
+    },
+    filterCountText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: theme.colors.textSecondary,
+    },
+    filterCountTextActive: {
+      color: '#fff',
+    },
 
-  filterTabActive: {
-    backgroundColor: "#3b82f6",
-    borderColor: "#3b82f6",
-  },
-
-  filterLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#555",
-  },
-
-  filterLabelActive: {
-    color: "#fff",
-  },
-
-  loader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  countBadge: {
-    backgroundColor: "#fef3c7",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-
-  countText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#b45309",
-  },
-
-  quickActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 8,
-  },
-
-  quickAccept: {
-    flexDirection: "row",
-    backgroundColor: "#22c55e",
-    padding: 8,
-    borderRadius: 8,
-    alignItems: "center",
-    gap: 5,
-  },
-
-  quickAcceptText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-
-  quickView: {
-    flexDirection: "row",
-    padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#3b82f6",
-    alignItems: "center",
-    gap: 5,
-  },
-
-  quickViewText: {
-    color: "#3b82f6",
-    fontWeight: "600",
-  },
-});
+    // ── List ─────────────────────────────────────────────
+    listContent: {
+      paddingHorizontal: theme.spacing.xl,
+      paddingTop: theme.spacing.md,
+      paddingBottom: 120,
+      flexGrow: 1,
+    },
+    columnWrapper: {
+      gap: theme.spacing.md,
+    },
+    cardWrap: {
+      flex: 1,
+    },
+    loader: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  });

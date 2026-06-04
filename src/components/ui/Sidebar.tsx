@@ -12,6 +12,9 @@ import { TAB_CONFIGS } from "../../types/navigation";
 import { AccountSwitcher } from "./AccountSwitcher";
 import { CreateLinkedPatientModal } from "./CreateLinkedPatientModal";
 import { LinkExistingAccountModal } from "./LinkExistingAccountModal";
+import { useTranslation } from "../../i18n";
+import { setItemAsync } from "../../services/storage";
+import { authService } from "../../features/auth/services/authService";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -26,6 +29,29 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const setUser = useAuthStore((s) => s.setUser);
+  const { t, i18n } = useTranslation();
+
+  const activeLang = (i18n.language || 'en').startsWith('am') ? 'am' : 'en';
+
+  const handleLanguageToggle = () => {
+    const nextLang = activeLang === 'en' ? 'am' : 'en';
+    i18n.changeLanguage(nextLang);
+    setItemAsync('preferred_language', nextLang);
+    if (user) {
+      authService.updateProfile({ preferred_language: nextLang })
+        .then((profileData) => {
+          const existingUser = useAuthStore.getState().user;
+          if (existingUser) {
+            setUser({ ...existingUser, ...profileData, role: existingUser.role });
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to sync language preference from sidebar:", err);
+        });
+    }
+  };
 
   const userRole = user?.role ?? "PATIENT";
   const verificationStage = useDoctorStore((s) => s.verificationStage());
@@ -121,6 +147,20 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
             const isActive = activeSegment === tab.name;
             const isHovered = hovered === tab.name;
 
+            const translatedTitle = (() => {
+              switch (tab.name) {
+                case 'index': return t('common:home');
+                case 'appointments': return t('common:appointments');
+                case 'health': return t('common:health');
+                case 'chat': return t('common:chat');
+                case 'availability': return t('common:availability');
+                case 'patients': return t('common:patientsTab');
+                case 'wallet': return t('common:wallet');
+                case 'profile': return t('common:profile');
+                default: return tab.title;
+              }
+            })();
+
             return (
               <Pressable
                 key={tab.name}
@@ -150,27 +190,35 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
                 <Ionicons
                   name={tab.icon as any}
                   size={20}
-                  className={
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }
+                  color={isActive ? theme.colors.primary : theme.colors.textSecondary}
                 />
 
                 {!isCollapsed && (
                   <Text
+                    style={{ color: isActive ? theme.colors.text : theme.colors.textSecondary }}
                     className={cn(
-                      "ml-2.5 text-sm font-medium text-muted-foreground",
-                      isActive && "text-foreground font-semibold",
+                      "ml-2.5 text-sm font-medium",
+                      isActive && "font-semibold",
                     )}
                   >
-                    {tab.title}
+                    {translatedTitle}
                   </Text>
                 )}
 
                 {/* Tooltip (collapsed mode) */}
                 {isCollapsed && isHovered && (
-                  <View className="absolute left-[50px] bg-popover py-1.5 px-2.5 rounded-md border border-border shadow-sm">
-                    <Text className="text-xs text-popover-foreground">
-                      {tab.title}
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.surfaceElevated,
+                      borderColor: theme.colors.border,
+                    }}
+                    className="absolute left-[50px] py-1.5 px-2.5 rounded-md border shadow-sm"
+                  >
+                    <Text
+                      style={{ color: theme.colors.text }}
+                      className="text-xs font-medium"
+                    >
+                      {translatedTitle}
                     </Text>
                   </View>
                 )}
@@ -182,6 +230,7 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
 
       {/* FOOTER */}
       <View className={cn(isCollapsed && "items-center w-full")}>
+
         {/* Account Switcher */}
         <View className="mb-2 w-full">
           <AccountSwitcher
@@ -202,10 +251,13 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
             <Ionicons
               name="notifications-outline"
               size={20}
-              className="text-muted-foreground"
+              color={theme.colors.textSecondary}
             />
             {!isCollapsed && (
-              <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
+              <Text
+                style={{ color: theme.colors.textSecondary }}
+                className="ml-2.5 text-sm font-medium"
+              >
                 Notifications
               </Text>
             )}
@@ -221,12 +273,55 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
             <Ionicons
               name={isDark ? "sunny" : "moon"}
               size={20}
-              className="text-muted-foreground"
+              color={theme.colors.textSecondary}
             />
             {!isCollapsed && (
-              <Text className="ml-2.5 text-sm font-medium text-muted-foreground">
+              <Text
+                style={{ color: theme.colors.textSecondary }}
+                className="ml-2.5 text-sm font-medium"
+              >
                 {isDark ? "Light Mode" : "Dark Mode"}
               </Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            className={cn(
+              "flex-row items-center h-10 rounded-lg px-3 mb-1 hover:bg-muted relative",
+              isCollapsed && "px-0 justify-center w-10"
+            )}
+            onHoverIn={() => setHovered("language")}
+            onHoverOut={() => setHovered(null)}
+            onPress={handleLanguageToggle}
+          >
+            <Ionicons
+              name="language-outline"
+              size={20}
+              color={theme.colors.textSecondary}
+            />
+            {!isCollapsed && (
+              <Text
+                style={{ color: theme.colors.textSecondary }}
+                className="ml-2.5 text-sm font-medium"
+              >
+                {activeLang === 'en' ? 'አማርኛ (Amharic)' : 'English'}
+              </Text>
+            )}
+            {isCollapsed && hovered === "language" && (
+              <View
+                style={{
+                  backgroundColor: theme.colors.surfaceElevated,
+                  borderColor: theme.colors.border,
+                }}
+                className="absolute left-[50px] py-1.5 px-2.5 rounded-md border shadow-sm z-50"
+              >
+                <Text
+                  style={{ color: theme.colors.text }}
+                  className="text-xs font-medium"
+                >
+                  {activeLang === 'en' ? 'አማርኛ' : 'English'}
+                </Text>
+              </View>
             )}
           </Pressable>
 
@@ -240,10 +335,13 @@ export function Sidebar({ onNavigate, onNotificationsPress }: SidebarProps) {
             <Ionicons
               name="log-out-outline"
               size={20}
-              className="text-destructive"
+              color={theme.colors.danger}
             />
             {!isCollapsed && (
-              <Text className="ml-2.5 text-sm font-medium text-destructive">
+              <Text
+                style={{ color: theme.colors.danger }}
+                className="ml-2.5 text-sm font-medium"
+              >
                 Logout
               </Text>
             )}

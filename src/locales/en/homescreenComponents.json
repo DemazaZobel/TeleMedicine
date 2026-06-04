@@ -1,0 +1,81 @@
+{
+    "todayAppointments": {
+        "title": "Today's appointments",
+        "emptyTitle": "No appointments today",
+        "emptySubtitle": "Enjoy your free day or add availability.",
+        "viewAll": "View all appointments",
+        "status": {
+            "confirmed": "Confirmed",
+            "pending": "Pending",
+            "completed": "Completed",
+            "noShow": "No-show"
+        },
+        "mode": {
+            "online": "Online",
+            "inPerson": "In-person"
+        }
+    },
+    "quickActions": {
+        "title": "Quick actions",
+        "actions": {
+            "addHours": "Add hours",
+            "patients": "Patients",
+            "earnings": "Earnings",
+            "messages": "Messages",
+            "schedule": "Schedule",
+            "profile": "Profile"
+        }
+    },
+    "scheduleCoverage": {
+        "title": "Schedule coverage",
+        "daysSet": "{{count}}/7 days set",
+        "edit": "Edit",
+        "noHoursSet": "No hours set",
+        "add": "Add",
+        "appointments_one": "{{count}} appt",
+        "appointments_other": "{{count}} appts",
+        "fillRate": "{{percent}}%",
+        "nudge": {
+            "oneDay": "{{day}} has no availability — patients can't book you.",
+            "manyDays": "{{count}} days have no availability set. Tap to add hours."
+        },
+        "days": {
+            "mon": "Mon",
+            "tue": "Tue",
+            "wed": "Wed",
+            "thu": "Thu",
+            "fri": "Fri",
+            "sat": "Sat",
+            "sun": "Sun"
+        }
+    },
+    "suggestions": {
+        "title": "Suggestions",
+        "allGood": {
+            "title": "You're all caught up!",
+            "subtitle": "No pending actions. Have a great day, Doctor."
+        },
+        "pending": {
+            "title_one": "{{count}} appointment pending your decision",
+            "title_other": "{{count}} appointments pending your decision",
+            "subtitle": "Accept or propose a new time before they expire."
+        },
+        "availability": {
+            "titleOneDay": "{{day}} has no availability set",
+            "titleManyDays": "{{count}} days have no availability set",
+            "subtitle": "Patients cannot book you on those days."
+        },
+        "bio": {
+            "title": "Your profile has no bio",
+            "subtitle": "Patients read your bio before booking — add one to build trust."
+        },
+        "fee": {
+            "title": "Consultation fee not set",
+            "subtitle": "Set your fee so patients know what to expect before booking."
+        },
+        "reviews": {
+            "title": "No reviews yet",
+            "subtitle": "Follow up with past patients to encourage their first review."
+        }
+    }
+}

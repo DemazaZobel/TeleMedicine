@@ -12,6 +12,7 @@
   "close": "Close",
   "edit": "Edit",
   "back": "Back",
+  "goBack": "Go Back",
   "next": "Next",
   "phonePlaceholder": "+251 9XX XXX XXX",
   "letterA": "A",
@@ -177,7 +178,6 @@
   "noNotifications": "No Notifications",
   "noNotificationsYet": "No notifications yet",
   "allCaughtUp": "You're all caught up! New alerts will appear here.",
-
   "findRightDoctor": "Find the Right Doctor",
   "searchPlaceholder": "Search doctors, specialties...",
   "allSpecialties": "All Specialties",
@@ -187,7 +187,6 @@
   "viewAll": "View All",
   "bookAppointment": "Book Appointment",
   "howMedlinkWorks": "How Medlink Works",
- 
   "yourHealthJourney": "Your Health Journey Starts Here",
   "joinThousands": "Join thousands of patients across Ethiopia who trust Medlink for their healthcare needs.",
   "signUp": "Sign Up",
@@ -228,8 +227,6 @@
   "lastUpdated": "Last updated: May 2026",
   "privacyIntro": "This Privacy Policy describes how Medlink collects, uses, and protects your information.",
   "termsIntro": "Please read these Terms of Service carefully before using the Medlink platform.",
-
-
   "bookAppointmentLink": "Book Appointment",
   "onlineConsultation": "Online Consultation",
   "healthPackages": "Health Packages",
@@ -239,27 +236,25 @@
   "phone": "+251 911 234 567",
   "emailContact": "support@medlink.et",
   "specialtyAll": "All",
-    "specialtyCardiologist": "Cardiologist",
-    "specialtyDermatologist": "Dermatologist",
-    "specialtyPediatrician": "Pediatrician",
-    "specialtyGynecologist": "Gynecologist",
-    "specialtyGeneral": "General Practitioner",
-    "whatPatientsSay": "What Our Patients Say",
-
-    "testimonial1Name": "Hana T.",
-    "testimonial1Text": "Booking appointments became very easy. I can now consult with my doctor without any hassle. Thank you, Medlink!",
-  
-    "testimonial2Name": "Dawit M.",
-    "testimonial2Text": "I found a specialist in minutes and got the care I needed. Medlink is a blessing!",
-  
-    "testimonial3Name": "Selamawit K.",
-    "testimonial3Text": "The reminders help me a lot. Great app for busy people like me.",
-  
-    "testimonial4Name": "Yonas A.",
-    "testimonial4Text": "The best healthcare app in Ethiopia. Simple, fast, and reliable.",
-    "translitHint": "Type in English to get Amharic. Example:",
-"translitLongPressHint": "Long press {{button}} for the full guide.",
-"errorTitle": "Something went wrong",
-"errorGeneric": "Please try again later.",
-"errorNetwork": "Network error. Check your connection and try again."
+  "specialtyCardiologist": "Cardiologist",
+  "specialtyDermatologist": "Dermatologist",
+  "specialtyPediatrician": "Pediatrician",
+  "specialtyGynecologist": "Gynecologist",
+  "specialtyGeneral": "General Practitioner",
+  "whatPatientsSay": "What Our Patients Say",
+  "testimonial1Name": "Hana T.",
+  "testimonial1Text": "Booking appointments became very easy. I can now consult with my doctor without any hassle. Thank you, Medlink!",
+  "testimonial2Name": "Dawit M.",
+  "testimonial2Text": "I found a specialist in minutes and got the care I needed. Medlink is a blessing!",
+  "testimonial3Name": "Selamawit K.",
+  "testimonial3Text": "The reminders help me a lot. Great app for busy people like me.",
+  "testimonial4Name": "Yonas A.",
+  "testimonial4Text": "The best healthcare app in Ethiopia. Simple, fast, and reliable.",
+  "translitHint": "Type in English to get Amharic. Example:",
+  "translitLongPressHint": "Long press {{button}} for the full guide.",
+  "errorTitle": "Something went wrong",
+  "errorGeneric": "Please try again later.",
+  "errorNetwork": "Network error. Check your connection and try again.",
+  "patientsTab": "Patients",
+  "verificationTitle": "Verification"
 }

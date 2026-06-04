@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from '../../../i18n';
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,9 +15,21 @@ import type { Theme } from "../../../theme";
 import { useTheme } from "../../../theme";
 import type { AppointmentMode } from "../types/bookingTypes";
 
+// JS getDay() 0=Sun…6=Sat  →  Python weekday() 0=Mon…6=Sun
+const JS_TO_PYTHON_WEEKDAY = [6, 0, 1, 2, 3, 4, 5];
+
+function toLocalISOString(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  );
+}
+
 interface RescheduleModalProps {
   visible: boolean;
   doctorId: string | number;
+  isDoctor?: boolean;
   onClose: () => void;
   onConfirm: (payload: any) => void;
   isLoading: boolean;
@@ -26,43 +38,51 @@ interface RescheduleModalProps {
 export function RescheduleModal({
   visible,
   doctorId,
+  isDoctor = false,
   onClose,
   onConfirm,
   isLoading,
 }: RescheduleModalProps) {
-  const { t } = useTranslation();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { fetchDoctorAvailability, doctorAvailabilityRules } = useBookingStore();
+  const { fetchDoctorAvailability, fetchAvailabilityRules, doctorAvailabilityRules, availabilityRules } = useBookingStore();
+
+  const rules = isDoctor ? availabilityRules : doctorAvailabilityRules;
 
   const [mode, setMode] = useState<AppointmentMode>("ONLINE");
   const [notes, setNotes] = useState("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
 
-  // Fetch real availability when modal opens
+  // Dropdown Picker Overlay States
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+
   useEffect(() => {
-    if (visible && doctorId) {
-      fetchDoctorAvailability(doctorId);
+    if (visible) {
+      if (isDoctor) {
+        fetchAvailabilityRules();
+      } else if (doctorId) {
+        fetchDoctorAvailability(doctorId);
+      }
     }
-  }, [visible, doctorId]);
+  }, [visible, doctorId, isDoctor]);
 
-  // Generate real slots from doctor rules
   const allSlots = useMemo(() => {
-    if (!doctorAvailabilityRules || doctorAvailabilityRules.length === 0)
-      return [];
-
+    if (!rules || rules.length === 0) return [];
     const generatedSlots = [];
     const today = new Date();
 
-    for (let dayOffset = 0; dayOffset <= 14; dayOffset++) {
+    for (let dayOffset = 1; dayOffset <= 14; dayOffset++) {
       const currentDay = new Date(today);
       currentDay.setDate(today.getDate() + dayOffset);
-      const weekday = currentDay.getDay();
 
-      const dateISO = currentDay.toISOString().split('T')[0];
-      const rulesForDay = doctorAvailabilityRules.filter(
-        (r) => (r.weekday === weekday || r.specific_date === dateISO) && r.is_active,
+      const jsWeekday = currentDay.getDay();
+      const pyWeekday = JS_TO_PYTHON_WEEKDAY[jsWeekday];
+      const dateISO = `${currentDay.getFullYear()}-${String(currentDay.getMonth() + 1).padStart(2, '0')}-${String(currentDay.getDate()).padStart(2, '0')}`;
+
+      const rulesForDay = rules.filter(
+        (r) => r.is_active && (r.specific_date ? r.specific_date === dateISO : r.weekday === pyWeekday)
       );
 
       for (const rule of rulesForDay) {
@@ -76,21 +96,17 @@ export function RescheduleModal({
         currentSlotStart.setHours(h, m, 0, 0);
 
         while (currentSlotStart.getTime() + 3600000 <= ruleEnd.getTime()) {
-          if (dayOffset > 0 || currentSlotStart.getTime() > today.getTime()) {
-            generatedSlots.push({
-              start: new Date(currentSlotStart),
-              end: new Date(currentSlotStart.getTime() + 3600000),
-            });
-          }
+          generatedSlots.push({
+            start: new Date(currentSlotStart),
+            end: new Date(currentSlotStart.getTime() + 3600000),
+          });
           currentSlotStart.setTime(currentSlotStart.getTime() + 3600000);
         }
       }
     }
-
     return generatedSlots.sort((a, b) => a.start.getTime() - b.start.getTime());
-  }, [doctorAvailabilityRules]);
+  }, [rules]);
 
-  // Group slots by date
   const groupedSlots = useMemo(() => {
     const groups: Record<string, typeof allSlots> = {};
     allSlots.forEach(slot => {
@@ -103,12 +119,13 @@ export function RescheduleModal({
 
   const uniqueDates = useMemo(() => Object.keys(groupedSlots), [groupedSlots]);
 
-  // Set initial selected date
   useEffect(() => {
-    if (uniqueDates.length > 0 && !selectedDate) {
+    if (uniqueDates.length > 0) {
       setSelectedDate(uniqueDates[0]);
+    } else {
+      setSelectedDate(null);
     }
-  }, [uniqueDates, selectedDate]);
+  }, [uniqueDates]);
 
   const activeDaySlots = useMemo(() => {
     return (selectedDate ? groupedSlots[selectedDate] : []) || [];
@@ -119,136 +136,168 @@ export function RescheduleModal({
       setNotes("");
       setMode("ONLINE");
       setSelectedSlotIndex(null);
+      setSelectedDate(null);
     }
   }, [visible]);
 
   const handleConfirm = () => {
     if (selectedSlotIndex === null || !selectedDate) return;
-    
     const selectedSlot = activeDaySlots[selectedSlotIndex];
     onConfirm({
-      proposed_start: selectedSlot.start.toISOString(),
-      proposed_end: selectedSlot.end.toISOString(),
+      proposed_start: toLocalISOString(selectedSlot.start),
+      proposed_end: toLocalISOString(selectedSlot.end),
       proposed_mode: mode,
       notes,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), 
+      expires_at: toLocalISOString(new Date(Date.now() + 24 * 60 * 60 * 1000)),
     });
+  };
+
+  // UI Format Helpers
+  const formatDropdownDate = (dateString: string | null) => {
+    if (!dateString) return "Select a date";
+    const d = new Date(dateString);
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatDropdownTime = (index: number | null) => {
+    if (index === null || !activeDaySlots[index]) return "Select a time";
+    return activeDaySlots[index].start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
   return (
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title={t("appointment:proposeReschedule")}
-      subtitle={t("appointment:proposeChangeInstructions")}
+      title="Propose Reschedule"
+      subtitle="Suggest a new time and mode for this appointment."
       maxWidth={520}
     >
       <View style={styles.container}>
-        {/* DATE STRIP */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.label}>1. Select New Date</Text>
-          {selectedDate && (
-            <Text style={styles.monthHeader}>
-              {new Date(selectedDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-            </Text>
-          )}
+
+        {/* DROPDOWNS ROW */}
+        <View style={styles.dropdownRow}>
+          <View style={styles.dropdownField}>
+            <Text style={styles.label}>Select New Date</Text>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => setDatePickerVisible(true)}
+            >
+              <Text style={styles.dropdownButtonText}>{formatDropdownDate(selectedDate)}</Text>
+              <Ionicons name="chevron-down" size={18} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.dropdownField}>
+            <Text style={styles.label}>Select New Time</Text>
+            <TouchableOpacity
+              style={[styles.dropdownButton, !selectedDate && styles.dropdownDisabled]}
+              disabled={!selectedDate}
+              onPress={() => setTimePickerVisible(true)}
+            >
+              <Text style={styles.dropdownButtonText}>{formatDropdownTime(selectedSlotIndex)}</Text>
+              <Ionicons name="chevron-down" size={18} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.dateStrip}
-          contentContainerStyle={styles.dateStripContent}
-        >
-          {uniqueDates.map((dateKey) => {
-            const date = new Date(dateKey);
-            const isActive = selectedDate === dateKey;
-            return (
-              <TouchableOpacity
-                key={dateKey}
-                style={[styles.dateCard, isActive && styles.dateCardActive]}
-                onPress={() => {
-                  setSelectedDate(dateKey);
-                  setSelectedSlotIndex(null);
-                }}
-              >
-                <Text style={[styles.dateMonth, isActive && styles.activeText]}>
-                  {date.toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}
-                </Text>
-                <Text style={[styles.dateDay, isActive && styles.activeText]}>
-                  {date.getDate()}
-                </Text>
-                <Text style={[styles.dateWeekday, isActive && styles.activeText]}>
-                  {date.toLocaleDateString(undefined, { weekday: 'short' })}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
 
-        {/* TIME GRID */}
-        <Text style={styles.label}>2. Select New Time</Text>
-        {activeDaySlots.length > 0 ? (
-          <View style={styles.timeGrid}>
-            {activeDaySlots.map((slot, index) => {
-              const isActive = selectedSlotIndex === index;
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[styles.timeSlot, isActive && styles.timeSlotActive]}
-                  onPress={() => setSelectedSlotIndex(index)}
-                >
-                  <Text style={[styles.timeText, isActive && styles.activeText]}>
-                    {slot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={32} color={theme.colors.textTertiary} />
-            <Text style={styles.emptyText}>{t("doctor:noSlotsOnDay")}</Text>
-          </View>
-        )}
-
-        {/* MODE SELECTOR */}
-        <Text style={styles.label}>3. Consultation Mode</Text>
+        {/* CONSULTATION MODE SELECTOR */}
+        <Text style={styles.label}>Consultation Mode</Text>
         <View style={styles.modeContainer}>
           <TouchableOpacity
             style={[styles.modeOption, mode === 'ONLINE' && styles.modeOptionActive]}
             onPress={() => setMode('ONLINE')}
           >
             <Ionicons name="videocam" size={18} color={mode === 'ONLINE' ? theme.colors.primary : theme.colors.textTertiary} />
-            <Text style={[styles.modeLabel, mode === 'ONLINE' && { color: theme.colors.primary }]}>{t("appointment:online")}</Text>
+            <Text style={[styles.modeLabel, mode === 'ONLINE' && { color: theme.colors.primary }]}>Online</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.modeOption, mode === 'IN_PERSON' && styles.modeOptionActive]}
             onPress={() => setMode('IN_PERSON')}
           >
             <Ionicons name="people" size={18} color={mode === 'IN_PERSON' ? theme.colors.primary : theme.colors.textTertiary} />
-            <Text style={[styles.modeLabel, mode === 'IN_PERSON' && { color: theme.colors.primary }]}>{t("appointment:inPerson")}</Text>
+            <Text style={[styles.modeLabel, mode === 'IN_PERSON' && { color: theme.colors.primary }]}>In Person</Text>
           </TouchableOpacity>
         </View>
 
+        {/* REASON INPUT */}
         <Input
-          label={t("appointment:reasonForChange")}
-          placeholder={t("appointment:rescheduleReasonPlaceholder")}
+          label="Reason for Change"
+          placeholder="E.g., I have a conflicting meeting..."
           value={notes}
           onChangeText={setNotes}
           containerStyle={styles.reasonInput}
         />
 
+        {/* ACTION FOOTER */}
         <View style={styles.footer}>
           <Button title="Cancel" variant="outline" onPress={onClose} disabled={isLoading} style={styles.footerBtn} />
-          <Button 
-            title={t("common:propose")} 
-            onPress={handleConfirm} 
+          <Button
+            title="Propose"
+            onPress={handleConfirm}
             loading={isLoading}
             disabled={isLoading || allSlots.length === 0 || selectedSlotIndex === null}
             style={styles.footerBtn}
           />
         </View>
       </View>
+
+      {/* ==================== SELECTOR DROPDOWN OVERLAYS ==================== */}
+
+      {/* Date Picker Modal */}
+      <Modal visible={datePickerVisible} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setDatePickerVisible(false)}>
+          <View style={styles.pickerCard}>
+            <Text style={styles.pickerTitle}>Available Dates</Text>
+            <ScrollView bounces={false}>
+              {uniqueDates.map((dateKey) => (
+                <TouchableOpacity
+                  key={dateKey}
+                  style={[styles.pickerOption, selectedDate === dateKey && styles.pickerOptionSelected]}
+                  onPress={() => {
+                    setSelectedDate(dateKey);
+                    setSelectedSlotIndex(null); // Reset time when date changes
+                    setDatePickerVisible(false);
+                  }}
+                >
+                  <Text style={[styles.pickerOptionText, selectedDate === dateKey && styles.pickerOptionTextSelected]}>
+                    {formatDropdownDate(dateKey)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Time Picker Modal */}
+      <Modal visible={timePickerVisible} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setTimePickerVisible(false)}>
+          <View style={styles.pickerCard}>
+            <Text style={styles.pickerTitle}>Available Slots</Text>
+            {activeDaySlots.length > 0 ? (
+              <ScrollView bounces={false}>
+                {activeDaySlots.map((slot, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.pickerOption, selectedSlotIndex === index && styles.pickerOptionSelected]}
+                    onPress={() => {
+                      setSelectedSlotIndex(index);
+                      setTimePickerVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.pickerOptionText, selectedSlotIndex === index && styles.pickerOptionTextSelected]}>
+                      {slot.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={styles.noSlotsText}>Please select a valid date first.</Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
     </ModalBase>
   );
 }
@@ -258,111 +307,46 @@ const createStyles = (theme: Theme) =>
     container: {
       paddingBottom: 10,
     },
-    sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'baseline',
-      marginBottom: 12,
-    },
-    monthHeader: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: theme.colors.primary,
-    },
     label: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: '800',
       color: theme.colors.textTertiary,
       textTransform: 'uppercase',
-      letterSpacing: 1,
+      letterSpacing: 0.8,
+      marginBottom: 8,
     },
-    dateStrip: {
-      marginBottom: 24,
-    },
-    dateStripContent: {
-      paddingRight: 20,
-    },
-    dateCard: {
-      width: 70,
-      height: 90,
-      backgroundColor: theme.colors.background,
-      borderRadius: 16,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 10,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      paddingVertical: 8,
-    },
-    dateCardActive: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
-      ...theme.shadows.md,
-    },
-    dateMonth: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: theme.colors.textTertiary,
-      marginBottom: 2,
-    },
-    dateWeekday: {
-      fontSize: 11,
-      fontWeight: '600',
-      color: theme.colors.textTertiary,
-      marginTop: 2,
-    },
-    dateDay: {
-      fontSize: 20,
-      fontWeight: '800',
-      color: theme.colors.text,
-    },
-    activeText: {
-      color: '#FFF',
-    },
-    timeGrid: {
+    dropdownRow: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 10,
-      marginBottom: 24,
+      gap: 12,
+      marginBottom: 20,
     },
-    timeSlot: {
-      width: '31%',
-      paddingVertical: 12,
+    dropdownField: {
+      flex: 1,
+    },
+    dropdownButton: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       backgroundColor: theme.colors.background,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      height: 48,
     },
-    timeSlotActive: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
+    dropdownDisabled: {
+      opacity: 0.5,
     },
-    timeText: {
+    dropdownButtonText: {
       fontSize: 14,
-      fontWeight: '700',
-      color: theme.colors.textSecondary,
-    },
-    emptyState: {
-      padding: 30,
-      backgroundColor: theme.colors.background,
-      borderRadius: 16,
-      alignItems: 'center',
-      marginBottom: 24,
-      borderStyle: 'dashed',
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    emptyText: {
-      fontSize: 13,
-      color: theme.colors.textTertiary,
-      marginTop: 10,
-      textAlign: 'center',
+      fontWeight: '600',
+      color: theme.colors.text,
     },
     modeContainer: {
       flexDirection: 'row',
       gap: 12,
-      marginBottom: 24,
+      marginBottom: 20,
     },
     modeOption: {
       flex: 1,
@@ -375,6 +359,7 @@ const createStyles = (theme: Theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.border,
+      height: 46,
     },
     modeOptionActive: {
       borderColor: theme.colors.primary,
@@ -398,5 +383,54 @@ const createStyles = (theme: Theme) =>
     },
     footerBtn: {
       flex: 1,
-    }
+    },
+    /* Modal Overlay Selector Pickers styles */
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    pickerCard: {
+      width: '100%',
+      maxWidth: 340,
+      backgroundColor: theme.colors.background,
+      borderRadius: 16,
+      paddingVertical: 16,
+      maxHeight: 320,
+      ...theme.shadows.md,
+    },
+    pickerTitle: {
+      fontSize: 15,
+      fontWeight: '800',
+      color: theme.colors.text,
+      paddingHorizontal: 20,
+      marginBottom: 10,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    pickerOption: {
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+    },
+    pickerOptionSelected: {
+      backgroundColor: theme.colors.primary + '10',
+    },
+    pickerOptionText: {
+      fontSize: 15,
+      color: theme.colors.textSecondary,
+    },
+    pickerOptionTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: '700',
+    },
+    noSlotsText: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      color: theme.colors.textTertiary,
+      fontStyle: 'italic',
+    },
   });

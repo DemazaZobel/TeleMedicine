@@ -4,6 +4,7 @@ import type {
   PatientProfile,
   PatientProfileUpdate,
 } from '../features/patient/types/patient.types';
+import { parseBackendError } from '../lib/utils';
 
 // ─── State ───────────────────────────────────────────────
 interface PatientState {
@@ -40,10 +41,7 @@ export const usePatientStore = create<PatientStore>((set, get) => ({
       const data = await patientApi.getMedicalInfo();
       set({ medicalInfo: data, isLoadingInfo: false });
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.detail ??
-        err?.message ??
-        'Failed to fetch medical info';
+      const msg = parseBackendError(err);
       set({ error: msg, isLoadingInfo: false });
     }
   },
@@ -54,10 +52,7 @@ export const usePatientStore = create<PatientStore>((set, get) => ({
       const data = await patientApi.updateMedicalInfo(payload);
       set({ medicalInfo: data, isUpdatingInfo: false });
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.detail ??
-        err?.message ??
-        'Failed to update medical info';
+      const msg = parseBackendError(err);
       set({ error: msg, isUpdatingInfo: false });
       throw err;
     }

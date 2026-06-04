@@ -11,6 +11,8 @@ import { useDiscoveryStore } from "../../store/discovery.store";
 import { useDoctorStore } from "../../store/doctor.store";
 import { useTheme } from "../../theme";
 import { TAB_CONFIGS } from "../../types/navigation";
+import { setItemAsync } from "../../services/storage";
+import { authService } from "../../features/auth/services/authService";
 
 interface NavbarProps {
   onNavigate?: () => void;
@@ -18,14 +20,36 @@ interface NavbarProps {
 }
 
 export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
   const segments = useSegments();
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const setUser = useAuthStore((s) => s.setUser);
   const setSearchQuery = useDiscoveryStore((s) => s.setSearchQuery);
+
+  const activeLang = (i18n.language || 'en').startsWith('am') ? 'am' : 'en';
+
+  const handleLanguageToggle = () => {
+    const nextLang = activeLang === 'en' ? 'am' : 'en';
+    i18n.changeLanguage(nextLang);
+    setItemAsync('preferred_language', nextLang);
+    if (user) {
+      authService.updateProfile({ preferred_language: nextLang })
+        .then((profileData) => {
+          const existingUser = useAuthStore.getState().user;
+          if (existingUser) {
+            setUser({ ...existingUser, ...profileData, role: existingUser.role });
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to sync language preference from navbar:", err);
+        });
+    }
+  };
 
   const userRole = user?.role ?? "PATIENT";
   const verificationStage = useDoctorStore((s) => s.verificationStage());
@@ -75,6 +99,20 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
           const isActive = activeSegment === tab.name;
           const isHovered = hovered === tab.name;
 
+          const translatedTitle = (() => {
+            switch (tab.name) {
+              case 'index': return t('common:home');
+              case 'appointments': return t('common:appointments');
+              case 'health': return t('common:health');
+              case 'chat': return t('common:chat');
+              case 'availability': return t('common:availability');
+              case 'patients': return t('common:patientsTab');
+              case 'wallet': return t('common:wallet');
+              case 'profile': return t('common:profile');
+              default: return tab.title;
+            }
+          })();
+
           return (
             <Pressable
               key={tab.name}
@@ -107,7 +145,7 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
                   isActive && "text-primary font-semibold"
                 )}
               >
-                {tab.title}
+                {translatedTitle}
               </Text>
             </Pressable>
           );
@@ -145,6 +183,18 @@ export function Navbar({ onNavigate, onNotificationsPress }: NavbarProps) {
         >
           <Ionicons
             name={isDark ? "sunny" : "moon"}
+            size={19}
+            className="text-muted-foreground"
+          />
+        </Pressable>
+
+        {/* Language toggle */}
+        <Pressable
+          onPress={handleLanguageToggle}
+          className="w-9 h-9 rounded-lg items-center justify-center hover:bg-muted"
+        >
+          <Ionicons
+            name="language-outline"
             size={19}
             className="text-muted-foreground"
           />

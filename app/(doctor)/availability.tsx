@@ -1,6 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from '../../src/i18n';
-import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator, Alert, FlatList,
@@ -11,14 +9,13 @@ import {
   EmptyState, PageHeader, ScreenContainer,
 } from "../../src/components/ui";
 import { AddAvailabilityModal } from "../../src/features/booking/components/AddAvailabilityModal";
+import { useTranslation } from "../../src/i18n";
 import { useBookingStore } from "../../src/store/booking.store";
 import type { Theme } from "../../src/theme";
 import { useTheme } from "../../src/theme";
 
-// Python weekday: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
-const PYTHON_DAYS = [
-  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-];
+// Python weekday index → translation key (Mon=0 … Sun=6)
+const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 const DAY_COLORS = [
   "#3B82F6", // Monday
@@ -30,10 +27,31 @@ const DAY_COLORS = [
   "#F97316", // Sunday
 ];
 
+function to12Hour(time24: string): string {
+  if (!time24) return '';
+  const [hourStr, minStr] = time24.split(':');
+  let h = parseInt(hourStr, 10);
+  const m = minStr?.slice(0, 2) ?? '00';
+  if (isNaN(h)) return time24;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${m} ${ampm}`;
+}
+
+function slotDuration(start: string, end: string): string {
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  const mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) return '';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
 export default function AvailabilityScreen() {
-  const { t } = useTranslation();
-  const router = useRouter();
   const { theme } = useTheme();
+  const { t } = useTranslation('availability');
   const styles = createStyles(theme);
 
   const {
@@ -48,8 +66,6 @@ export default function AvailabilityScreen() {
 
   useEffect(() => { fetchAvailabilityRules(); }, []);
 
-
-  // Replace handleDelete:
   const handleDelete = (id: string | number) => {
     if (!id) {
       console.warn('[AvailabilityScreen] handleDelete: invalid id', id);
@@ -62,24 +78,29 @@ export default function AvailabilityScreen() {
         .then(() => console.log('[AvailabilityScreen] Delete successful'))
         .catch((e: any) => {
           console.error('[AvailabilityScreen] Delete error:', e?.response?.data || e?.message);
-          Alert.alert("Error", "Could not delete this slot. Please try again.");
+          Alert.alert(t('delete.errorTitle'), t('delete.errorMessage'));
         });
     };
 
-    // ✅ Alert.alert buttons are broken on web Expo — use window.confirm instead
     if (Platform.OS === 'web') {
-      if (window.confirm("Delete this working hour?")) doDelete();
+      if (window.confirm(t('delete.webConfirm'))) doDelete();
       return;
     }
 
-    Alert.alert("Remove Schedule", "Are you sure you want to delete this working hour?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: doDelete },
-    ]);
+    Alert.alert(
+      t('delete.alertTitle'),
+      t('delete.alertMessage'),
+      [
+        { text: t('delete.cancel'), style: "cancel" },
+        { text: t('delete.confirm'), style: "destructive", onPress: doDelete },
+      ]
+    );
   };
 
-  const grouped = PYTHON_DAYS.map((day, index) => ({
-    day,
+  // Build grouped data — day names come from translations
+  const grouped = DAY_KEYS.map((dayKey, index) => ({
+    dayKey,
+    dayName: t(`days.${dayKey}`),
     index,
     color: DAY_COLORS[index],
     rules: [...(availabilityRules || [])]
@@ -96,27 +117,36 @@ export default function AvailabilityScreen() {
         <View style={[styles.dayAccent, { backgroundColor: item.color }]} />
         <View style={[styles.dayBadge, { backgroundColor: item.color + "15" }]}>
           <Text style={[styles.dayBadgeText, { color: item.color }]}>
-            {item.day.substring(0, 3).toUpperCase()}
+            {item.dayName.substring(0, 3).toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.dayFullText}>{item.day}</Text>
+        <Text style={styles.dayFullText}>{item.dayName}</Text>
         <View style={styles.slotCount}>
           <Text style={styles.slotCountText}>
-            {item.rules.length} slot{item.rules.length > 1 ? "s" : ""}
+            {t(
+              item.rules.length === 1 ? 'slots.count_one' : 'slots.count_other',
+              { count: item.rules.length }
+            )}
           </Text>
         </View>
       </View>
 
       {item.rules.map((rule) => {
-        // Debug: log the rule id to confirm it's present
         console.log("Rule:", rule.id, rule.weekday, rule.start_time);
         return (
           <View key={String(rule.id)} style={styles.slotRow}>
             <View style={styles.slotTimeWrapper}>
               <Ionicons name="time-outline" size={14} color={item.color} />
-              <Text style={styles.slotTime}>{rule.start_time.slice(0, 5)}</Text>
+              <Text style={styles.slotTime}>{to12Hour(rule.start_time)}</Text>
               <View style={styles.slotDash} />
-              <Text style={styles.slotTime}>{rule.end_time.slice(0, 5)}</Text>
+              <Text style={styles.slotTime}>{to12Hour(rule.end_time)}</Text>
+              {slotDuration(rule.start_time, rule.end_time) ? (
+                <View style={styles.durationBadge}>
+                  <Text style={styles.durationText}>
+                    {slotDuration(rule.start_time, rule.end_time)}
+                  </Text>
+                </View>
+              ) : null}
             </View>
             <TouchableOpacity
               onPress={() => handleDelete(rule.id)}
@@ -133,43 +163,60 @@ export default function AvailabilityScreen() {
   );
 
   return (
-    <ScreenContainer padded={false} style={{ backgroundColor: theme.colors.background }}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>{t("doctor:workingHoursTitle")}</Text>
-          <Text style={styles.subtitle}>Set your weekly consultation schedule</Text>
-        </View>
-        <Button
-          title={t("doctor:addHours")}
-          size="sm"
-          onPress={() => setShowAddModal(true)}
-          icon={<Ionicons name="add" size={18} color="#FFF" />}
-        />
-      </View>
+    <ScreenContainer scrollable={false} padded constrained>
+      <PageHeader
+        title={t('screen.title')}
+        subtitle={t('screen.subtitle')}
+        rightElement={
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+          >
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text style={styles.addButtonText}>{t('addButton')}</Text>
+          </TouchableOpacity>
+        }
+      />
 
-      <View style={styles.content}>
-        {isLoading && availabilityRules.length === 0 ? (
-          <ActivityIndicator
-            size="large"
-            color={theme.colors.primary}
-            style={{ marginTop: 100 }}
-          />
-        ) : (
-          <FlatList
-            data={[...availabilityRules].sort((a, b) => a.weekday - b.weekday)}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderRule}
-            contentContainerStyle={styles.listContainer}
-            ListEmptyComponent={
-              <EmptyState
-                icon="calendar-outline"
-                title={t("doctor:noScheduleSet")}
-                description={t("doctor:onboardingNotice")}
-              />
-            }
-          />
-        )}
-      </View>
+      {totalSlots > 0 && (
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{activeDays}</Text>
+            <Text style={styles.statLabel}>{t('stats.activeDays')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{totalSlots}</Text>
+            <Text style={styles.statLabel}>{t('stats.totalSlots')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{7 - activeDays}</Text>
+            <Text style={styles.statLabel}>{t('stats.daysOff')}</Text>
+          </View>
+        </View>
+      )}
+
+      {isLoading && totalSlots === 0 ? (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={grouped}
+          keyExtractor={(item) => String(item.index)}
+          renderItem={renderDayGroup}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <EmptyState
+              icon="calendar-outline"
+              title={t('empty.title')}
+              description={t('empty.description')}
+            />
+          }
+        />
+      )}
 
       <AddAvailabilityModal
         visible={showAddModal}
@@ -325,5 +372,19 @@ const createStyles = (theme: Theme) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
+    },
+    durationBadge: {
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginLeft: 4,
+    },
+    durationText: {
+      fontSize: 11,
+      color: theme.colors.textSecondary,
+      fontWeight: '500',
     },
   });

@@ -1,0 +1,9 @@
+{
+    "card": {
+        "accessibilityLabel": "Open profile for Dr. {{firstName}} {{lastName}}",
+        "doctorName": "Dr. {{firstName}} {{lastName}}",
+        "fee": "Br {{amount}}",
+        "experience": "{{years}} yrs exp",
+        "available": "Available"
+    }
+}

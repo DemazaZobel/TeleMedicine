@@ -1,0 +1,9 @@
+{
+    "card": {
+        "accessibilityLabel": "ዶ/ር {{firstName}} {{lastName}} መገለጫ ይክፈቱ",
+        "doctorName": "ዶ/ር {{firstName}} {{lastName}}",
+        "fee": "ብር {{amount}}",
+        "experience": "{{years}} ዓመት ልምድ",
+        "available": "ይገኛሉ"
+    }
+}

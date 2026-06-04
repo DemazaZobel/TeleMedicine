@@ -73,12 +73,17 @@ export function DocumentUpload() {
       formData.append('document_type', documentType.trim());
       formData.append('license_number', licenseNumber.trim());
       
-      // React Native trick to append files to FormData
-      formData.append('file', {
-        uri: selectedFile.uri,
-        name: selectedFile.name,
-        type: selectedFile.mimeType,
-      } as any);
+      if (Platform.OS === 'web') {
+        const response = await fetch(selectedFile.uri);
+        const blob = await response.blob();
+        formData.append('file', blob, selectedFile.name);
+      } else {
+        formData.append('file', {
+          uri: selectedFile.uri,
+          name: selectedFile.name,
+          type: selectedFile.mimeType,
+        } as any);
+      }
 
       await uploadDocument(formData);
 

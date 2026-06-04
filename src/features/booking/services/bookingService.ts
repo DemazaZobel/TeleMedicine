@@ -1,4 +1,4 @@
-import { apiClient } from "../../../services/api";
+import api, { apiClient } from "../../../services/api";
 import type {
   AppointmentBookingPayload,
   AppointmentCancelPayload,
@@ -94,10 +94,10 @@ export const bookingService = {
     payload: AppointmentDoctorDecisionPayload,
   ): Promise<
     | {
-        message?: string;
-        appointment?: AppointmentDetail;
-        change_request?: AppointmentChangeRequestDetail;
-      }
+      message?: string;
+      appointment?: AppointmentDetail;
+      change_request?: AppointmentChangeRequestDetail;
+    }
     | AppointmentDetail
   > => {
     const { data } = await apiClient.post(
@@ -271,4 +271,16 @@ export const bookingService = {
     const { data } = await apiClient.get<PaymentDetail[]>("/payments/history/");
     return data;
   },
+
+  getPayoutMethod: () =>
+    api.get('/payments/payout-method/').then(res => res.data),
+
+  savePayoutMethod: (payload: any) =>
+    api.put('/payments/payout-method/', payload).then(res => res.data),
+
+  getWithdrawals: () =>
+    api.get('/payments/withdrawals/').then(res => res.data),
+
+  createWithdrawal: (payload: any) =>
+    api.post('/payments/withdrawals/', payload).then(res => res.data),
 };

@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useTranslation } from '../../../i18n';
 import { Button } from '../../../components/ui';
 import { ModalBase } from '../../../components/ui/ModalBase';
+import { useTranslation } from '../../../i18n';
 import { Theme, useTheme } from '../../../theme';
 
 // JS weekday (Sun=0…Sat=6) → Python weekday (Mon=0…Sun=6)
@@ -54,7 +54,7 @@ interface AddAvailabilityModalProps {
 }
 
 export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, initialData }: AddAvailabilityModalProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("availability");
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -128,10 +128,8 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
     <ModalBase
       visible={visible}
       onClose={onClose}
-      title={initialData ? "Edit Working Hours" : "Add Working Hours"}
-      subtitle={initialData
-        ? "Modify your existing schedule block."
-        : "Define when patients can book your time."}
+      title={initialData ? t("editWorkingHoursTitle") : t("addWorkingHoursTitle")}
+      subtitle={initialData ? t("editWorkingHoursSubtitle") : t("addWorkingHoursSubtitle")}
       maxWidth={500}
     >
       <View style={styles.container}>
@@ -139,8 +137,8 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
         {/* ── Recurring toggle ── */}
         <View style={styles.recurringSection}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.recurringTitle}>{t("doctor:repeatWeekly")}</Text>
-            <Text style={styles.recurringSubtitle}>{t("doctor:makeWeekly")}</Text>
+            <Text style={styles.recurringTitle}>{t("repeatWeekly")}</Text>
+            <Text style={styles.recurringSubtitle}>{t("makeWeekly")}</Text>
           </View>
           <Switch
             value={isRecurring}
@@ -155,7 +153,7 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
         {/* ── Day / date picker ── */}
         {isRecurring ? (
           <View style={styles.section}>
-            <Text style={styles.label}>{t("doctor:selectDay")}</Text>
+            <Text style={styles.label}>{t("selectDay")}</Text>
             <View style={styles.daySelector}>
               {DAYS.map((day, index) => {
                 const isActive = weekday === index;
@@ -175,8 +173,8 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.label}>{t("doctor:selectSpecificDate")}</Text>
-            <TouchableOpacity 
+            <Text style={styles.label}>{t("selectSpecificDate")}</Text>
+            <TouchableOpacity
               style={styles.datePickerBtn}
               onPress={() => {
                 if (Platform.OS === 'web') {
@@ -279,14 +277,14 @@ export function AddAvailabilityModal({ visible, onClose, onConfirm, isLoading, i
         {/* ── Actions ── */}
         <View style={styles.actions}>
           <Button
-            title="Cancel"
+            title={t("cancelBtn")}
             variant="outline"
             onPress={onClose}
             disabled={isLoading}
             style={styles.actionBtn}
           />
           <Button
-            title={initialData ? "Update Schedule" : "Save Hours"}
+            title={initialData ? t("updateScheduleBtn") : t("saveHoursBtn")}
             onPress={handleAdd}
             loading={isLoading}
             disabled={isLoading}

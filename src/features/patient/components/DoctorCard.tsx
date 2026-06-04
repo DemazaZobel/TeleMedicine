@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from '../../../i18n';
 import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { StarRating } from '../../../components/ui';
+import { useTranslation } from '../../../i18n';
+import { getFullMediaUrl } from '../../../lib/utils';
 import type { Theme } from '../../../theme';
 import { useTheme } from '../../../theme';
 import type { ProviderSearchResult } from '../../doctor/types/doctor.types';
@@ -13,7 +14,7 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: DoctorCardProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('doctorCard');
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -22,13 +23,17 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
       onPress={onPress}
       style={({ pressed }) => [styles.container, pressed && styles.containerPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`Open profile for Dr. ${doctor.first_name} ${doctor.last_name}`}
+      accessibilityLabel={t('card.accessibilityLabel', { firstName: doctor.first_name, lastName: doctor.last_name })}
     >
       <View style={styles.backgroundGlow} />
       <View style={styles.mainContent}>
         <View style={styles.avatarContainer}>
           <Image
-            source={require('../../../../assets/images/doctor-avatar.png')}
+            source={
+              doctor.profile_image
+                ? { uri: getFullMediaUrl(doctor.profile_image) || '' }
+                : require('../../../../assets/images/doctor-avatar.png')
+            }
             style={styles.avatar}
           />
           {doctor.is_verified && (
@@ -42,12 +47,12 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
           <View style={styles.topRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.name} numberOfLines={1}>
-                Dr. {doctor.first_name} {doctor.last_name}
+                {t('card.doctorName', { firstName: doctor.first_name, lastName: doctor.last_name })}
               </Text>
               <Text style={styles.specialization}>{doctor.specialization}</Text>
             </View>
             <View style={styles.priceTag}>
-              <Text style={styles.priceText}>Br {doctor.consultation_fee}</Text>
+              <Text style={styles.priceText}>{t('card.fee', { amount: doctor.consultation_fee })}</Text>
             </View>
           </View>
 
@@ -58,12 +63,12 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, onPress }: Do
             <View style={styles.dot} />
             <View style={styles.statItem}>
               <Ionicons name="briefcase-outline" size={14} color={theme.colors.textTertiary} />
-              <Text style={styles.statLabel}>{doctor.years_of_experience} yrs exp</Text>
+              <Text style={styles.statLabel}>{t('card.experience', { years: doctor.years_of_experience })}</Text>
             </View>
             <View style={styles.dot} />
             <View style={styles.statItem}>
               <Ionicons name="checkmark-circle-outline" size={14} color={theme.colors.success} />
-              <Text style={styles.statLabel}>{t("doctor:available")}</Text>
+              <Text style={styles.statLabel}>{t('card.available')}</Text>
             </View>
           </View>
         </View>
@@ -96,7 +101,6 @@ const createStyles = (theme: Theme) =>
       right: -40,
       top: -55,
     },
-
     mainContent: {
       flexDirection: 'row',
       alignItems: 'center',

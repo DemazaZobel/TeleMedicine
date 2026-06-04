@@ -1,0 +1,53 @@
+{
+    "screen": {
+        "title": "የስራ ሰዓቶች",
+        "subtitle": "ሳምንታዊ የምክክር መርሃ ግብርዎን ያዘጋጁ"
+    },
+    "addButton": "ሰዓት ጨምር",
+    "stats": {
+        "activeDays": "ንቁ ቀናት",
+        "totalSlots": "ጠቅላላ ቦታዎች",
+        "daysOff": "ቀናት ፈቃድ"
+    },
+    "slots": {
+        "count_one": "{{count}} ቦታ",
+        "count_other": "{{count}} ቦታዎች"
+    },
+    "delete": {
+        "webConfirm": "ይህን የስራ ሰዓት ይሰርዙ?",
+        "alertTitle": "መርሃ ግብር ያስወግዱ",
+        "alertMessage": "ይህን የስራ ሰዓት መሰረዝ ይፈልጋሉ?",
+        "cancel": "ሰርዝ",
+        "confirm": "አጥፋ",
+        "errorTitle": "ስህተት",
+        "errorMessage": "ይህን ቦታ መሰረዝ አልተሳካም። እንደገና ይሞክሩ።"
+    },
+    "empty": {
+        "title": "መርሃ ግብር አልተቀናጀም",
+        "description": "የስራ ሰዓቶችዎን እስካላዘጋጁ ድረስ ታካሚዎች ቀጠሮ መያዝ አይችሉም።"
+    },
+    "days": {
+        "mon": "ሰኞ",
+        "tue": "ማክሰኞ",
+        "wed": "ረቡዕ",
+        "thu": "ሐሙስ",
+        "fri": "አርብ",
+        "sat": "ቅዳሜ",
+        "sun": "እሑድ"
+    },
+    "repeatWeekly": "በሳምንት ድገም",
+    "makeWeekly": "ይህን በሳምንት እንደ ተደጋጋሚ ጊዜ ያስቀምጡ",
+    "selectDay": "ቀን ይምረጡ",
+    "selectSpecificDate": "ልዩ ቀን ይምረጡ",
+    "startTime": "መጀመሪያ ሰዓት",
+    "endTime": "መጨረሻ ሰዓት",
+    "validationTimeFormat": "እባክዎ HH:MM ቅርጸት ይጠቀሙ (ለምሳሌ 09:00)",
+    "editWorkingHoursTitle": "የስራ ሰዓት ያርትዑ",
+    "addWorkingHoursTitle": "የስራ ሰዓት ይጨምሩ",
+    "editWorkingHoursSubtitle": "ያለውን የጊዜ ሰሌዳ ያስተካክሉ።",
+    "addWorkingHoursSubtitle": "ታካሚዎች መቼ ሊይዙ እንደሚችሉ ይግለጹ።",
+    "cancelBtn": "ሰርዝ",
+    "updateScheduleBtn": "ሰሌዳ ያዘምኑ",
+    "saveHoursBtn": "ሰዓት ያስቀምጡ",
+    "doneBtn": "ተከናወነ"
+}

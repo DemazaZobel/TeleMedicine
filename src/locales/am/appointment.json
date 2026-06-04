@@ -1,66 +1,57 @@
 {
-  "title": "ቀጠሮዎች",
-  "requested": "የተጠየቀ",
-  "confirmed": "የተረጋገጠ",
-  "cancelled": "የተሰረዘ",
-  "completed": "የተጠናቀቀ",
-  "noShow": "ያልተገኘ",
-  "expired": "ጊዜው ያለፈበት",
-  "bookTitle": "ቀጠሮ ያዝ",
-  "selectSlot": "ያሉትን የስራ ሰዓታት ይምረጡ",
-  "confirmBooking": "ቀጠሮውን አረጋግጥ",
-  "bookingSuccess": "የቀጠሮ ጥያቄ በተሳካ ሁኔታ ተልኳል!",
-  "reasonForVisit": "የቀጠሮው ምክንያት",
-  "cancelAppointment": "ቀጠሮ ሰርዝ",
-  "cancelConfirm": "እርግጠኛ ነዎት ይህንን ቀጠሮ መሰረዝ ይፈልጋሉ?",
-  "reschedule": "ቀን ቀይር",
-  "doctorDetails": "የሐኪም ዝርዝር መረጃ",
-  "specialties": {
-    "Cardiologist": "የልብ ሐኪም",
-    "Dermatologist": "የቆዳ ሐኪም",
-    "Pediatrician": "የሕፃናት ሐኪም",
-    "Gynecologist": "የማህፀንና ፅንስ ሐኪም",
-    "General": "አጠቃላይ ሐኪም"
+  "header": {
+    "title": "ቀጠሮዎች",
+    "subtitleDoctor": "የጊዜ ሰሌዳዎን ያስተዳድሩ",
+    "subtitlePatient": "መጪ ክፍለ ጊዜዎችዎን ይመልከቱ"
   },
-  "acceptAppointment": "ቀጠሮውን ተቀበል",
-  "accepted": "ተቀባይነት አግኝቷል",
-  "appointmentDate": "የቀጠሮ ቀን",
-  "appointmentDetails": "የቀጠሮ ዝርዝሮች",
-  "acceptedMessage": "ቀጠሮው ተቀባይነት አግኝቷል።",
-  "confirmedSuccessMessage": "ቀጠሮዎ በተሳካ ሁኔታ ተረጋግጧል።",
-  "cancelledSuccessMessage": "ቀጠሮው ተሰርዟል።",
-  "confirmedSuccess": "ቀጠሮው ተረጋግጧል።",
-  "bookingExists": "ቀድሞውኑ ቀጠሮ አለዎት",
-  "reasonPlaceholder": "የበሽታዎን ምልክቶች ወይም የቀጠሮዎን ምክንያት ባጭሩ ይግለጹ",
-  "calendar": "የቀን መቁጠሪያ",
-  "cancellationReason": "የመሰረዣ ምክንያት",
-  "consultation": "ምክክር",
-  "consultationMode": "የምክክር አገልግሎት አይነት",
-  "consultationCompleted": "ምክክሩ ተጠናቋል።",
-  "reasonEgp": "ምሳሌ፡ አጠቃላይ ምርመራ፣ ክትትል...",
-  "rescheduleReasonPlaceholder": "ምሳሌ፡ ከሌላ ስብሰባ ጋር ስለተደራረበብኝ...",
-  "cancelReasonPlaceholder": "ምሳሌ፡ የግል ድንገተኛ ጉዳይ ስላጋጠመኝ...",
-  "enterDoctorId": "የሐኪሙን መገለጫ መለያ ያስገቡ",
-  "inPerson": "በአካል",
-  "joinConsultation": "ምክክሩን ተቀላቀል",
-  "keepAppointment": "ቀጠሮውን አቆይ",
-  "locationFacility": "ቦታ እና የህክምና ተቋም",
-  "noAppointments": "ምንም ቀጠሮ የለም",
-  "online": "በኢንተርኔት (ኦንላይን)",
-  "proposedChange": "የቀረበው አዲስ ሰዓት",
-  "payNow": "አሁን ክፈል",
-  "validationDateTime": "እባክዎ ትክክለኛ ቀን (አአአአ-ወወ-ቀቀ) እና ሰዓት (ሰሰ:ደደ) ያስገቡ።",
-  "proposeReschedule": "አዲስ ቀን አቅርብ",
-  "reasonForChange": "የቀን ለውጡ ምክንያት",
-  "requestAppointment": "ቀጠሮ ይጠይቁ",
-  "rescheduleSentSuccess": "የቀጠሮ ለውጥ ጥያቄው በተሳካ ሁኔታ ተልኳል።",
-  "reviewReschedule": "የቀጠሮ ለውጥ ግምገማ",
-  "selectBestTimeDesc": "ለእርስዎ በጣም ምቹ የሆነውን ቀን እና ሰዓት ይምረጡ።",
-  "proposeChangeInstructions": "ለዚህ ቀጠሮ አዲስ ሰዓት እና የምክክር አይነት ያቅርቡ።",
-  "upcoming": "ቀጣይ",
-  "upcomingAppointment": "ቀጣይ ቀጠሮ",
-  "viewDetails": "ዝርዝር መረጃዎችን ተመልከት",
-  "yesCancel": "አዎ፣ ሰርዝ",
-  "noUpcomingScheduled": "እስካሁን ምንም ቀጣይ ቀጠሮዎች አልተያዙም።",
-  "requestSubmitted": "የቀጠሮ ጥያቄዎ በተሳካ ሁኔታ ገብቷል!"
+  "screen": {
+    "title": "ቀጠሮዎች",
+    "subtitle": "{{active}} ንቁ · {{pending}} በጥበቃ ላይ",
+    "pendingBadge": "{{count}} በጥበቃ ላይ"
+  },
+  "summary": {
+    "upcoming": "መጪ",
+    "pending": "በጥበቃ ላይ",
+    "completed": "የተጠናቀቀ",
+    "cancelled": "የተሰረዘ"
+  },
+  "filters": {
+    "all": "ሁሉም",
+    "pending": "በጥበቃ ላይ",
+    "confirmed": "የተረጋገጠ",
+    "completed": "የተጠናቀቀ",
+    "cancelled": "የተሰረዘ"
+  },
+  "empty": {
+    "all": {
+      "title": "ቀጠሮ የለም",
+      "desc": "መጪ ቀጠሮዎችዎ እዚህ ይታያሉ።"
+    },
+    "pending": {
+      "title": "የጥያቄ ቀጠሮ የለም",
+      "desc": "አዲስ የቀጠሮ ጥያቄዎች እዚህ ይታያሉ።"
+    },
+    "confirmed": {
+      "title": "የተረጋገጠ ቀጠሮ የለም",
+      "desc": "የተቀበሏቸው ቀጠሮዎች እዚህ ይታያሉ።"
+    },
+    "completed": {
+      "title": "የተጠናቀቀ ክፍለ ጊዜ የለም",
+      "desc": "የተጠናቀቁ ምክክሮች እዚህ ይታያሉ።"
+    },
+    "cancelled": {
+      "title": "የተሰረዘ ቀጠሮ የለም",
+      "desc": "የተሰረዙ ቀጠሮዎች እዚህ ይታያሉ።"
+    }
+  },
+  "alerts": {
+    "acceptSuccess": {
+      "title": "ተቀብሏል",
+      "message": "ቀጠሮ በተሳካ ሁኔታ ተረጋግጧል።"
+    },
+    "acceptError": {
+      "title": "ስህተት",
+      "message": "ቀጠሮ መቀበል አልተሳካም።"
+    }
+  }
 }

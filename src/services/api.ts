@@ -43,8 +43,8 @@ apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     console.log(`[API REQUEST] => ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
 
-    // Log payload for debugging (except passwords)
-    if (config.data) {
+    // Log payload for debugging (skip FormData — JSON.stringify corrupts it)
+    if (config.data && !(config.data instanceof FormData)) {
       const sanitizedData = { ...config.data };
       if (sanitizedData.password) sanitizedData.password = '***';
       console.log(`[API PAYLOAD] =>`, JSON.stringify(sanitizedData, null, 2));
