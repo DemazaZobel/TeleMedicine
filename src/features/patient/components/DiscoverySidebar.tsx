@@ -173,7 +173,7 @@ export function DiscoverySidebar({ isCollapsed, onToggle }: DiscoverySidebarProp
               >
                 <Text style={styles.dropdownItemText}>All Specialties</Text>
               </TouchableOpacity>
-              {specializations.map((spec) => (
+              {(Array.isArray(specializations) ? specializations : []).map((spec) => (
                 <TouchableOpacity 
                   key={spec}
                   style={styles.dropdownItem}

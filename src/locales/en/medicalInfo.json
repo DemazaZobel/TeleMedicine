@@ -30,5 +30,10 @@
     "address": "Address",
     "city": "City",
     "country": "Country"
+  },
+  "documents": {
+    "sectionTitle": "Medical Documents",
+    "noDocuments": "No documents uploaded yet.",
+    "viewFile": "View"
   }
 }

@@ -30,5 +30,10 @@
         "address": "አድራሻ",
         "city": "ከተማ",
         "country": "ሀገር"
+    },
+    "documents": {
+        "sectionTitle": "የሕክምና ሰነዶች",
+        "noDocuments": "እስካሁን ምንም ሰነድ አልተሰቀለም።",
+        "viewFile": "ይመልከቱ"
     }
 }

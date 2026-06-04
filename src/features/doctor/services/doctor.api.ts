@@ -122,8 +122,13 @@ export const doctorApi = {
 
   getSpecializations: async (): Promise<string[]> => {
     try {
-      const response = await apiClient.get<string[]>(`${DOCTOR_BASE}/specializations/`);
-      return response.data;
+      const response = await apiClient.get(`${DOCTOR_BASE}/specializations/`);
+      const data = response.data;
+      // Handle paginated responses (e.g. { results: [...] }) or plain arrays
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.results)) return data.results;
+      console.warn('[DoctorApi] Unexpected specializations response shape:', data);
+      return ['General', 'Cardiology', 'Pediatrics', 'Dentistry', 'Neurology', 'Orthopedics', 'Dermatology'];
     } catch {
       // Fallback to static list if endpoint is not yet deployed
       console.warn('[DoctorApi] specializations endpoint unavailable, using fallback');
